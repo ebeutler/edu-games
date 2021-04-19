@@ -1,7 +1,7 @@
 # edu-games
 Small educational games
 
-1. CodeAlphabet
+# CodeAlphabet
 Intended to learn and automate the order of the alphabet.
 
 Browser (ECMA 6) game that allows a moderator (i.e. teacher) to enter words, then display one at a
