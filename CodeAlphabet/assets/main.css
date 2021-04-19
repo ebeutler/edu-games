@@ -1,0 +1,27 @@
+body {
+    font-family: "Trebuchet MS",Arial, Helvetica, sans-serif;
+	font-weight: bold;
+}
+
+ul {
+	padding-left: 0;
+}
+
+li {
+	list-style: none;
+	padding: 4px 0;
+}
+
+label[for="wordlist"] {
+    display: table-cell;
+    vertical-align: top;
+}
+
+input[type="number"] {
+	width: 50px;
+}
+
+textarea {
+	width: 150px;
+	height: 150px;
+}

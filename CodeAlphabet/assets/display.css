@@ -1,0 +1,39 @@
+body {
+    font-family: "Trebuchet MS",Arial, Helvetica, sans-serif;
+	font-weight: bold;
+}
+
+div#timer {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+}
+
+div#timer span.seconds {
+    font-size: 48px;
+}
+
+div#timer span.fractions {
+    font-size: 36px;
+	width: 40px;
+	display: inline-block;
+}
+
+ul {
+	margin: 0 auto;
+    padding: 0;
+    width: 80%;
+}
+
+li {
+    list-style: none;
+    display: inline-block;
+}
+
+div#solution {
+    display: none;
+}
+
+div#solution.show {
+    display: block;
+}
