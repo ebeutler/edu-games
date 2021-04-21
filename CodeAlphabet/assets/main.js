@@ -43,6 +43,8 @@
 			theWord = wordList[Math.floor(Math.random() * max)];
 			const wordListEle = document.getElementById('wordlist');
 			wordListEle.value = wordListEle.value.replace(new RegExp('^' + theWord + '$', 'm'), '').replace(/^\s*[\r\n]/gm, '');
+		} else {
+			document.getElementById('word').value = '';
 		}
 		const shift = document.getElementById('amount').value;
 		const direction = document.getElementById('dir').value;
