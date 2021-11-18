@@ -43,8 +43,6 @@
 			theWord = wordList[Math.floor(Math.random() * max)];
 			const wordListEle = document.getElementById('wordlist');
 			wordListEle.value = wordListEle.value.replace(new RegExp('^' + theWord + '$', 'm'), '').replace(/^\s*[\r\n]/gm, '');
-		} else {
-			document.getElementById('word').value = '';
 		}
 		const shift = document.getElementById('amount').value;
 		const direction = document.getElementById('dir').value;
@@ -54,6 +52,9 @@
 		const btnStart = document.getElementById('start');
 		btnStart.disabled = true;
 		btnStart.removeEventListener('click', start);
+		const current = document.getElementById('current');
+		current.innerText = theWord;
+		current.style.display = 'inline-block';
 	};
 	
 	const stop = function() {
@@ -71,6 +72,7 @@
 		btnSolve.disabled = true;
 		btnSolve.removeEventListener('click', solve);
 		popup.postMessage({ action: 2 }, '*');
+		document.getElementById('current').style.display = 'none';
 	};
 	
 	const buttonsActiveCheck = function () {
