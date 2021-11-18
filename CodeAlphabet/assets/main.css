@@ -1,4 +1,6 @@
 body {
+    background-color: #222;
+    color: #ddd;
     font-family: "Trebuchet MS",Arial, Helvetica, sans-serif;
 	font-weight: bold;
 }
@@ -24,4 +26,13 @@ input[type="number"] {
 textarea {
 	width: 150px;
 	height: 150px;
+}
+
+#current {
+    color: #ddd;
+    border: #a33 solid 2px;
+    padding: 12px 36px;
+    font-size: 36px;
+    width: auto;
+    display: inline-block;
 }
