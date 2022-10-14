@@ -36,6 +36,7 @@
 		<button type="button" id="stop" disabled>Stop Timer</button>
 		<button type="button" id="solve" disabled>Aufgabe L&ouml;sen</button>
 	</div>
+	<p id="current" style="display:none;"></p>
 	<div class="settings">
 		<h2>Einstellungen</h2>
 		<ul>
@@ -58,7 +59,16 @@
 			<li>
 				<ul>
 					<li><label for="word">N&auml;chstes Wort: </label><input id="word" type="text"/></li>
-					<li><label for="wordlist">Wortpool: </label><textarea id="wordlist"></textarea></li>
+					<li><label for="wordlist">Wortpool: </label>
+						<ul class="horizontal">
+							<li><textarea id="wordlist"></textarea></li>
+							<li>Poolreihenfolge:<br />
+								<input type="radio" name="nextpick" value="1" checked="checked" /> Fix<br />
+								<input type="radio" name="nextpick" value="5" /> Zufall aus ersten 5<br />
+								<input type="radio" name="nextpick" value="99999" /> Zufall
+							</li>
+						</ul>
+					</li>
 				</ul>
 			</li>
 		</ul>
