@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Sort a scrambled photo to visualize sorting algorithms.">
+	<title>Image Slice Sort</title>
+	<link href="assets/main.css" rel="stylesheet">
+	<script src="assets/algorithms.js" defer></script>
+	<script src="assets/main.js" defer></script>
+</head>
+<body>
+	<header class="page-header">
+		<p class="eyebrow">edu-games / visual algorithms</p>
+		<h1>Image Slice Sort</h1>
+		<p class="intro">Scramble a photograph into vertical slices, then watch an algorithm put it back together.</p>
+	</header>
+
+	<main class="app-shell">
+		<aside class="control-panel" aria-label="Sorting controls">
+			<section>
+				<h2>1. Choose a photo</h2>
+				<label class="drop-zone" id="dropZone" for="imageInput">
+					<span class="drop-zone-title">Take or drop a photo</span>
+					<span class="drop-zone-hint">Choose an image, use your phone camera, or drag a file here.</span>
+				</label>
+				<input id="imageInput" class="visually-hidden" type="file" accept="image/*">
+				<p id="fileName" class="file-name">No photo selected</p>
+			</section>
+
+			<section>
+				<h2>2. Configure</h2>
+				<div class="field">
+					<div class="field-heading">
+						<label for="sliceCount">Slices</label>
+						<output id="sliceCountValue" for="sliceCount">120</output>
+					</div>
+					<input id="sliceCount" type="range" min="2" max="300" value="120">
+				</div>
+
+				<label class="field" for="algorithm">
+					<span>Algorithm</span>
+					<select id="algorithm">
+						<option value="bubble">Bubble sort</option>
+						<option value="insertion">Insertion sort</option>
+						<option value="selection">Selection sort</option>
+						<option value="merge">Merge sort</option>
+					</select>
+				</label>
+
+				<div class="field">
+					<div class="field-heading">
+						<label for="speed">Speed</label>
+						<output id="speedValue" for="speed">30 steps/s</output>
+					</div>
+					<input id="speed" type="range" min="1" max="240" value="30">
+				</div>
+
+				<label class="check-field" for="showComparisons">
+					<input id="showComparisons" type="checkbox" checked>
+					<span>Show every comparison</span>
+				</label>
+			</section>
+
+			<section>
+				<h2>3. Sort</h2>
+				<div class="primary-actions">
+					<button id="start" class="button button-primary" type="button" disabled>Start</button>
+					<button id="stop" class="button" type="button" disabled>Stop</button>
+					<button id="step" class="button" type="button" disabled>Step</button>
+				</div>
+				<div class="secondary-actions">
+					<button id="reset" class="text-button" type="button" disabled>Reset</button>
+					<button id="reshuffle" class="text-button" type="button" disabled>Reshuffle</button>
+				</div>
+			</section>
+		</aside>
+
+		<section class="visualizer" aria-labelledby="visualizerTitle">
+			<div class="visualizer-heading">
+				<div>
+					<p class="eyebrow">Current run</p>
+					<h2 id="visualizerTitle">Scrambled image</h2>
+				</div>
+				<p id="status" class="status" aria-live="polite">Choose a photo to begin</p>
+			</div>
+
+			<div class="canvas-frame" id="canvasFrame">
+				<canvas id="canvas" hidden></canvas>
+				<div id="emptyState" class="empty-state">
+					<span class="empty-mark" aria-hidden="true">120</span>
+					<p>Your scrambled photo will appear here.</p>
+				</div>
+			</div>
+
+			<dl class="metrics" aria-label="Sorting statistics">
+				<div>
+					<dt>Comparisons</dt>
+					<dd id="comparisonCount">0</dd>
+				</div>
+				<div>
+					<dt>Moves</dt>
+					<dd id="moveCount">0</dd>
+				</div>
+				<div>
+					<dt>Elapsed</dt>
+					<dd id="elapsedTime">0.0 s</dd>
+				</div>
+			</dl>
+		</section>
+	</main>
+
+	<footer>
+		<p>Photos stay on this device. Nothing is uploaded.</p>
+	</footer>
+</body>
+</html>

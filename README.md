@@ -9,3 +9,11 @@ time with letters shifted along the alphabet (by x letters in direction left, ri
 
 - Currently UI is German only
 - Only letters A-Z (e.g. no ÄÖÜ)
+
+# ImageSliceSort
+
+Browser-based sorting algorithm visualizer that scrambles a photo into vertical slices and sorts it
+again using bubble, insertion, selection, or merge sort.
+
+Open `ImageSliceSort/ImageSliceSort.html` in a modern browser. Photos are processed locally and are
+never uploaded. `ImageSliceSort/tests.html` runs the algorithm checks.
