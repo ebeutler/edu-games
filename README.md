@@ -17,5 +17,9 @@ again. It includes conventional algorithms such as bubble, merge, QuickSort, hea
 cycle, cocktail shaker, and odd-even sort, plus novelty algorithms including I Can't Believe It Can
 Sort, gnome sort, stooge sort, and Bogosort.
 
+One, two, or four algorithms can run simultaneously against the same shuffled image. Shared controls
+advance every active algorithm by the same raw operation so hidden comparison highlights do not
+change the outcome of a race.
+
 Open `ImageSliceSort/ImageSliceSort.html` in a modern browser. Photos are processed locally and are
-never uploaded. `ImageSliceSort/tests.html` runs the algorithm checks.
+never uploaded. `ImageSliceSort/tests.html` runs the algorithm and race-runner checks.

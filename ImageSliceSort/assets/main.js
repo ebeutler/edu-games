@@ -3,24 +3,25 @@
 
 	const MAX_IMAGE_WIDTH = 1400;
 	const MAX_IMAGE_HEIGHT = 900;
+	const DEFAULT_ALGORITHMS = ["bubble", "quick", "merge", "heap"];
 	const sourceCanvas = document.createElement("canvas");
 	const sourceContext = sourceCanvas.getContext("2d", { alpha: false });
-	const elements = {};
+	const elements = { panelViews: [], algorithmControls: [] };
 	const highlightColors = {};
 	const state = {
 		imageReady: false,
+		loading: false,
 		baseline: [],
-		values: [],
-		iterator: null,
+		panelCount: 1,
 		running: false,
-		complete: false,
-		comparisons: 0,
-		moves: 0,
 		elapsed: 0,
 		lastFrame: 0,
 		budget: 0,
 		animationFrame: 0,
-		lastEvent: null
+		loadGeneration: 0,
+		runs: DEFAULT_ALGORITHMS.map(function (algorithmId, index) {
+			return window.ImageSliceSortRace.createRun("sort-" + (index + 1), algorithmId);
+		})
 	};
 
 	const byId = function (id) {
@@ -29,116 +30,186 @@
 
 	const cacheElements = function () {
 		[
-			"algorithm", "algorithmHint", "appShell", "canvas", "canvasFrame", "comparisonCount", "dropZone", "elapsedTime", "emptyState",
-			"fileName", "fullscreen", "imageInput", "moveCount", "reshuffle", "reset", "showComparisons",
-			"sliceCount", "sliceCountValue", "speed", "speedValue", "start", "status", "step",
-			"stop", "visualizerTitle"
+			"algorithmFields", "appShell", "dropZone", "fileName", "fullscreen", "imageInput",
+			"panelCount", "raceGrid", "reshuffle", "reset", "showComparisons", "sliceCount",
+			"sliceCountValue", "sortPanelTemplate", "speed", "speedValue", "start", "status",
+			"step", "stop"
 		].forEach(function (id) {
 			elements[id] = byId(id);
 		});
+	};
+
+	const activeRuns = function () {
+		return state.runs.slice(0, state.panelCount);
 	};
 
 	const setStatus = function (message) {
 		elements.status.textContent = message;
 	};
 
-	const selectedAlgorithm = function () {
-		return window.ImageSliceSortAlgorithms.definitions[elements.algorithm.value];
-	};
-
-	const algorithmLimitMessage = function () {
-		const definition = selectedAlgorithm();
-		const count = state.imageReady ? state.values.length : Number(elements.sliceCount.value);
-		return definition.maxSlices && count > definition.maxSlices
-			? definition.label + " is limited to " + definition.maxSlices + " slices; reduce the slice count to continue."
-			: "";
-	};
-
-	const updateAlgorithmHint = function () {
-		const definition = selectedAlgorithm();
-		const limitMessage = algorithmLimitMessage();
-		elements.algorithmHint.textContent = limitMessage || (definition.novelty
-			? "Novelty algorithm: intentionally inefficient"
-				+ (definition.maxSlices ? "; maximum " + definition.maxSlices + " slices." : ".")
-			: "");
-		elements.algorithmHint.classList.toggle("is-warning", !!limitMessage);
-	};
-
-	const fitFullscreenCanvas = function () {
-		const canvas = elements.canvas;
-		if ((document.fullscreenElement !== elements.appShell) || !state.imageReady) {
-			canvas.style.removeProperty("width");
-			canvas.style.removeProperty("height");
-			return;
-		}
-
-		const scale = Math.min(
-			elements.canvasFrame.clientWidth / canvas.width,
-			elements.canvasFrame.clientHeight / canvas.height
-		);
-		canvas.style.width = Math.floor(canvas.width * scale) + "px";
-		canvas.style.height = Math.floor(canvas.height * scale) + "px";
-	};
-
-	const updateFullscreenControl = function () {
-		const active = document.fullscreenElement === elements.appShell;
-		elements.fullscreen.textContent = active ? "Exit full screen" : "Full screen";
-		elements.fullscreen.setAttribute("aria-pressed", String(active));
-		window.requestAnimationFrame(fitFullscreenCanvas);
-	};
-
-	const toggleFullscreen = async function () {
-		try {
-			if (document.fullscreenElement) {
-				await document.exitFullscreen();
-			} else {
-				await elements.appShell.requestFullscreen();
-			}
-		} catch (error) {
-			console.error(error);
-			setStatus("Full screen is not available");
-		}
-	};
-
 	const formatCount = function (value) {
 		return value.toLocaleString("en");
 	};
 
-	const updateMetrics = function () {
-		elements.comparisonCount.textContent = formatCount(state.comparisons);
-		elements.moveCount.textContent = formatCount(state.moves);
-		elements.elapsedTime.textContent = (state.elapsed / 1000).toFixed(1) + " s";
+	const createAlgorithmOptions = function (select, selectedId) {
+		const definitions = window.ImageSliceSortAlgorithms.definitions;
+		[
+			{ label: "Serious algorithms", novelty: false },
+			{ label: "Novelty algorithms", novelty: true }
+		].forEach(function (group) {
+			const optgroup = document.createElement("optgroup");
+			optgroup.label = group.label;
+			Object.keys(definitions).forEach(function (id) {
+				const definition = definitions[id];
+				if (!!definition.novelty === group.novelty) {
+					const option = document.createElement("option");
+					option.value = id;
+					option.textContent = definition.label;
+					optgroup.appendChild(option);
+				}
+			});
+			select.appendChild(optgroup);
+		});
+		select.value = selectedId;
+	};
+
+	const createPanelElements = function () {
+		state.runs.forEach(function (run, index) {
+			const field = document.createElement("label");
+			const label = document.createElement("span");
+			const select = document.createElement("select");
+			const hint = document.createElement("small");
+			field.className = "field algorithm-field";
+			select.id = "algorithm-" + (index + 1);
+			label.textContent = "Sort " + (index + 1) + " algorithm";
+			field.htmlFor = select.id;
+			hint.className = "field-hint";
+			hint.setAttribute("aria-live", "polite");
+			createAlgorithmOptions(select, run.algorithmId);
+			field.append(label, select, hint);
+			elements.algorithmFields.appendChild(field);
+			elements.algorithmControls.push({ field: field, select: select, hint: hint });
+
+			const panel = elements.sortPanelTemplate.content.firstElementChild.cloneNode(true);
+			const view = {
+				panel: panel,
+				number: panel.querySelector('[data-role="number"]'),
+				title: panel.querySelector('[data-role="title"]'),
+				status: panel.querySelector('[data-role="status"]'),
+				canvasFrame: panel.querySelector('[data-role="canvasFrame"]'),
+				canvas: panel.querySelector('[data-role="canvas"]'),
+				emptyState: panel.querySelector('[data-role="emptyState"]'),
+				comparisons: panel.querySelector('[data-role="comparisons"]'),
+				moves: panel.querySelector('[data-role="moves"]'),
+				elapsed: panel.querySelector('[data-role="elapsed"]')
+			};
+			view.context = view.canvas.getContext("2d", { alpha: false });
+			view.number.textContent = "Sort " + (index + 1);
+			view.canvas.setAttribute("aria-label", "Sort " + (index + 1) + " visualization");
+			panel.querySelector(".metrics").setAttribute("aria-label", "Sort " + (index + 1) + " statistics");
+			elements.raceGrid.appendChild(panel);
+			elements.panelViews.push(view);
+		});
+	};
+
+	const definitionFor = function (run) {
+		return window.ImageSliceSortAlgorithms.definitions[run.algorithmId];
+	};
+
+	const algorithmLimitMessage = function (run) {
+		const definition = definitionFor(run);
+		const count = state.imageReady ? state.baseline.length : Number(elements.sliceCount.value);
+		return definition.maxSlices && count > definition.maxSlices
+			? definition.label + " is limited to " + definition.maxSlices + " slices."
+			: "";
+	};
+
+	const firstLimitMessage = function () {
+		for (let index = 0; index < state.panelCount; index++) {
+			const message = algorithmLimitMessage(state.runs[index]);
+			if (message) {
+				return "Sort " + (index + 1) + ": " + message;
+			}
+		}
+		return "";
+	};
+
+	const updateAlgorithmDetails = function () {
+		state.runs.forEach(function (run, index) {
+			const definition = definitionFor(run);
+			const control = elements.algorithmControls[index];
+			const view = elements.panelViews[index];
+			const limitMessage = algorithmLimitMessage(run);
+			control.hint.textContent = limitMessage || (definition.novelty
+				? "Novelty algorithm: intentionally inefficient"
+					+ (definition.maxSlices ? "; maximum " + definition.maxSlices + " slices." : ".")
+				: "");
+			control.hint.classList.toggle("is-warning", !!limitMessage);
+			view.title.textContent = definition.label;
+		});
+	};
+
+	const allComplete = function () {
+		return activeRuns().every(function (run) { return run.complete; });
 	};
 
 	const updateControls = function () {
-		const overLimit = !!algorithmLimitMessage();
-		elements.start.disabled = !state.imageReady || state.running || state.complete || overLimit;
+		const blocked = !!firstLimitMessage();
+		elements.start.disabled = !state.imageReady || state.loading || state.running || allComplete() || blocked;
 		elements.stop.disabled = !state.running;
-		elements.step.disabled = !state.imageReady || state.running || state.complete || overLimit;
+		elements.step.disabled = !state.imageReady || state.loading || state.running || allComplete() || blocked;
 		elements.reset.disabled = !state.imageReady;
 		elements.reshuffle.disabled = !state.imageReady;
 		elements.sliceCount.disabled = state.running;
-		elements.algorithm.disabled = state.running;
-		updateAlgorithmHint();
+		elements.panelCount.disabled = state.running;
+		elements.algorithmControls.forEach(function (control) {
+			control.select.disabled = state.running;
+		});
+		updateAlgorithmDetails();
+	};
+
+	const updatePanelVisibility = function () {
+		elements.raceGrid.dataset.count = String(state.panelCount);
+		state.runs.forEach(function (_, index) {
+			const active = index < state.panelCount;
+			elements.algorithmControls[index].field.hidden = !active;
+			elements.panelViews[index].panel.hidden = !active;
+		});
+		window.requestAnimationFrame(fitFullscreenCanvases);
+	};
+
+	const updatePanelDetails = function (run, index) {
+		const view = elements.panelViews[index];
+		view.status.textContent = run.status;
+		view.status.dataset.state = run.status.toLowerCase();
+		view.comparisons.textContent = formatCount(run.comparisons);
+		view.moves.textContent = formatCount(run.moves);
+		view.elapsed.textContent = (run.elapsed / 1000).toFixed(1) + " s";
+	};
+
+	const updateAllPanelDetails = function () {
+		activeRuns().forEach(function (run, index) {
+			updatePanelDetails(run, index);
+		});
 	};
 
 	const sliceBoundary = function (position, count, width) {
 		return Math.floor(position * width / count);
 	};
 
-	const render = function () {
+	const renderRun = function (run, index) {
 		if (!state.imageReady) {
 			return;
 		}
-
-		const canvas = elements.canvas;
-		const context = canvas.getContext("2d", { alpha: false });
-		const count = state.values.length;
+		const view = elements.panelViews[index];
+		const canvas = view.canvas;
+		const context = view.context;
+		const count = run.values.length;
 		const width = canvas.width;
 		const height = canvas.height;
 
 		context.clearRect(0, 0, width, height);
-		state.values.forEach(function (sourceIndex, destinationIndex) {
+		run.values.forEach(function (sourceIndex, destinationIndex) {
 			const sourceStart = sliceBoundary(sourceIndex, count, width);
 			const sourceEnd = sliceBoundary(sourceIndex + 1, count, width);
 			const destinationStart = sliceBoundary(destinationIndex, count, width);
@@ -156,25 +227,64 @@
 			);
 		});
 
-		if (!state.lastEvent) {
+		if (!run.lastEvent) {
 			return;
 		}
-
 		const highlight = function (indices, color) {
 			context.fillStyle = color;
-			indices.forEach(function (index) {
-				const start = sliceBoundary(index, count, width);
-				const end = sliceBoundary(index + 1, count, width);
+			indices.forEach(function (position) {
+				const start = sliceBoundary(position, count, width);
+				const end = sliceBoundary(position + 1, count, width);
 				context.fillRect(start, 0, Math.max(1, end - start), height);
 			});
 		};
+		highlight(run.lastEvent.indices, run.lastEvent.comparison
+			? highlightColors.comparison
+			: highlightColors.move);
+		highlight(run.lastEvent.accentIndices || [], highlightColors.pivot);
+	};
 
-		highlight(
-			state.lastEvent.indices,
-			state.lastEvent.comparison ? highlightColors.comparison : highlightColors.move
-		);
-		if (state.lastEvent.accentIndices) {
-			highlight(state.lastEvent.accentIndices, highlightColors.pivot);
+	const renderAll = function () {
+		activeRuns().forEach(function (run, index) {
+			renderRun(run, index);
+		});
+	};
+
+	const fitFullscreenCanvases = function () {
+		activeRuns().forEach(function (_, index) {
+			const view = elements.panelViews[index];
+			const canvas = view.canvas;
+			if ((document.fullscreenElement !== elements.appShell) || !state.imageReady) {
+				canvas.style.removeProperty("width");
+				canvas.style.removeProperty("height");
+				return;
+			}
+			const scale = Math.min(
+				view.canvasFrame.clientWidth / canvas.width,
+				view.canvasFrame.clientHeight / canvas.height
+			);
+			canvas.style.width = Math.max(1, Math.floor(canvas.width * scale)) + "px";
+			canvas.style.height = Math.max(1, Math.floor(canvas.height * scale)) + "px";
+		});
+	};
+
+	const updateFullscreenControl = function () {
+		const active = document.fullscreenElement === elements.appShell;
+		elements.fullscreen.textContent = active ? "Exit full screen" : "Full screen";
+		elements.fullscreen.setAttribute("aria-pressed", String(active));
+		window.requestAnimationFrame(fitFullscreenCanvases);
+	};
+
+	const toggleFullscreen = async function () {
+		try {
+			if (document.fullscreenElement) {
+				await document.exitFullscreen();
+			} else {
+				await elements.appShell.requestFullscreen();
+			}
+		} catch (error) {
+			console.error(error);
+			setStatus("Full screen is not available");
 		}
 	};
 
@@ -184,88 +294,83 @@
 			window.cancelAnimationFrame(state.animationFrame);
 			state.animationFrame = 0;
 		}
-		updateControls();
 	};
 
-	const finish = function () {
+	const finishRaceIfComplete = function () {
+		if (!allComplete()) {
+			return false;
+		}
 		stopAnimation();
-		state.complete = true;
-		state.lastEvent = null;
-		elements.visualizerTitle.textContent = "Photo restored";
-		setStatus("Sorted");
-		render();
-		updateMetrics();
-		updateControls();
+		setStatus(activeRuns().some(function (run) { return run.error; })
+			? "Finished with errors"
+			: (state.panelCount === 1 ? "Sorted" : "All sorts complete"));
+		return true;
 	};
 
-	const ensureIterator = function () {
-		if (!state.iterator) {
-			state.iterator = window.ImageSliceSortAlgorithms.create(elements.algorithm.value, state.values);
-		}
-	};
-
-	const advanceDisplayStep = function () {
-		ensureIterator();
-		while (true) {
-			const next = state.iterator.next();
-			if (next.done) {
-				finish();
-				return false;
+	const advanceRound = function () {
+		const showComparisons = elements.showComparisons.checked;
+		activeRuns().forEach(function (run) {
+			if (!run.complete) {
+				const result = window.ImageSliceSortRace.advanceRun(run, showComparisons);
+				if (result.error) {
+					console.error(result.error);
+				}
+				if (run.complete) {
+					run.elapsed = state.elapsed;
+				}
 			}
-
-			const event = next.value;
-			state.lastEvent = event;
-			if (event.comparison) {
-				state.comparisons++;
-			}
-			if (event.moved) {
-				state.moves++;
-			}
-
-			if (elements.showComparisons.checked || event.moved) {
-				return true;
-			}
-		}
+		});
+		return finishRaceIfComplete();
 	};
 
 	const animationTick = function (time) {
 		if (!state.running) {
 			return;
 		}
-
 		const elapsedSinceFrame = time - state.lastFrame;
 		state.elapsed += elapsedSinceFrame;
 		state.lastFrame = time;
 		state.budget += Math.min(elapsedSinceFrame, 100) * Number(elements.speed.value) / 1000;
+		activeRuns().forEach(function (run) {
+			if (!run.complete) {
+				run.elapsed = state.elapsed;
+			}
+		});
 
-		let steps = Math.min(1000, Math.floor(state.budget));
-		state.budget -= steps;
-		while ((steps-- > 0) && state.running) {
-			advanceDisplayStep();
+		let rounds = Math.min(1000, Math.floor(state.budget));
+		state.budget -= rounds;
+		const advanced = rounds > 0;
+		while ((rounds-- > 0) && state.running) {
+			advanceRound();
 		}
-
-		render();
-		updateMetrics();
+		if (advanced) {
+			renderAll();
+		}
+		updateAllPanelDetails();
 		if (state.running) {
 			state.animationFrame = window.requestAnimationFrame(animationTick);
+		} else {
+			updateControls();
 		}
 	};
 
 	const start = function () {
-		if (!state.imageReady || state.running || state.complete || algorithmLimitMessage()) {
+		if (!state.imageReady || state.running || allComplete() || firstLimitMessage()) {
 			return;
 		}
-
-		ensureIterator();
 		state.running = true;
 		state.budget = 0;
 		state.lastFrame = window.performance.now();
-		elements.visualizerTitle.textContent = window.ImageSliceSortAlgorithms.definitions[elements.algorithm.value].label;
-		setStatus("Sorting");
+		activeRuns().forEach(function (run) {
+			if (!run.complete) {
+				run.status = "Sorting";
+			}
+		});
+		setStatus(state.panelCount === 1 ? "Sorting" : "Sorting together");
+		advanceRound();
+		renderAll();
+		updateAllPanelDetails();
 		updateControls();
-		advanceDisplayStep();
-		render();
-		updateMetrics();
 		if (state.running) {
 			state.animationFrame = window.requestAnimationFrame(animationTick);
 		}
@@ -276,43 +381,53 @@
 			return;
 		}
 		stopAnimation();
+		activeRuns().forEach(function (run) {
+			if (!run.complete) {
+				run.status = "Paused";
+			}
+		});
 		setStatus("Paused");
-	};
-
-	const step = function () {
-		if (!state.imageReady || state.running || state.complete || algorithmLimitMessage()) {
-			return;
-		}
-		elements.visualizerTitle.textContent = window.ImageSliceSortAlgorithms.definitions[elements.algorithm.value].label;
-		advanceDisplayStep();
-		if (!state.complete) {
-			setStatus(state.lastEvent.comparison ? "Compared slices" : "Moved slices");
-		}
-		render();
-		updateMetrics();
+		updateAllPanelDetails();
 		updateControls();
 	};
 
-	const resetRun = function (message) {
+	const step = function () {
+		if (!state.imageReady || state.running || allComplete() || firstLimitMessage()) {
+			return;
+		}
+		advanceRound();
+		activeRuns().forEach(function (run) {
+			if (!run.complete) {
+				run.status = run.lastEvent
+					? (run.lastEvent.comparison ? "Compared" : "Moved")
+					: "Advanced";
+			}
+		});
+		if (!allComplete()) {
+			setStatus("Advanced one operation per sort");
+		}
+		renderAll();
+		updateAllPanelDetails();
+		updateControls();
+	};
+
+	const resetRace = function (message) {
 		stopAnimation();
-		state.values = state.baseline.slice();
-		state.iterator = null;
-		state.complete = false;
-		state.comparisons = 0;
-		state.moves = 0;
 		state.elapsed = 0;
-		state.lastEvent = null;
-		elements.visualizerTitle.textContent = "Scrambled image";
-		setStatus(algorithmLimitMessage() || message || "Ready to sort");
-		render();
-		updateMetrics();
+		state.budget = 0;
+		state.runs.forEach(function (run) {
+			window.ImageSliceSortRace.resetRun(run, state.baseline);
+		});
+		setStatus(state.imageReady
+			? (firstLimitMessage() || message || "Ready to sort")
+			: "Choose a photo to begin");
+		renderAll();
+		updateAllPanelDetails();
 		updateControls();
 	};
 
 	const shuffledIndices = function (count) {
-		const values = Array.from({ length: count }, function (_, index) {
-			return index;
-		});
+		const values = Array.from({ length: count }, function (_, index) { return index; });
 		for (let index = values.length - 1; index > 0; index--) {
 			const swapWith = Math.floor(Math.random() * (index + 1));
 			[values[index], values[swapWith]] = [values[swapWith], values[index]];
@@ -337,7 +452,7 @@
 		const count = Math.max(1, Math.min(Number(elements.sliceCount.value), sourceCanvas.width));
 		updateSliceCountOutput(count);
 		state.baseline = shuffledIndices(count);
-		resetRun(message || "New scramble ready");
+		resetRace(message || "New scramble ready");
 	};
 
 	const decodeImage = function (file) {
@@ -346,7 +461,6 @@
 				return window.createImageBitmap(file);
 			});
 		}
-
 		return new Promise(function (resolve, reject) {
 			const image = new Image();
 			const url = URL.createObjectURL(file);
@@ -371,10 +485,19 @@
 			return;
 		}
 
+		const generation = ++state.loadGeneration;
 		stopAnimation();
+		state.loading = true;
 		setStatus("Preparing photo...");
+		updateControls();
 		try {
 			const image = await decodeImage(file);
+			if (generation !== state.loadGeneration) {
+				if (typeof image.close === "function") {
+					image.close();
+				}
+				return;
+			}
 			const width = image.width || image.naturalWidth;
 			const height = image.height || image.naturalHeight;
 			if (!width || !height) {
@@ -389,17 +512,24 @@
 				image.close();
 			}
 
-			elements.canvas.width = sourceCanvas.width;
-			elements.canvas.height = sourceCanvas.height;
-			elements.canvas.hidden = false;
-			elements.emptyState.hidden = true;
+			elements.panelViews.forEach(function (view) {
+				view.canvas.width = sourceCanvas.width;
+				view.canvas.height = sourceCanvas.height;
+				view.canvas.hidden = false;
+				view.emptyState.hidden = true;
+			});
 			elements.fileName.textContent = file.name || "Camera photo";
 			state.imageReady = true;
+			state.loading = false;
 			reshuffle("Photo scrambled and ready");
-			window.requestAnimationFrame(fitFullscreenCanvas);
+			window.requestAnimationFrame(fitFullscreenCanvases);
 		} catch (error) {
-			console.error(error);
-			setStatus(error.message || "Could not load this image");
+			if (generation === state.loadGeneration) {
+				state.loading = false;
+				console.error(error);
+				setStatus(error.message || "Could not load this image");
+				updateControls();
+			}
 		}
 		elements.imageInput.value = "";
 	};
@@ -408,7 +538,6 @@
 		elements.imageInput.addEventListener("change", function (event) {
 			loadFile(event.target.files[0]);
 		});
-
 		["dragenter", "dragover"].forEach(function (name) {
 			elements.dropZone.addEventListener(name, function (event) {
 				event.preventDefault();
@@ -433,32 +562,47 @@
 				updateControls();
 			}
 		});
+		elements.panelCount.addEventListener("change", function () {
+			state.panelCount = Number(elements.panelCount.value);
+			updatePanelVisibility();
+			resetRace("Layout changed; original scramble restored");
+		});
+		elements.algorithmControls.forEach(function (control, index) {
+			control.select.addEventListener("change", function () {
+				state.runs[index].algorithmId = control.select.value;
+				resetRace("Algorithms changed; original scramble restored");
+			});
+		});
 		elements.speed.addEventListener("input", function () {
 			elements.speedValue.textContent = elements.speed.value + " steps/s";
 		});
-		elements.algorithm.addEventListener("change", function () {
-			if (state.imageReady) {
-				resetRun("Algorithm changed; original scramble restored");
-			} else {
-				updateControls();
+		elements.showComparisons.addEventListener("change", function () {
+			if (!elements.showComparisons.checked) {
+				activeRuns().forEach(function (run) {
+					if (run.lastEvent && run.lastEvent.comparison) {
+						run.lastEvent = null;
+					}
+				});
+				renderAll();
 			}
 		});
 		elements.start.addEventListener("click", start);
 		elements.stop.addEventListener("click", pause);
 		elements.step.addEventListener("click", step);
 		elements.reset.addEventListener("click", function () {
-			resetRun("Original scramble restored");
+			resetRace("Original scramble restored");
 		});
 		elements.reshuffle.addEventListener("click", function () {
 			reshuffle();
 		});
 		elements.fullscreen.addEventListener("click", toggleFullscreen);
 		document.addEventListener("fullscreenchange", updateFullscreenControl);
-		window.addEventListener("resize", fitFullscreenCanvas);
+		window.addEventListener("resize", fitFullscreenCanvases);
 	};
 
 	const init = function () {
 		cacheElements();
+		createPanelElements();
 		const styles = window.getComputedStyle(document.documentElement);
 		highlightColors.comparison = styles.getPropertyValue("--comparison-highlight").trim();
 		highlightColors.move = styles.getPropertyValue("--move-highlight").trim();
@@ -466,8 +610,9 @@
 		if (!document.fullscreenEnabled || !elements.appShell.requestFullscreen) {
 			elements.fullscreen.hidden = true;
 		}
+		updatePanelVisibility();
 		bindEvents();
-		updateControls();
+		resetRace();
 	};
 
 	document.addEventListener("DOMContentLoaded", init);

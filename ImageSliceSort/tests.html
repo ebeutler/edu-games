@@ -4,6 +4,7 @@
 	<meta charset="utf-8">
 	<title>Image Slice Sort checks</title>
 	<script src="assets/algorithms.js"></script>
+	<script src="assets/race.js"></script>
 </head>
 <body>
 	<h1>Image Slice Sort algorithm checks</h1>
@@ -111,6 +112,27 @@
 				throw new Error("novelty algorithm limits are missing");
 			}
 			messages.push("PASS: novelty limits");
+
+			const firstRun = window.ImageSliceSortRace.createRun("first", "bubble");
+			const secondRun = window.ImageSliceSortRace.createRun("second", "bubble");
+			window.ImageSliceSortRace.resetRun(firstRun, [1, 0]);
+			window.ImageSliceSortRace.resetRun(secondRun, [1, 0]);
+			if (firstRun.values === secondRun.values) {
+				throw new Error("race runs share their mutable slice array");
+			}
+			window.ImageSliceSortRace.advanceRun(firstRun, true);
+			if (!firstRun.lastEvent.comparison || firstRun.values[0] !== 1) {
+				throw new Error("race comparison advanced too far");
+			}
+			window.ImageSliceSortRace.advanceRun(firstRun, true);
+			if (!firstRun.lastEvent.moved || firstRun.values[0] !== 0 || secondRun.values[0] !== 1) {
+				throw new Error("race runs are not independent");
+			}
+			window.ImageSliceSortRace.advanceRun(secondRun, false);
+			if (secondRun.lastEvent || secondRun.comparisons !== 1) {
+				throw new Error("race did not count and hide a raw comparison");
+			}
+			messages.push("PASS: independent race runners");
 
 			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
 		})();

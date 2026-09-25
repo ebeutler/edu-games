@@ -7,6 +7,7 @@
 	<title>Image Slice Sort</title>
 	<link href="assets/main.css" rel="stylesheet">
 	<script src="assets/algorithms.js" defer></script>
+	<script src="assets/race.js" defer></script>
 	<script src="assets/main.js" defer></script>
 </head>
 <body>
@@ -38,31 +39,15 @@
 					<input id="sliceCount" type="range" min="2" max="300" value="120">
 				</div>
 
-				<label class="field" for="algorithm">
-					<span>Algorithm</span>
-					<select id="algorithm">
-						<optgroup label="Serious algorithms">
-							<option value="bubble">Bubble sort</option>
-							<option value="cocktail">Cocktail shaker sort</option>
-							<option value="cycle">Cycle sort</option>
-							<option value="heap">Heap sort</option>
-							<option value="insertion">Insertion sort</option>
-							<option value="merge">Merge sort</option>
-							<option value="oddEven">Odd-even sort</option>
-							<option value="quick">QuickSort</option>
-							<option value="radix">Radix sort (LSD)</option>
-							<option value="selection">Selection sort</option>
-							<option value="shell">Shell sort</option>
-						</optgroup>
-						<optgroup label="Novelty algorithms">
-							<option value="cantBelieve">I Can't Believe It Can Sort</option>
-							<option value="gnome">Gnome sort</option>
-							<option value="stooge">Stooge sort</option>
-							<option value="bogo">Bogosort</option>
-						</optgroup>
+				<label class="field" for="panelCount">
+					<span>Algorithms shown</span>
+					<select id="panelCount">
+						<option value="1">1 algorithm</option>
+						<option value="2">2 algorithms</option>
+						<option value="4">4 algorithms</option>
 					</select>
-					<small id="algorithmHint" class="field-hint" aria-live="polite"></small>
 				</label>
+				<div id="algorithmFields" class="algorithm-fields"></div>
 
 				<div class="field">
 					<div class="field-heading">
@@ -101,7 +86,7 @@
 			<div class="visualizer-heading">
 				<div>
 					<p class="eyebrow">Current run</p>
-					<h2 id="visualizerTitle">Scrambled image</h2>
+					<h2 id="visualizerTitle">Sorting workspace</h2>
 				</div>
 				<div class="visualizer-actions">
 					<p id="status" class="status" aria-live="polite">Choose a photo to begin</p>
@@ -109,30 +94,33 @@
 				</div>
 			</div>
 
-			<div class="canvas-frame" id="canvasFrame">
-				<canvas id="canvas" hidden></canvas>
-				<div id="emptyState" class="empty-state">
+			<div id="raceGrid" class="race-grid" data-count="1"></div>
+		</section>
+	</main>
+
+	<template id="sortPanelTemplate">
+		<article class="sort-panel">
+			<header class="sort-panel-heading">
+				<div>
+					<p class="panel-number" data-role="number"></p>
+					<h3 data-role="title"></h3>
+				</div>
+				<span class="panel-status" data-role="status">Ready</span>
+			</header>
+			<div class="canvas-frame" data-role="canvasFrame">
+				<canvas data-role="canvas" hidden></canvas>
+				<div class="empty-state" data-role="emptyState">
 					<span class="empty-mark" aria-hidden="true">120</span>
 					<p>Your scrambled photo will appear here.</p>
 				</div>
 			</div>
-
 			<dl class="metrics" aria-label="Sorting statistics">
-				<div>
-					<dt>Comparisons</dt>
-					<dd id="comparisonCount">0</dd>
-				</div>
-				<div>
-					<dt>Moves</dt>
-					<dd id="moveCount">0</dd>
-				</div>
-				<div>
-					<dt>Elapsed</dt>
-					<dd id="elapsedTime">0.0 s</dd>
-				</div>
+				<div><dt>Comparisons</dt><dd data-role="comparisons">0</dd></div>
+				<div><dt>Moves</dt><dd data-role="moves">0</dd></div>
+				<div><dt>Elapsed</dt><dd data-role="elapsed">0.0 s</dd></div>
 			</dl>
-		</section>
-	</main>
+		</article>
+	</template>
 
 	<footer>
 		<p>Photos stay on this device. Nothing is uploaded. <a href="privacy.html">Data privacy</a> | Image Slice Sort is <a href="https://github.com/ebeutler/edu-games" target="_blank" rel="noopener noreferrer">open source on GitHub</a>.</p>
