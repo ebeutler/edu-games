@@ -623,7 +623,7 @@ canvas {
 .app-shell:fullscreen .sort-panel h3 {
 	overflow: hidden;
 	font-family: inherit;
-	font-size: 0.82rem;
+	font-size: 1.6rem;
 	font-weight: 700;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -673,7 +673,7 @@ canvas {
 }
 
 .app-shell:fullscreen .metrics dd {
-	font-size: 0.82rem;
+	font-size: 1.6rem;
 }
 
 footer {
