@@ -21,23 +21,55 @@
 				[2, 1, 2, 0, 1]
 			];
 			const messages = [];
+			const definitions = window.ImageSliceSortAlgorithms.definitions;
 
-			Object.keys(window.ImageSliceSortAlgorithms.definitions).forEach(function (name) {
-				cases.forEach(function (input) {
-					const values = input.slice();
-					const expected = input.slice().sort(function (left, right) { return left - right; });
-					const events = Array.from(window.ImageSliceSortAlgorithms.create(name, values));
-					if (JSON.stringify(values) !== JSON.stringify(expected)) {
-						throw new Error(name + " failed for " + JSON.stringify(input));
-					}
-					if (events.some(function (event) {
-						return !event.comparison && !event.moved;
-					})) {
+			const sorted = function (values) {
+				return values.slice().sort(function (left, right) { return left - right; });
+			};
+
+			const runCase = function (name, input) {
+				const values = input.slice();
+				const expected = sorted(input);
+				const events = [];
+				for (const event of window.ImageSliceSortAlgorithms.create(name, values)) {
+					events.push(event);
+					if (!event.comparison && !event.moved) {
 						throw new Error(name + " emitted an empty event");
+					}
+					const indices = event.indices.concat(event.accentIndices || []);
+					if (indices.some(function (index) { return index < 0 || index >= values.length; })) {
+						throw new Error(name + " emitted an invalid slice index");
+					}
+					if (JSON.stringify(sorted(values)) !== JSON.stringify(expected)) {
+						throw new Error(name + " lost a slice while sorting");
+					}
+				}
+				if (JSON.stringify(values) !== JSON.stringify(expected)) {
+					throw new Error(name + " failed for " + JSON.stringify(input));
+				}
+				return events;
+			};
+
+			Object.keys(definitions).forEach(function (name) {
+				if (name === "bogo") {
+					return;
+				}
+				cases.forEach(function (input) {
+					if (definitions[name].supportsDuplicates !== false || new Set(input).size === input.length) {
+						runCase(name, input);
 					}
 				});
 				messages.push("PASS: " + name);
 			});
+
+			const originalRandom = Math.random;
+			Math.random = function () { return 0; };
+			try {
+				runCase("bogo", [1, 0]);
+			} finally {
+				Math.random = originalRandom;
+			}
+			messages.push("PASS: bogo with deterministic shuffle");
 
 			const mergeValues = [3, 2, 1, 0];
 			const mergeSnapshots = [];
@@ -50,6 +82,23 @@
 				throw new Error("merge did not expose its in-place movements");
 			}
 			messages.push("PASS: merge moves in place");
+
+			const quickEvents = runCase("quick", [3, 1, 2, 0]);
+			if (!quickEvents.some(function (event) { return event.accentIndices.length > 0; })) {
+				throw new Error("quick did not identify its pivot");
+			}
+			messages.push("PASS: quick identifies pivots");
+
+			const radixEvents = runCase("radix", [12, 2, 21, 1]);
+			if (radixEvents.some(function (event) { return event.comparison; })) {
+				throw new Error("radix emitted comparison events");
+			}
+			messages.push("PASS: radix uses movement events");
+
+			if (definitions.bogo.maxSlices !== 8 || definitions.stooge.maxSlices !== 64) {
+				throw new Error("novelty algorithm limits are missing");
+			}
+			messages.push("PASS: novelty limits");
 
 			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
 		})();

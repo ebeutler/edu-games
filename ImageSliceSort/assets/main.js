@@ -28,7 +28,7 @@
 
 	const cacheElements = function () {
 		[
-			"algorithm", "appShell", "canvas", "canvasFrame", "comparisonCount", "dropZone", "elapsedTime", "emptyState",
+			"algorithm", "algorithmHint", "appShell", "canvas", "canvasFrame", "comparisonCount", "dropZone", "elapsedTime", "emptyState",
 			"fileName", "fullscreen", "imageInput", "moveCount", "reshuffle", "reset", "showComparisons",
 			"sliceCount", "sliceCountValue", "speed", "speedValue", "start", "status", "step",
 			"stop", "visualizerTitle"
@@ -39,6 +39,28 @@
 
 	const setStatus = function (message) {
 		elements.status.textContent = message;
+	};
+
+	const selectedAlgorithm = function () {
+		return window.ImageSliceSortAlgorithms.definitions[elements.algorithm.value];
+	};
+
+	const algorithmLimitMessage = function () {
+		const definition = selectedAlgorithm();
+		const count = state.imageReady ? state.values.length : Number(elements.sliceCount.value);
+		return definition.maxSlices && count > definition.maxSlices
+			? definition.label + " is limited to " + definition.maxSlices + " slices; reduce the slice count to continue."
+			: "";
+	};
+
+	const updateAlgorithmHint = function () {
+		const definition = selectedAlgorithm();
+		const limitMessage = algorithmLimitMessage();
+		elements.algorithmHint.textContent = limitMessage || (definition.novelty
+			? "Novelty algorithm: intentionally inefficient"
+				+ (definition.maxSlices ? "; maximum " + definition.maxSlices + " slices." : ".")
+			: "");
+		elements.algorithmHint.classList.toggle("is-warning", !!limitMessage);
 	};
 
 	const fitFullscreenCanvas = function () {
@@ -88,13 +110,15 @@
 	};
 
 	const updateControls = function () {
-		elements.start.disabled = !state.imageReady || state.running || state.complete;
+		const overLimit = !!algorithmLimitMessage();
+		elements.start.disabled = !state.imageReady || state.running || state.complete || overLimit;
 		elements.stop.disabled = !state.running;
-		elements.step.disabled = !state.imageReady || state.running || state.complete;
+		elements.step.disabled = !state.imageReady || state.running || state.complete || overLimit;
 		elements.reset.disabled = !state.imageReady;
 		elements.reshuffle.disabled = !state.imageReady;
 		elements.sliceCount.disabled = state.running;
 		elements.algorithm.disabled = state.running;
+		updateAlgorithmHint();
 	};
 
 	const sliceBoundary = function (position, count, width) {
@@ -135,17 +159,18 @@
 			return;
 		}
 
-		context.fillStyle = "rgba(85, 214, 190, 0.3)";
-		if (state.lastEvent.range) {
-			const start = sliceBoundary(state.lastEvent.range[0], count, width);
-			const end = sliceBoundary(state.lastEvent.range[1], count, width);
-			context.fillRect(start, 0, end - start, height);
-		} else {
-			state.lastEvent.indices.forEach(function (index) {
+		const highlight = function (indices, color) {
+			context.fillStyle = color;
+			indices.forEach(function (index) {
 				const start = sliceBoundary(index, count, width);
 				const end = sliceBoundary(index + 1, count, width);
 				context.fillRect(start, 0, Math.max(1, end - start), height);
 			});
+		};
+
+		highlight(state.lastEvent.indices, "rgba(85, 214, 190, 0.3)");
+		if (state.lastEvent.accentIndices) {
+			highlight(state.lastEvent.accentIndices, "rgba(255, 176, 0, 0.55)");
 		}
 	};
 
@@ -223,7 +248,7 @@
 	};
 
 	const start = function () {
-		if (!state.imageReady || state.running || state.complete) {
+		if (!state.imageReady || state.running || state.complete || algorithmLimitMessage()) {
 			return;
 		}
 
@@ -251,7 +276,7 @@
 	};
 
 	const step = function () {
-		if (!state.imageReady || state.running || state.complete) {
+		if (!state.imageReady || state.running || state.complete || algorithmLimitMessage()) {
 			return;
 		}
 		elements.visualizerTitle.textContent = window.ImageSliceSortAlgorithms.definitions[elements.algorithm.value].label;
@@ -274,7 +299,7 @@
 		state.elapsed = 0;
 		state.lastEvent = null;
 		elements.visualizerTitle.textContent = "Scrambled image";
-		setStatus(message || "Ready to sort");
+		setStatus(algorithmLimitMessage() || message || "Ready to sort");
 		render();
 		updateMetrics();
 		updateControls();
@@ -400,6 +425,8 @@
 			updateSliceCountOutput();
 			if (state.imageReady) {
 				reshuffle("Slice count changed; new scramble ready");
+			} else {
+				updateControls();
 			}
 		});
 		elements.speed.addEventListener("input", function () {
@@ -408,6 +435,8 @@
 		elements.algorithm.addEventListener("change", function () {
 			if (state.imageReady) {
 				resetRun("Algorithm changed; original scramble restored");
+			} else {
+				updateControls();
 			}
 		});
 		elements.start.addEventListener("click", start);

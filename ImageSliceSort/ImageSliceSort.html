@@ -41,11 +41,27 @@
 				<label class="field" for="algorithm">
 					<span>Algorithm</span>
 					<select id="algorithm">
-						<option value="bubble">Bubble sort</option>
-						<option value="insertion">Insertion sort</option>
-						<option value="selection">Selection sort</option>
-						<option value="merge">Merge sort</option>
+						<optgroup label="Serious algorithms">
+							<option value="bubble">Bubble sort</option>
+							<option value="cocktail">Cocktail shaker sort</option>
+							<option value="cycle">Cycle sort</option>
+							<option value="heap">Heap sort</option>
+							<option value="insertion">Insertion sort</option>
+							<option value="merge">Merge sort</option>
+							<option value="oddEven">Odd-even sort</option>
+							<option value="quick">QuickSort</option>
+							<option value="radix">Radix sort (LSD)</option>
+							<option value="selection">Selection sort</option>
+							<option value="shell">Shell sort</option>
+						</optgroup>
+						<optgroup label="Novelty algorithms">
+							<option value="cantBelieve">I Can't Believe It Can Sort</option>
+							<option value="gnome">Gnome sort</option>
+							<option value="stooge">Stooge sort</option>
+							<option value="bogo">Bogosort</option>
+						</optgroup>
 					</select>
+					<small id="algorithmHint" class="field-hint" aria-live="polite"></small>
 				</label>
 
 				<div class="field">
