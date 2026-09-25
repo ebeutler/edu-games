@@ -107,7 +107,7 @@ h1 {
 }
 
 .intro {
-	max-width: 720px;
+	max-width: 1080px;
 	margin-bottom: 0;
 	color: var(--muted);
 	font-size: clamp(1rem, 2vw, 1.25rem);
@@ -642,7 +642,7 @@ canvas {
 .app-shell:fullscreen .sort-panel h3 {
 	overflow: hidden;
 	font-family: inherit;
-	font-size: 0.82rem;
+	font-size: 1.6rem;
 	font-weight: 700;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -692,7 +692,7 @@ canvas {
 }
 
 .app-shell:fullscreen .metrics dd {
-	font-size: 0.82rem;
+	font-size: 1.6rem;
 }
 
 footer {
