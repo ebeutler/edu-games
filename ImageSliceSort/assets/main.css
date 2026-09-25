@@ -58,7 +58,26 @@ footer {
 }
 
 .page-header {
+	position: relative;
 	padding: 48px 0 28px;
+}
+
+.help-link {
+	position: absolute;
+	top: 48px;
+	right: 0;
+	padding: 8px 14px;
+	border: 1px solid var(--line);
+	background: var(--paper);
+	color: var(--ink);
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.help-link:hover {
+	border-color: var(--active);
+	color: var(--active);
 }
 
 .eyebrow {
@@ -723,6 +742,51 @@ footer a:hover,
 	margin: 30px 0 0;
 }
 
+.help-content h2:not(:first-child) {
+	margin-top: 38px;
+}
+
+.help-content li,
+.help-definitions dd {
+	color: var(--muted);
+	line-height: 1.65;
+}
+
+.help-content li + li {
+	margin-top: 10px;
+}
+
+.help-definitions {
+	margin: 0;
+}
+
+.help-definitions div {
+	display: grid;
+	grid-template-columns: 100px minmax(0, 1fr);
+	gap: 16px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.help-definitions dt {
+	font-weight: 700;
+}
+
+.help-definitions dd {
+	margin: 0;
+}
+
+.help-colors {
+	padding-left: 0;
+	list-style: none;
+}
+
+.help-colors li {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
 .visually-hidden {
 	position: absolute;
 	width: 1px;
@@ -744,6 +808,10 @@ footer a:hover,
 
 	.page-header {
 		padding-top: 32px;
+	}
+
+	.help-link {
+		top: 32px;
 	}
 
 	.app-shell {

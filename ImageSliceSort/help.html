@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Instructions for the Image Slice Sort visualizer.">
+	<title>Help - Image Slice Sort</title>
+	<link href="assets/main.css" rel="stylesheet">
+</head>
+<body>
+	<header class="page-header">
+		<a class="help-link" href="ImageSliceSort.html">Back to app</a>
+		<p class="eyebrow">Image Slice Sort</p>
+		<h1>Help</h1>
+		<p class="intro">Learn how sorting algorithms rebuild a scrambled photograph.</p>
+	</header>
+
+	<main class="privacy-content help-content">
+		<h2>What is Image Slice Sort?</h2>
+		<p>Image Slice Sort turns a photograph into vertical slices, shuffles them, and uses sorting algorithms to restore their original order. It is intended to make comparisons, movements, and differences between algorithms visible rather than presenting sorting as an abstract list of numbers.</p>
+
+		<h2>Getting started</h2>
+		<ol>
+			<li><strong>Choose a photo.</strong> Select an image, take a photo on a supported device, or drag an image onto the upload area.</li>
+			<li><strong>Choose the number of slices.</strong> More slices make the image and sorting process more detailed, but slower algorithms take longer.</li>
+			<li><strong>Choose how many algorithms to show.</strong> Run one algorithm, two side by side, or four in a 2 by 2 grid.</li>
+			<li><strong>Select an algorithm for each sort.</strong> Every active algorithm receives an independent copy of the same scrambled arrangement.</li>
+			<li><strong>Set the speed.</strong> The speed controls how many sorting operations each algorithm receives per second.</li>
+			<li><strong>Start sorting.</strong> All active algorithms start together and use the shared controls.</li>
+		</ol>
+
+		<h2>Controls</h2>
+		<dl class="help-definitions">
+			<div><dt>Start</dt><dd>Starts or resumes every unfinished sort.</dd></div>
+			<div><dt>Stop</dt><dd>Pauses all active sorts without losing progress.</dd></div>
+			<div><dt>Step</dt><dd>Advances every unfinished sort by one raw operation.</dd></div>
+			<div><dt>Reset</dt><dd>Returns every sort to the current shared scramble and clears its statistics.</dd></div>
+			<div><dt>Reshuffle</dt><dd>Creates a new shared scramble for every active sort.</dd></div>
+			<div><dt>Full screen</dt><dd>Maximizes the available image area while retaining the controls and statistics.</dd></div>
+		</dl>
+
+		<h2>Color coding</h2>
+		<ul class="help-colors">
+			<li><span class="legend-swatch legend-comparison" aria-hidden="true"></span><strong>Green:</strong> slices being compared.</li>
+			<li><span class="legend-swatch legend-move" aria-hidden="true"></span><strong>Yellow:</strong> slices being moved.</li>
+			<li><span class="legend-swatch legend-pivot" aria-hidden="true"></span><strong>Purple:</strong> the current QuickSort pivot.</li>
+		</ul>
+		<p>When “Show every comparison” is disabled, comparisons are still performed and counted, but their green highlight is hidden. This keeps simultaneous sorts synchronized by raw operations.</p>
+
+		<h2>Comparing algorithms</h2>
+		<p>All active algorithms use the same image and initial shuffle. Each panel maintains its own comparison count, move count, elapsed time, and state. A completed algorithm stops while the others continue.</p>
+		<p>The displayed race compares visualization operations, not processor-level execution speed. Different algorithms also define a move in different ways, so the statistics are educational indicators rather than a formal benchmark.</p>
+
+		<h2>Novelty algorithms</h2>
+		<p>Novelty algorithms are intentionally inefficient and are separated in the algorithm list. Bogosort is limited to 8 slices and Stooge sort to 64 slices to prevent impractically long runs.</p>
+
+		<h2>Image privacy</h2>
+		<p>Your photo is processed locally inside the browser and is never uploaded. See the <a class="back-link" href="privacy.html">data privacy statement</a> for details.</p>
+	</main>
+
+	<footer>
+		<p><a href="ImageSliceSort.html">Image Slice Sort</a> | <a href="privacy.html">Data privacy</a> | <a href="https://github.com/ebeutler/edu-games" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+	</footer>
+</body>
+</html>
