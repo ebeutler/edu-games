@@ -28,7 +28,7 @@
 
 	const cacheElements = function () {
 		[
-			"algorithm", "appShell", "canvas", "comparisonCount", "dropZone", "elapsedTime", "emptyState",
+			"algorithm", "appShell", "canvas", "canvasFrame", "comparisonCount", "dropZone", "elapsedTime", "emptyState",
 			"fileName", "fullscreen", "imageInput", "moveCount", "reshuffle", "reset", "showComparisons",
 			"sliceCount", "sliceCountValue", "speed", "speedValue", "start", "status", "step",
 			"stop", "visualizerTitle"
@@ -41,10 +41,27 @@
 		elements.status.textContent = message;
 	};
 
+	const fitFullscreenCanvas = function () {
+		const canvas = elements.canvas;
+		if ((document.fullscreenElement !== elements.appShell) || !state.imageReady) {
+			canvas.style.removeProperty("width");
+			canvas.style.removeProperty("height");
+			return;
+		}
+
+		const scale = Math.min(
+			elements.canvasFrame.clientWidth / canvas.width,
+			elements.canvasFrame.clientHeight / canvas.height
+		);
+		canvas.style.width = Math.floor(canvas.width * scale) + "px";
+		canvas.style.height = Math.floor(canvas.height * scale) + "px";
+	};
+
 	const updateFullscreenControl = function () {
 		const active = document.fullscreenElement === elements.appShell;
 		elements.fullscreen.textContent = active ? "Exit full screen" : "Full screen";
 		elements.fullscreen.setAttribute("aria-pressed", String(active));
+		window.requestAnimationFrame(fitFullscreenCanvas);
 	};
 
 	const toggleFullscreen = async function () {
@@ -350,6 +367,7 @@
 			elements.fileName.textContent = file.name || "Camera photo";
 			state.imageReady = true;
 			reshuffle("Photo scrambled and ready");
+			window.requestAnimationFrame(fitFullscreenCanvas);
 		} catch (error) {
 			console.error(error);
 			setStatus(error.message || "Could not load this image");
@@ -403,6 +421,7 @@
 		});
 		elements.fullscreen.addEventListener("click", toggleFullscreen);
 		document.addEventListener("fullscreenchange", updateFullscreenControl);
+		window.addEventListener("resize", fitFullscreenCanvas);
 	};
 
 	const init = function () {
