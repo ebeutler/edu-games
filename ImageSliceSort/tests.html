@@ -39,6 +39,18 @@
 				messages.push("PASS: " + name);
 			});
 
+			const mergeValues = [3, 2, 1, 0];
+			const mergeSnapshots = [];
+			for (const event of window.ImageSliceSortAlgorithms.create("merge", mergeValues)) {
+				if (event.moved) {
+					mergeSnapshots.push(JSON.stringify(mergeValues));
+				}
+			}
+			if (!mergeSnapshots.includes("[0,2,3,1]")) {
+				throw new Error("merge did not expose its in-place movements");
+			}
+			messages.push("PASS: merge moves in place");
+
 			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
 		})();
 	</script>

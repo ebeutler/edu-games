@@ -69,28 +69,18 @@
 		yield* mergeRange(values, start, middle);
 		yield* mergeRange(values, middle, end);
 
-		const left = values.slice(start, middle);
-		const right = values.slice(middle, end);
-		const merged = [];
-		let leftIndex = 0;
-		let rightIndex = 0;
-
-		while ((leftIndex < left.length) && (rightIndex < right.length)) {
-			const leftPosition = start + leftIndex;
-			const rightPosition = middle + rightIndex;
-			if (left[leftIndex] <= right[rightIndex]) {
-				merged.push(left[leftIndex++]);
-			} else {
-				merged.push(right[rightIndex++]);
+		let left = start;
+		let right = middle;
+		while ((left < right) && (right < end)) {
+			const shouldInsert = values[right] < values[left];
+			yield compare([left, right], false);
+			if (shouldInsert) {
+				const value = values.splice(right, 1)[0];
+				values.splice(left, 0, value);
+				yield move([left, right], [left, right + 1]);
+				right++;
 			}
-			yield compare([leftPosition, rightPosition], false);
-		}
-
-		merged.push(...left.slice(leftIndex), ...right.slice(rightIndex));
-		const changed = merged.some((value, offset) => values[start + offset] !== value);
-		if (changed) {
-			values.splice(start, merged.length, ...merged);
-			yield move([], [start, end]);
+			left++;
 		}
 	}
 
