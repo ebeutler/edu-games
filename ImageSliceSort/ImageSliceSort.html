@@ -97,14 +97,33 @@
 
 			<div id="raceGrid" class="race-grid" data-count="1"></div>
 		</section>
+
+		<dialog id="algorithmDialog" class="algorithm-dialog" aria-labelledby="algorithmDialogTitle">
+			<form method="dialog">
+				<button class="dialog-close" type="submit" aria-label="Close algorithm information">&times;</button>
+			</form>
+			<p class="eyebrow">Algorithm overview</p>
+			<h2 id="algorithmDialogTitle"></h2>
+			<p id="algorithmDescription" class="algorithm-description"></p>
+			<section class="pseudocode-box" aria-labelledby="pseudocodeTitle">
+				<div class="pseudocode-heading">
+					<h3 id="pseudocodeTitle">Pseudocode</h3>
+					<button id="copyPseudocode" class="copy-button" type="button">Copy to clipboard</button>
+				</div>
+				<pre><code id="algorithmPseudocode"></code></pre>
+			</section>
+		</dialog>
 	</main>
 
 	<template id="sortPanelTemplate">
 		<article class="sort-panel">
 			<header class="sort-panel-heading">
-				<div>
+				<div class="panel-title">
 					<p class="panel-number" data-role="number"></p>
-					<h3 data-role="title"></h3>
+					<div class="panel-title-row">
+						<h3 data-role="title"></h3>
+						<button class="algorithm-info-button" data-role="info" type="button">i</button>
+					</div>
 				</div>
 				<span class="panel-status" data-role="status">Ready</span>
 			</header>

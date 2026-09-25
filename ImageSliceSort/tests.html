@@ -113,6 +113,13 @@
 			}
 			messages.push("PASS: novelty limits");
 
+			Object.keys(definitions).forEach(function (name) {
+				if (!definitions[name].description || !definitions[name].pseudoCode) {
+					throw new Error(name + " is missing algorithm information");
+				}
+			});
+			messages.push("PASS: algorithm information");
+
 			const firstRun = window.ImageSliceSortRace.createRun("first", "bubble");
 			const secondRun = window.ImageSliceSortRace.createRun("second", "bubble");
 			window.ImageSliceSortRace.resetRun(firstRun, [1, 0]);

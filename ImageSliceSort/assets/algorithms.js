@@ -373,22 +373,158 @@
 		}
 	}
 
+	const algorithmInfo = {
+		bubble: {
+			description: "Bubble sort repeatedly compares neighboring items and swaps them when they are out of order. Each pass pushes the largest remaining item toward the end, like a bubble rising to the surface.",
+			pseudoCode: `for end from last index down to 1
+  swapped = false
+  for i from 0 to end - 1
+    if items[i] > items[i + 1]
+      swap items[i] and items[i + 1]
+      swapped = true
+  if not swapped
+    stop`
+		},
+		cocktail: {
+			description: "Cocktail shaker sort is a two-way bubble sort. It sweeps forward to move large items right, then backward to move small items left, narrowing the unsorted range after each pair of passes.",
+			pseudoCode: `start = 0
+end = last index
+while a swap was made
+  sweep from start to end, swapping neighbors out of order
+  end = end - 1
+  sweep from end to start, swapping neighbors out of order
+  start = start + 1`
+		},
+		cycle: {
+			description: "Cycle sort determines where each item belongs by counting how many items are smaller. It rotates misplaced items into their final positions and is designed to minimize writes.",
+			pseudoCode: `for each cycle start
+  item = items[cycle start]
+  position = count of items smaller than item
+  while position is not cycle start
+    place item at position
+    item = the displaced item
+    position = count of items smaller than item`
+		},
+		heap: {
+			description: "Heap sort first arranges the items as a max heap, where the largest item is at the root. It repeatedly moves that root to the end and repairs the remaining heap.",
+			pseudoCode: `build a max heap from items
+for end from last index down to 1
+  swap items[0] and items[end]
+  restore the max heap from 0 up to end`
+		},
+		insertion: {
+			description: "Insertion sort grows a sorted section from left to right. Each new item moves backward through that section until it reaches its correct position, much like sorting cards in your hand.",
+			pseudoCode: `for i from 1 to last index
+  current = i
+  while current > 0 and items[current - 1] > items[current]
+    swap items[current - 1] and items[current]
+    current = current - 1`
+		},
+		merge: {
+			description: "Merge sort divides the range into smaller halves, sorts each half, and merges the results. This visualizer performs the merge in place by inserting items from the right half into the left.",
+			pseudoCode: `mergeSort(start, end)
+  if range has fewer than 2 items, return
+  middle = midpoint of start and end
+  mergeSort(start, middle)
+  mergeSort(middle, end)
+  merge the two sorted halves`
+		},
+		oddEven: {
+			description: "Odd-even sort alternates between comparing odd-even neighbor pairs and even-odd neighbor pairs. Those independent pairs can be compared together in parallel implementations.",
+			pseudoCode: `repeat until no swap is made
+  compare and swap pairs (1, 2), (3, 4), ...
+  compare and swap pairs (0, 1), (2, 3), ...`
+		},
+		quick: {
+			description: "QuickSort chooses a pivot and partitions the other items around it. Items no larger than the pivot move left, larger items stay right, and the same process recursively sorts both sides.",
+			pseudoCode: `quickSort(start, end)
+  if start >= end, return
+  pivot = items[end]
+  partition items around pivot
+  quickSort(start, pivot position - 1)
+  quickSort(pivot position + 1, end)`
+		},
+		radix: {
+			description: "LSD radix sort groups numbers by one digit at a time, starting with the least significant digit. Repeating the stable grouping for each digit eventually orders the complete numbers without comparing pairs.",
+			pseudoCode: `divisor = 1
+while maximum item / divisor > 0
+  put each item into the bucket for its current digit
+  collect buckets from 0 through 9
+  divisor = divisor * 10`
+		},
+		selection: {
+			description: "Selection sort scans the unsorted portion for its smallest item. It swaps that item into the next open position, then repeats with the shorter remaining portion.",
+			pseudoCode: `for i from 0 to second-last index
+  minimum = i
+  for candidate from i + 1 to last index
+    if items[candidate] < items[minimum]
+      minimum = candidate
+  if minimum is not i
+    swap items[i] and items[minimum]`
+		},
+		shell: {
+			description: "Shell sort starts by insertion-sorting items that are far apart. It progressively shrinks that gap until neighboring items are sorted, reducing the long shifts ordinary insertion sort may need.",
+			pseudoCode: `gap = item count / 2
+while gap > 0
+  insertion-sort items that are gap positions apart
+  gap = gap / 2`
+		},
+		cantBelieve: {
+			description: "This deliberately surprising algorithm compares every ordered pair and swaps when the left item is smaller. Despite its unusual direction and many unnecessary comparisons, the repeated swaps produce ascending order.",
+			pseudoCode: `for left from 0 to last index
+  for right from 0 to last index
+    if items[left] < items[right]
+      swap items[left] and items[right]`
+		},
+		gnome: {
+			description: "Gnome sort walks forward while neighboring items are ordered. After a swap it steps backward to check the newly moved item, resembling a garden gnome sorting flower pots one pair at a time.",
+			pseudoCode: `position = 1
+while position is before the end
+  if items[position - 1] <= items[position]
+    position = position + 1
+  else
+    swap the two items
+    position = max(1, position - 1)`
+		},
+		stooge: {
+			description: "Stooge sort swaps the first and last items when needed, then recursively sorts overlapping two-thirds sections three times. It works, but its enormous repetition makes it intentionally impractical.",
+			pseudoCode: `stoogeSort(start, end)
+  if items[start] > items[end], swap them
+  if range has more than 2 items
+    sort the first two-thirds
+    sort the last two-thirds
+    sort the first two-thirds again`
+		},
+		bogo: {
+			description: "Bogosort checks whether the items are sorted and, if not, shuffles them randomly before trying again. It is a joke algorithm whose running time becomes impractical with even a few items.",
+			pseudoCode: `while items are not sorted
+  shuffle all items randomly`
+		}
+	};
+
+	const define = function (id, label, create, options) {
+		return Object.freeze(Object.assign({
+			label: label,
+			create: create
+		}, algorithmInfo[id], options));
+	};
+
 	const definitions = Object.freeze({
-		bubble: Object.freeze({ label: "Bubble sort", create: bubbleSort }),
-		cocktail: Object.freeze({ label: "Cocktail shaker sort", create: cocktailSort }),
-		cycle: Object.freeze({ label: "Cycle sort", create: cycleSort, supportsDuplicates: false }),
-		heap: Object.freeze({ label: "Heap sort", create: heapSort }),
-		insertion: Object.freeze({ label: "Insertion sort", create: insertionSort }),
-		merge: Object.freeze({ label: "Merge sort", create: mergeSort }),
-		oddEven: Object.freeze({ label: "Odd-even sort", create: oddEvenSort }),
-		quick: Object.freeze({ label: "QuickSort", create: quickSort }),
-		radix: Object.freeze({ label: "Radix sort (LSD)", create: radixSort }),
-		selection: Object.freeze({ label: "Selection sort", create: selectionSort }),
-		shell: Object.freeze({ label: "Shell sort", create: shellSort }),
-		cantBelieve: Object.freeze({ label: "I Can't Believe It Can Sort", create: cantBelieveSort, novelty: true }),
-		gnome: Object.freeze({ label: "Gnome sort", create: gnomeSort, novelty: true }),
-		stooge: Object.freeze({ label: "Stooge sort", create: stoogeSort, novelty: true, maxSlices: 64 }),
-		bogo: Object.freeze({ label: "Bogosort", create: bogoSort, novelty: true, maxSlices: 8 })
+		bubble: define("bubble", "Bubble sort", bubbleSort),
+		cocktail: define("cocktail", "Cocktail shaker sort", cocktailSort),
+		cycle: define("cycle", "Cycle sort", cycleSort, { supportsDuplicates: false }),
+		heap: define("heap", "Heap sort", heapSort),
+		insertion: define("insertion", "Insertion sort", insertionSort),
+		merge: define("merge", "Merge sort", mergeSort),
+		oddEven: define("oddEven", "Odd-even sort", oddEvenSort),
+		quick: define("quick", "QuickSort", quickSort),
+		radix: define("radix", "Radix sort (LSD)", radixSort),
+		selection: define("selection", "Selection sort", selectionSort),
+		shell: define("shell", "Shell sort", shellSort),
+		cantBelieve: define("cantBelieve", "I Can't Believe It Can Sort", cantBelieveSort, { novelty: true }),
+		gnome: define("gnome", "Gnome sort", gnomeSort, { novelty: true }),
+		stooge: define("stooge", "Stooge sort", stoogeSort, { novelty: true, maxSlices: 64 }),
+		bogo: define("bogo", "Bogosort", bogoSort, { novelty: true, maxSlices: 8 })
 	});
 
 	window.ImageSliceSortAlgorithms = Object.freeze({

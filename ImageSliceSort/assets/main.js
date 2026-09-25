@@ -30,10 +30,11 @@
 
 	const cacheElements = function () {
 		[
-			"algorithmFields", "appShell", "dropZone", "fileName", "fullscreen", "imageInput",
-			"panelCount", "raceGrid", "reshuffle", "reset", "showComparisons", "sliceCount",
-			"sliceCountValue", "sortPanelTemplate", "speed", "speedValue", "start", "status",
-			"step", "stop"
+			"algorithmDescription", "algorithmDialog", "algorithmDialogTitle", "algorithmFields",
+			"algorithmPseudocode", "appShell", "copyPseudocode", "dropZone", "fileName",
+			"fullscreen", "imageInput", "panelCount", "raceGrid", "reshuffle", "reset",
+			"showComparisons", "sliceCount", "sliceCountValue", "sortPanelTemplate", "speed",
+			"speedValue", "start", "status", "step", "stop"
 		].forEach(function (id) {
 			elements[id] = byId(id);
 		});
@@ -95,6 +96,7 @@
 				panel: panel,
 				number: panel.querySelector('[data-role="number"]'),
 				title: panel.querySelector('[data-role="title"]'),
+				info: panel.querySelector('[data-role="info"]'),
 				status: panel.querySelector('[data-role="status"]'),
 				canvasFrame: panel.querySelector('[data-role="canvasFrame"]'),
 				canvas: panel.querySelector('[data-role="canvas"]'),
@@ -114,6 +116,25 @@
 
 	const definitionFor = function (run) {
 		return window.ImageSliceSortAlgorithms.definitions[run.algorithmId];
+	};
+
+	const showAlgorithmInfo = function (run) {
+		const definition = definitionFor(run);
+		elements.algorithmDialogTitle.textContent = definition.label;
+		elements.algorithmDescription.textContent = definition.description;
+		elements.algorithmPseudocode.textContent = definition.pseudoCode;
+		elements.copyPseudocode.textContent = "Copy to clipboard";
+		elements.algorithmDialog.showModal();
+	};
+
+	const copyAlgorithmPseudocode = async function () {
+		try {
+			await navigator.clipboard.writeText(elements.algorithmPseudocode.textContent);
+			elements.copyPseudocode.textContent = "Copied";
+		} catch (error) {
+			console.error(error);
+			elements.copyPseudocode.textContent = "Copy failed";
+		}
 	};
 
 	const algorithmLimitMessage = function (run) {
@@ -146,6 +167,8 @@
 				: "");
 			control.hint.classList.toggle("is-warning", !!limitMessage);
 			view.title.textContent = definition.label;
+			view.info.setAttribute("aria-label", "About " + definition.label);
+			view.info.title = "About " + definition.label;
 		});
 	};
 
@@ -572,6 +595,9 @@
 				state.runs[index].algorithmId = control.select.value;
 				resetRace("Algorithms changed; original scramble restored");
 			});
+			elements.panelViews[index].info.addEventListener("click", function () {
+				showAlgorithmInfo(state.runs[index]);
+			});
 		});
 		elements.speed.addEventListener("input", function () {
 			elements.speedValue.textContent = elements.speed.value + " steps/s";
@@ -596,6 +622,7 @@
 			reshuffle();
 		});
 		elements.fullscreen.addEventListener("click", toggleFullscreen);
+		elements.copyPseudocode.addEventListener("click", copyAlgorithmPseudocode);
 		document.addEventListener("fullscreenchange", updateFullscreenControl);
 		window.addEventListener("resize", fitFullscreenCanvases);
 	};
