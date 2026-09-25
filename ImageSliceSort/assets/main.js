@@ -28,8 +28,8 @@
 
 	const cacheElements = function () {
 		[
-			"algorithm", "canvas", "comparisonCount", "dropZone", "elapsedTime", "emptyState",
-			"fileName", "imageInput", "moveCount", "reshuffle", "reset", "showComparisons",
+			"algorithm", "appShell", "canvas", "comparisonCount", "dropZone", "elapsedTime", "emptyState",
+			"fileName", "fullscreen", "imageInput", "moveCount", "reshuffle", "reset", "showComparisons",
 			"sliceCount", "sliceCountValue", "speed", "speedValue", "start", "status", "step",
 			"stop", "visualizerTitle"
 		].forEach(function (id) {
@@ -39,6 +39,25 @@
 
 	const setStatus = function (message) {
 		elements.status.textContent = message;
+	};
+
+	const updateFullscreenControl = function () {
+		const active = document.fullscreenElement === elements.appShell;
+		elements.fullscreen.textContent = active ? "Exit full screen" : "Full screen";
+		elements.fullscreen.setAttribute("aria-pressed", String(active));
+	};
+
+	const toggleFullscreen = async function () {
+		try {
+			if (document.fullscreenElement) {
+				await document.exitFullscreen();
+			} else {
+				await elements.appShell.requestFullscreen();
+			}
+		} catch (error) {
+			console.error(error);
+			setStatus("Full screen is not available");
+		}
 	};
 
 	const formatCount = function (value) {
@@ -382,10 +401,15 @@
 		elements.reshuffle.addEventListener("click", function () {
 			reshuffle();
 		});
+		elements.fullscreen.addEventListener("click", toggleFullscreen);
+		document.addEventListener("fullscreenchange", updateFullscreenControl);
 	};
 
 	const init = function () {
 		cacheElements();
+		if (!document.fullscreenEnabled || !elements.appShell.requestFullscreen) {
+			elements.fullscreen.hidden = true;
+		}
 		bindEvents();
 		updateControls();
 	};

@@ -16,7 +16,7 @@
 		<p class="intro">Scramble a photograph into vertical slices, then watch an algorithm put it back together.</p>
 	</header>
 
-	<main class="app-shell">
+	<main class="app-shell" id="appShell">
 		<aside class="control-panel" aria-label="Sorting controls">
 			<section>
 				<h2>1. Choose a photo</h2>
@@ -82,7 +82,10 @@
 					<p class="eyebrow">Current run</p>
 					<h2 id="visualizerTitle">Scrambled image</h2>
 				</div>
-				<p id="status" class="status" aria-live="polite">Choose a photo to begin</p>
+				<div class="visualizer-actions">
+					<p id="status" class="status" aria-live="polite">Choose a photo to begin</p>
+					<button id="fullscreen" class="fullscreen-button" type="button" aria-pressed="false">Full screen</button>
+				</div>
 			</div>
 
 			<div class="canvas-frame" id="canvasFrame">

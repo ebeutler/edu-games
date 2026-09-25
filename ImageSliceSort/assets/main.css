@@ -279,6 +279,12 @@ select:disabled {
 	font-size: clamp(1.25rem, 2vw, 1.8rem);
 }
 
+.visualizer-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
 .status {
 	margin: 0;
 	padding: 7px 10px;
@@ -287,6 +293,19 @@ select:disabled {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 0.75rem;
 	text-align: right;
+}
+
+.fullscreen-button {
+	padding: 7px 10px;
+	border: 1px solid var(--line);
+	background: transparent;
+	color: var(--ink);
+	font-size: 0.75rem;
+	cursor: pointer;
+}
+
+.fullscreen-button:hover {
+	border-color: var(--active);
 }
 
 .canvas-frame {
@@ -360,6 +379,39 @@ canvas {
 	font-size: clamp(1.1rem, 2vw, 1.5rem);
 }
 
+.app-shell:fullscreen {
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+	border: 0;
+	background: var(--paper);
+}
+
+.app-shell:fullscreen .control-panel {
+	overflow-y: auto;
+}
+
+.app-shell:fullscreen .visualizer {
+	min-height: 0;
+	padding: clamp(16px, 2vw, 32px);
+}
+
+.app-shell:fullscreen .canvas-frame {
+	min-height: 0;
+	margin: 18px 0 0;
+	flex: 1;
+}
+
+.app-shell:fullscreen canvas {
+	width: 100%;
+	height: 100%;
+	max-height: none;
+}
+
+.app-shell:fullscreen .metrics {
+	margin-top: 16px;
+}
+
 footer {
 	padding: 20px 0 36px;
 	color: var(--muted);
@@ -407,6 +459,23 @@ footer p {
 		min-height: 240px;
 		margin-top: 22px;
 	}
+
+	.app-shell:fullscreen {
+		display: block;
+		overflow-y: auto;
+	}
+
+	.app-shell:fullscreen .control-panel {
+		overflow: visible;
+	}
+
+	.app-shell:fullscreen .visualizer {
+		min-height: 100%;
+	}
+
+	.app-shell:fullscreen .canvas-frame {
+		min-height: min(70vh, 480px);
+	}
 }
 
 @media (max-width: 480px) {
@@ -419,6 +488,11 @@ footer p {
 	.status {
 		align-self: flex-start;
 		text-align: left;
+	}
+
+	.visualizer-actions {
+		align-items: flex-start;
+		flex-direction: column;
 	}
 
 	.metrics div {
