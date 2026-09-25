@@ -6,6 +6,7 @@
 	const sourceCanvas = document.createElement("canvas");
 	const sourceContext = sourceCanvas.getContext("2d", { alpha: false });
 	const elements = {};
+	const highlightColors = {};
 	const state = {
 		imageReady: false,
 		baseline: [],
@@ -168,9 +169,12 @@
 			});
 		};
 
-		highlight(state.lastEvent.indices, "rgba(85, 214, 190, 0.3)");
+		highlight(
+			state.lastEvent.indices,
+			state.lastEvent.comparison ? highlightColors.comparison : highlightColors.move
+		);
 		if (state.lastEvent.accentIndices) {
-			highlight(state.lastEvent.accentIndices, "rgba(255, 176, 0, 0.55)");
+			highlight(state.lastEvent.accentIndices, highlightColors.pivot);
 		}
 	};
 
@@ -282,7 +286,7 @@
 		elements.visualizerTitle.textContent = window.ImageSliceSortAlgorithms.definitions[elements.algorithm.value].label;
 		advanceDisplayStep();
 		if (!state.complete) {
-			setStatus(elements.showComparisons.checked ? "Advanced one operation" : "Advanced to next move");
+			setStatus(state.lastEvent.comparison ? "Compared slices" : "Moved slices");
 		}
 		render();
 		updateMetrics();
@@ -455,6 +459,10 @@
 
 	const init = function () {
 		cacheElements();
+		const styles = window.getComputedStyle(document.documentElement);
+		highlightColors.comparison = styles.getPropertyValue("--comparison-highlight").trim();
+		highlightColors.move = styles.getPropertyValue("--move-highlight").trim();
+		highlightColors.pivot = styles.getPropertyValue("--pivot-highlight").trim();
 		if (!document.fullscreenEnabled || !elements.appShell.requestFullscreen) {
 			elements.fullscreen.hidden = true;
 		}

@@ -1,10 +1,10 @@
 (function (window) {
 	"use strict";
 
-	const compare = function (indices, moved, accentIndices) {
+	const compare = function (indices, accentIndices) {
 		return {
 			comparison: true,
-			moved: !!moved,
+			moved: false,
 			indices: indices,
 			accentIndices: accentIndices || []
 		};
@@ -28,11 +28,12 @@
 			let changed = false;
 			for (let index = 0; index < end; index++) {
 				const shouldSwap = values[index] > values[index + 1];
+				yield compare([index, index + 1]);
 				if (shouldSwap) {
 					swap(values, index, index + 1);
 					changed = true;
+					yield move([index, index + 1]);
 				}
-				yield compare([index, index + 1], shouldSwap);
 			}
 			if (!changed) {
 				return;
@@ -48,11 +49,12 @@
 			changed = false;
 			for (let index = start; index < end; index++) {
 				const shouldSwap = values[index] > values[index + 1];
+				yield compare([index, index + 1]);
 				if (shouldSwap) {
 					swap(values, index, index + 1);
 					changed = true;
+					yield move([index, index + 1]);
 				}
-				yield compare([index, index + 1], shouldSwap);
 			}
 			if (!changed) {
 				return;
@@ -62,11 +64,12 @@
 			end--;
 			for (let index = end; index > start; index--) {
 				const shouldSwap = values[index - 1] > values[index];
+				yield compare([index - 1, index]);
 				if (shouldSwap) {
 					swap(values, index - 1, index);
 					changed = true;
+					yield move([index - 1, index]);
 				}
-				yield compare([index - 1, index], shouldSwap);
 			}
 			start++;
 		}
@@ -82,7 +85,7 @@
 						if (values[index] < current) {
 							destination++;
 						}
-						yield compare([start, index], false);
+						yield compare([start, index]);
 					}
 				}
 				if (destination === start) {
@@ -102,14 +105,14 @@
 
 			if (left < size) {
 				const leftIsLarger = values[left] > values[largest];
-				yield compare([largest, left], false);
+				yield compare([largest, left]);
 				if (leftIsLarger) {
 					largest = left;
 				}
 			}
 			if (right < size) {
 				const rightIsLarger = values[right] > values[largest];
-				yield compare([largest, right], false);
+				yield compare([largest, right]);
 				if (rightIsLarger) {
 					largest = right;
 				}
@@ -140,10 +143,11 @@
 			let current = index;
 			while (current > 0) {
 				const shouldSwap = values[current - 1] > values[current];
+				yield compare([current - 1, current]);
 				if (shouldSwap) {
 					swap(values, current - 1, current);
+					yield move([current - 1, current]);
 				}
-				yield compare([current - 1, current], shouldSwap);
 				if (!shouldSwap) {
 					break;
 				}
@@ -165,7 +169,7 @@
 		let right = middle;
 		while ((left < right) && (right < end)) {
 			const shouldInsert = values[right] < values[left];
-			yield compare([left, right], false);
+			yield compare([left, right]);
 			if (shouldInsert) {
 				const value = values.splice(right, 1)[0];
 				values.splice(left, 0, value);
@@ -187,11 +191,12 @@
 			for (const parity of [1, 0]) {
 				for (let index = parity; index < values.length - 1; index += 2) {
 					const shouldSwap = values[index] > values[index + 1];
+					yield compare([index, index + 1]);
 					if (shouldSwap) {
 						swap(values, index, index + 1);
 						sorted = false;
+						yield move([index, index + 1]);
 					}
-					yield compare([index, index + 1], shouldSwap);
 				}
 			}
 		}
@@ -203,10 +208,11 @@
 		for (let index = start; index < end; index++) {
 			const belongsLeft = values[index] <= pivotValue;
 			const shouldSwap = belongsLeft && destination !== index;
+			yield compare([index, end], [end]);
 			if (shouldSwap) {
 				swap(values, destination, index);
+				yield move([destination, index], [end]);
 			}
-			yield compare([index, end], shouldSwap, [end]);
 			if (belongsLeft) {
 				destination++;
 			}
@@ -266,7 +272,7 @@
 				if (values[candidate] < values[minimum]) {
 					minimum = candidate;
 				}
-				yield compare(compared, false);
+				yield compare(compared);
 			}
 			if (minimum !== index) {
 				swap(values, index, minimum);
@@ -281,10 +287,11 @@
 				let current = index;
 				while (current >= gap) {
 					const shouldSwap = values[current - gap] > values[current];
+					yield compare([current - gap, current]);
 					if (shouldSwap) {
 						swap(values, current - gap, current);
+						yield move([current - gap, current]);
 					}
-					yield compare([current - gap, current], shouldSwap);
 					if (!shouldSwap) {
 						break;
 					}
@@ -298,10 +305,11 @@
 		for (let left = 0; left < values.length; left++) {
 			for (let right = 0; right < values.length; right++) {
 				const shouldSwap = values[left] < values[right];
+				yield compare([left, right]);
 				if (shouldSwap) {
 					swap(values, left, right);
+					yield move([left, right]);
 				}
-				yield compare([left, right], shouldSwap);
 			}
 		}
 	}
@@ -310,10 +318,11 @@
 		let index = 1;
 		while (index < values.length) {
 			const shouldSwap = values[index - 1] > values[index];
+			yield compare([index - 1, index]);
 			if (shouldSwap) {
 				swap(values, index - 1, index);
+				yield move([index - 1, index]);
 			}
-			yield compare([index - 1, index], shouldSwap);
 			index = shouldSwap ? Math.max(1, index - 1) : index + 1;
 		}
 	}
@@ -323,10 +332,11 @@
 			return;
 		}
 		const shouldSwap = values[start] > values[end];
+		yield compare([start, end]);
 		if (shouldSwap) {
 			swap(values, start, end);
+			yield move([start, end]);
 		}
-		yield compare([start, end], shouldSwap);
 
 		if (end - start + 1 > 2) {
 			const third = Math.floor((end - start + 1) / 3);
@@ -343,7 +353,7 @@
 	function* bogoSorted(values) {
 		for (let index = 0; index < values.length - 1; index++) {
 			const inOrder = values[index] <= values[index + 1];
-			yield compare([index, index + 1], false);
+			yield compare([index, index + 1]);
 			if (!inOrder) {
 				return false;
 			}

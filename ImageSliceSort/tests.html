@@ -33,8 +33,8 @@
 				const events = [];
 				for (const event of window.ImageSliceSortAlgorithms.create(name, values)) {
 					events.push(event);
-					if (!event.comparison && !event.moved) {
-						throw new Error(name + " emitted an empty event");
+					if (event.comparison === event.moved) {
+						throw new Error(name + " did not separate comparison and movement events");
 					}
 					const indices = event.indices.concat(event.accentIndices || []);
 					if (indices.some(function (index) { return index < 0 || index >= values.length; })) {
@@ -71,6 +71,18 @@
 			}
 			messages.push("PASS: bogo with deterministic shuffle");
 
+			const bubbleValues = [1, 0];
+			const bubble = window.ImageSliceSortAlgorithms.create("bubble", bubbleValues);
+			const bubbleComparison = bubble.next().value;
+			if (!bubbleComparison.comparison || bubbleValues[0] !== 1 || bubbleValues[1] !== 0) {
+				throw new Error("bubble moved slices during its comparison event");
+			}
+			const bubbleMove = bubble.next().value;
+			if (!bubbleMove.moved || bubbleValues[0] !== 0 || bubbleValues[1] !== 1) {
+				throw new Error("bubble did not defer movement to the next event");
+			}
+			messages.push("PASS: comparisons precede movements");
+
 			const mergeValues = [3, 2, 1, 0];
 			const mergeSnapshots = [];
 			for (const event of window.ImageSliceSortAlgorithms.create("merge", mergeValues)) {
@@ -84,8 +96,8 @@
 			messages.push("PASS: merge moves in place");
 
 			const quickEvents = runCase("quick", [3, 1, 2, 0]);
-			if (!quickEvents.some(function (event) { return event.accentIndices.length > 0; })) {
-				throw new Error("quick did not identify its pivot");
+			if (quickEvents.some(function (event) { return event.accentIndices.length === 0; })) {
+				throw new Error("quick did not retain its pivot marker");
 			}
 			messages.push("PASS: quick identifies pivots");
 

@@ -8,6 +8,9 @@
 	--accent: #ffb000;
 	--accent-dark: #b86e00;
 	--active: #55d6be;
+	--comparison-highlight: rgba(65, 209, 125, 0.55);
+	--move-highlight: rgba(255, 205, 55, 0.68);
+	--pivot-highlight: rgba(180, 105, 255, 0.7);
 	font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -396,6 +399,42 @@ canvas {
 	font-size: clamp(1.1rem, 2vw, 1.5rem);
 }
 
+.legend {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	margin: 14px 0 0;
+	padding: 0;
+	color: var(--muted);
+	font-size: 0.72rem;
+	list-style: none;
+}
+
+.legend li {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.legend-swatch {
+	display: inline-block;
+	width: 18px;
+	height: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.legend-comparison {
+	background: var(--comparison-highlight);
+}
+
+.legend-move {
+	background: var(--move-highlight);
+}
+
+.legend-pivot {
+	background: var(--pivot-highlight);
+}
+
 .app-shell:fullscreen {
 	width: 100%;
 	height: 100%;
@@ -410,7 +449,7 @@ canvas {
 
 .app-shell:fullscreen .visualizer {
 	display: grid;
-	grid-template-rows: auto minmax(0, 1fr) auto;
+	grid-template-rows: auto minmax(0, 1fr) auto auto;
 	height: 100%;
 	min-height: 0;
 	padding: clamp(16px, 2vw, 32px);
@@ -555,6 +594,12 @@ footer a:hover,
 
 	.metrics div {
 		padding-right: 6px;
+	}
+
+	.legend {
+		align-items: flex-start;
+		flex-wrap: wrap;
+		gap: 8px 14px;
 	}
 }
 
