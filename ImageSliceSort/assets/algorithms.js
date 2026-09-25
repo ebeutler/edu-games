@@ -77,7 +77,7 @@
 			if (shouldInsert) {
 				const value = values.splice(right, 1)[0];
 				values.splice(left, 0, value);
-				yield move([left, right], [left, right + 1]);
+				yield move([left, right]);
 				right++;
 			}
 			left++;
