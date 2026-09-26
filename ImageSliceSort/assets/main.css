@@ -214,6 +214,52 @@ output {
 	text-align: right;
 }
 
+.panel-count-field {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+}
+
+.panel-count-options {
+	display: flex;
+	gap: 8px;
+}
+
+.panel-count-option {
+	cursor: pointer;
+}
+
+.panel-count-option span {
+	display: grid;
+	width: 28px;
+	height: 28px;
+	border: 1px solid var(--accent);
+	border-radius: 50%;
+	color: var(--accent);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.75rem;
+	place-items: center;
+}
+
+.panel-count-option input:checked + span {
+	background: var(--accent);
+	color: #1a1408;
+}
+
+.panel-count-option input:focus-visible + span {
+	outline: 3px solid var(--active);
+	outline-offset: 3px;
+}
+
+.panel-count-field:disabled .panel-count-option {
+	opacity: 0.38;
+	cursor: not-allowed;
+}
+
 select {
 	width: 100%;
 	margin-top: 8px;

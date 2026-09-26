@@ -605,8 +605,8 @@
 				updateControls();
 			}
 		});
-		elements.panelCount.addEventListener("change", function () {
-			state.panelCount = Number(elements.panelCount.value);
+		elements.panelCount.addEventListener("change", function (event) {
+			state.panelCount = Number(event.target.value);
 			updatePanelVisibility();
 			resetRace("Layout changed; original scramble restored");
 		});

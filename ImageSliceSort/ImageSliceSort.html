@@ -41,14 +41,15 @@
 					<small id="sliceCountHint" class="field-hint" aria-live="polite"></small>
 				</div>
 
-				<label class="field" for="panelCount">
-					<span>Algorithms shown</span>
-					<select id="panelCount">
-						<option value="1">1 algorithm</option>
-						<option value="2">2 algorithms</option>
-						<option value="4">4 algorithms</option>
-					</select>
-				</label>
+				<fieldset id="panelCount" class="field panel-count-field">
+					<legend class="visually-hidden">Algorithms shown</legend>
+					<span aria-hidden="true">Algorithms shown</span>
+					<div class="panel-count-options">
+						<label class="panel-count-option"><input class="visually-hidden" type="radio" name="panelCount" value="1" checked><span>1</span></label>
+						<label class="panel-count-option"><input class="visually-hidden" type="radio" name="panelCount" value="2"><span>2</span></label>
+						<label class="panel-count-option"><input class="visually-hidden" type="radio" name="panelCount" value="4"><span>4</span></label>
+					</div>
+				</fieldset>
 				<div id="algorithmFields" class="algorithm-fields"></div>
 
 				<div class="field">
