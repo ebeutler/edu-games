@@ -8,6 +8,9 @@
 	const sourceContext = sourceCanvas.getContext("2d", { alpha: false });
 	const elements = { panelViews: [], algorithmControls: [] };
 	const highlightColors = {};
+	let cameraStream = null;
+	let cameraDevices = [];
+	let cameraRequestGeneration = 0;
 	const state = {
 		imageReady: false,
 		loading: false,
@@ -31,10 +34,11 @@
 	const cacheElements = function () {
 		[
 			"algorithmDescription", "algorithmDialog", "algorithmDialogTitle", "algorithmFields",
-			"algorithmPseudocode", "appShell", "copyPseudocode", "dropZone", "fileName",
-			"fullscreen", "imageInput", "panelCount", "raceGrid", "reshuffle", "reset",
+			"algorithmPseudocode", "appShell", "cameraButton", "cameraCancel", "cameraClose",
+			"cameraDialog", "cameraMessage", "cameraVideo", "capturePhoto", "copyPseudocode",
+			"dropZone", "fileName", "fullscreen", "imageInput", "panelCount", "raceGrid", "reshuffle", "reset",
 			"showComparisons", "sliceCount", "sliceCountHint", "sliceCountNumber", "sortPanelTemplate", "speed",
-			"speedValue", "start", "status", "step", "stop"
+			"speedValue", "start", "status", "step", "stop", "switchCamera"
 		].forEach(function (id) {
 			elements[id] = byId(id);
 		});
@@ -501,6 +505,145 @@
 		});
 	};
 
+	const stopCameraStream = function () {
+		if (cameraStream) {
+			cameraStream.getTracks().forEach(function (track) { track.stop(); });
+			cameraStream = null;
+		}
+		elements.cameraVideo.pause();
+		elements.cameraVideo.srcObject = null;
+	};
+
+	const cameraErrorMessage = function (error) {
+		switch (error && error.name) {
+			case "NotAllowedError":
+			case "SecurityError":
+				return "Camera access was denied. Allow camera access in your browser and try again.";
+			case "NotFoundError":
+				return "No camera was found on this device.";
+			case "NotReadableError":
+				return "The camera could not be opened. It may already be in use.";
+			case "OverconstrainedError":
+				return "The selected camera is no longer available.";
+			default:
+				return "The camera could not be started.";
+		}
+	};
+
+	const startCamera = async function (videoConstraints) {
+		const generation = ++cameraRequestGeneration;
+		stopCameraStream();
+		elements.capturePhoto.disabled = true;
+		elements.switchCamera.disabled = true;
+		elements.cameraMessage.hidden = false;
+		elements.cameraMessage.textContent = "Starting camera...";
+
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({
+				audio: false,
+				video: videoConstraints
+			});
+			if ((generation !== cameraRequestGeneration) || !elements.cameraDialog.open) {
+				stream.getTracks().forEach(function (track) { track.stop(); });
+				return;
+			}
+
+			cameraStream = stream;
+			elements.cameraVideo.srcObject = stream;
+			await elements.cameraVideo.play();
+			if ((generation !== cameraRequestGeneration) || !elements.cameraDialog.open) {
+				stream.getTracks().forEach(function (track) { track.stop(); });
+				if (cameraStream === stream) {
+					cameraStream = null;
+				}
+				return;
+			}
+
+			let devices = [];
+			if (typeof navigator.mediaDevices.enumerateDevices === "function") {
+				try {
+					devices = (await navigator.mediaDevices.enumerateDevices()).filter(function (device) {
+						return device.kind === "videoinput";
+					});
+				} catch (error) {
+					console.error(error);
+				}
+			}
+			if ((generation !== cameraRequestGeneration) || !elements.cameraDialog.open) {
+				stream.getTracks().forEach(function (track) { track.stop(); });
+				if (cameraStream === stream) {
+					cameraStream = null;
+				}
+				return;
+			}
+			cameraDevices = devices;
+			elements.cameraMessage.hidden = true;
+			elements.capturePhoto.disabled = false;
+			elements.switchCamera.hidden = cameraDevices.length < 2;
+			elements.switchCamera.disabled = false;
+		} catch (error) {
+			if (generation === cameraRequestGeneration) {
+				console.error(error);
+				stopCameraStream();
+				elements.cameraMessage.textContent = cameraErrorMessage(error);
+				elements.switchCamera.hidden = true;
+			}
+		}
+	};
+
+	const openCamera = function () {
+		cameraDevices = [];
+		elements.switchCamera.hidden = true;
+		elements.cameraDialog.showModal();
+		startCamera({ facingMode: { ideal: "user" } });
+	};
+
+	const switchCamera = function () {
+		if (!cameraStream || cameraDevices.length < 2) {
+			return;
+		}
+		const currentDeviceId = cameraStream.getVideoTracks()[0].getSettings().deviceId;
+		const currentIndex = cameraDevices.findIndex(function (device) {
+			return device.deviceId === currentDeviceId;
+		});
+		const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % cameraDevices.length : 1;
+		startCamera({ deviceId: { exact: cameraDevices[nextIndex].deviceId } });
+	};
+
+	const captureCameraPhoto = async function () {
+		const width = elements.cameraVideo.videoWidth;
+		const height = elements.cameraVideo.videoHeight;
+		if (!cameraStream || !width || !height) {
+			return;
+		}
+
+		elements.capturePhoto.disabled = true;
+		elements.switchCamera.disabled = true;
+		const captureCanvas = document.createElement("canvas");
+		captureCanvas.width = width;
+		captureCanvas.height = height;
+		captureCanvas.getContext("2d", { alpha: false }).drawImage(elements.cameraVideo, 0, 0, width, height);
+		try {
+			const blob = await new Promise(function (resolve, reject) {
+				captureCanvas.toBlob(function (result) {
+					if (result) {
+						resolve(result);
+					} else {
+						reject(new Error("The camera frame could not be captured."));
+					}
+				}, "image/png");
+			});
+			elements.cameraDialog.close();
+			await loadFile(blob);
+		} catch (error) {
+			console.error(error);
+			elements.cameraMessage.hidden = false;
+			elements.cameraMessage.textContent = error.message;
+			elements.capturePhoto.disabled = false;
+			elements.switchCamera.disabled = false;
+		}
+	};
+
 	const loadFile = async function (file) {
 		if (!file) {
 			return;
@@ -560,6 +703,16 @@
 	};
 
 	const bindEvents = function () {
+		elements.cameraButton.addEventListener("click", openCamera);
+		elements.cameraClose.addEventListener("click", function () { elements.cameraDialog.close(); });
+		elements.cameraCancel.addEventListener("click", function () { elements.cameraDialog.close(); });
+		elements.switchCamera.addEventListener("click", switchCamera);
+		elements.capturePhoto.addEventListener("click", captureCameraPhoto);
+		elements.cameraDialog.addEventListener("close", function () {
+			cameraRequestGeneration++;
+			stopCameraStream();
+			cameraDevices = [];
+		});
 		elements.imageInput.addEventListener("change", function (event) {
 			loadFile(event.target.files[0]);
 		});
@@ -645,6 +798,10 @@
 		elements.copyPseudocode.addEventListener("click", copyAlgorithmPseudocode);
 		document.addEventListener("fullscreenchange", updateFullscreenControl);
 		window.addEventListener("resize", fitFullscreenCanvases);
+		window.addEventListener("pagehide", function () {
+			cameraRequestGeneration++;
+			stopCameraStream();
+		});
 	};
 
 	const init = function () {
@@ -656,6 +813,9 @@
 		highlightColors.pivot = styles.getPropertyValue("--pivot-highlight").trim();
 		if (!document.fullscreenEnabled || !elements.appShell.requestFullscreen) {
 			elements.fullscreen.hidden = true;
+		}
+		if (!navigator.mediaDevices || (typeof navigator.mediaDevices.getUserMedia !== "function")) {
+			elements.cameraButton.hidden = true;
 		}
 		updatePanelVisibility();
 		bindEvents();

@@ -21,7 +21,12 @@
 	<main class="app-shell" id="appShell">
 		<aside class="control-panel" aria-label="Sorting controls">
 			<section>
-				<h2>1. Choose a photo</h2>
+				<div class="control-section-heading">
+					<h2>1. Choose a photo</h2>
+					<button id="cameraButton" class="camera-button" type="button" aria-label="Take a photo with a camera" title="Take a photo with a camera">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5 9.5 4h5L16 6.5h3A2.5 2.5 0 0 1 21.5 9v8A2.5 2.5 0 0 1 19 19.5H5A2.5 2.5 0 0 1 2.5 17V9A2.5 2.5 0 0 1 5 6.5h3Z"/><circle cx="12" cy="13" r="4"/></svg>
+					</button>
+				</div>
 				<label class="drop-zone" id="dropZone" for="imageInput">
 					<span class="drop-zone-title">Take or drop a photo</span>
 					<span class="drop-zone-hint">Choose an image, use your phone camera, or drag a file here.</span>
@@ -99,6 +104,21 @@
 
 			<div id="raceGrid" class="race-grid" data-count="1"></div>
 		</section>
+
+		<dialog id="cameraDialog" class="camera-dialog" aria-labelledby="cameraDialogTitle">
+			<button id="cameraClose" class="dialog-close" type="button" aria-label="Close camera">&times;</button>
+			<p class="eyebrow">Camera</p>
+			<h2 id="cameraDialogTitle">Take a photo</h2>
+			<div class="camera-preview">
+				<video id="cameraVideo" autoplay muted playsinline></video>
+				<p id="cameraMessage" class="camera-message" aria-live="polite">Starting camera...</p>
+			</div>
+			<div class="camera-actions">
+				<button id="switchCamera" class="button" type="button" hidden>Switch camera</button>
+				<button id="cameraCancel" class="button" type="button">Cancel</button>
+				<button id="capturePhoto" class="button button-primary" type="button" disabled>Take photo</button>
+			</div>
+		</dialog>
 
 		<dialog id="algorithmDialog" class="algorithm-dialog" aria-labelledby="algorithmDialogTitle">
 			<form method="dialog">
