@@ -33,7 +33,7 @@
 			"algorithmDescription", "algorithmDialog", "algorithmDialogTitle", "algorithmFields",
 			"algorithmPseudocode", "appShell", "copyPseudocode", "dropZone", "fileName",
 			"fullscreen", "imageInput", "panelCount", "raceGrid", "reshuffle", "reset",
-			"showComparisons", "sliceCount", "sliceCountValue", "sortPanelTemplate", "speed",
+			"showComparisons", "sliceCount", "sliceCountHint", "sliceCountNumber", "sortPanelTemplate", "speed",
 			"speedValue", "start", "status", "step", "stop"
 		].forEach(function (id) {
 			elements[id] = byId(id);
@@ -184,6 +184,7 @@
 		elements.reset.disabled = !state.imageReady;
 		elements.reshuffle.disabled = !state.imageReady;
 		elements.sliceCount.disabled = state.running;
+		elements.sliceCountNumber.disabled = state.running;
 		elements.panelCount.disabled = state.running;
 		elements.algorithmControls.forEach(function (control) {
 			control.select.disabled = state.running;
@@ -461,11 +462,12 @@
 		return values;
 	};
 
-	const updateSliceCountOutput = function (actualCount) {
+	const updateSliceCountDisplay = function (actualCount) {
 		const requested = Number(elements.sliceCount.value);
-		elements.sliceCountValue.textContent = (actualCount && actualCount !== requested)
-			? actualCount + " (image limit)"
-			: String(requested);
+		elements.sliceCountNumber.value = String(requested);
+		elements.sliceCountHint.textContent = (actualCount && actualCount !== requested)
+			? "This image is limited to " + actualCount + " slices."
+			: "";
 	};
 
 	const reshuffle = function (message) {
@@ -473,7 +475,7 @@
 			return;
 		}
 		const count = Math.max(1, Math.min(Number(elements.sliceCount.value), sourceCanvas.width));
-		updateSliceCountOutput(count);
+		updateSliceCountDisplay(count);
 		state.baseline = shuffledIndices(count);
 		resetRace(message || "New scramble ready");
 	};
@@ -578,7 +580,25 @@
 		});
 
 		elements.sliceCount.addEventListener("input", function () {
-			updateSliceCountOutput();
+			updateSliceCountDisplay();
+			if (state.imageReady) {
+				reshuffle("Slice count changed; new scramble ready");
+			} else {
+				updateControls();
+			}
+		});
+		elements.sliceCountNumber.addEventListener("change", function () {
+			const typedValue = elements.sliceCountNumber.valueAsNumber;
+			if (!Number.isFinite(typedValue)) {
+				updateSliceCountDisplay();
+				return;
+			}
+			const value = Math.max(
+				Number(elements.sliceCount.min),
+				Math.min(Number(elements.sliceCount.max), Math.round(typedValue))
+			);
+			elements.sliceCount.value = String(value);
+			updateSliceCountDisplay();
 			if (state.imageReady) {
 				reshuffle("Slice count changed; new scramble ready");
 			} else {

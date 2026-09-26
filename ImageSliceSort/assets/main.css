@@ -67,17 +67,17 @@ footer {
 	top: 48px;
 	right: 0;
 	padding: 8px 14px;
-	border: 1px solid var(--line);
+	border: 1px solid var(--accent);
 	background: var(--paper);
-	color: var(--ink);
+	color: var(--accent);
 	font-size: 0.8rem;
 	font-weight: 700;
 	text-decoration: none;
 }
 
 .help-link:hover {
-	border-color: var(--active);
-	color: var(--active);
+	border-color: #ffd16a;
+	color: #ffd16a;
 }
 
 .eyebrow {
@@ -200,6 +200,18 @@ output {
 	color: var(--active);
 	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 	font-size: 0.8rem;
+}
+
+.slice-count-input {
+	width: 72px;
+	padding: 4px 6px;
+	border: 1px solid var(--line);
+	background: #171a1c;
+	color: var(--accent);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-align: right;
 }
 
 select {
@@ -392,10 +404,10 @@ select:disabled {
 	width: 24px;
 	height: 24px;
 	padding: 0;
-	border: 1px solid var(--muted);
+	border: 1px solid var(--accent);
 	border-radius: 50%;
 	background: transparent;
-	color: var(--muted);
+	color: var(--accent);
 	font-family: Georgia, "Times New Roman", serif;
 	font-size: 0.85rem;
 	font-weight: 700;
@@ -406,8 +418,8 @@ select:disabled {
 }
 
 .algorithm-info-button:hover {
-	border-color: var(--active);
-	color: var(--active);
+	border-color: #ffd16a;
+	color: #ffd16a;
 }
 
 .panel-status {

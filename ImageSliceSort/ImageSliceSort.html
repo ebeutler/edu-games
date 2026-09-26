@@ -35,9 +35,10 @@
 				<div class="field">
 					<div class="field-heading">
 						<label for="sliceCount">Slices</label>
-						<output id="sliceCountValue" for="sliceCount">120</output>
+						<input id="sliceCountNumber" class="slice-count-input" type="number" min="2" max="300" value="120" aria-label="Number of slices">
 					</div>
 					<input id="sliceCount" type="range" min="2" max="300" value="120">
+					<small id="sliceCountHint" class="field-hint" aria-live="polite"></small>
 				</div>
 
 				<label class="field" for="panelCount">
