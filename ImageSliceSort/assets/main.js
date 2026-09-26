@@ -10,6 +10,7 @@
 	const highlightColors = {};
 	let cameraStream = null;
 	let cameraDevices = [];
+	let cameraFacingMode = "user";
 	let cameraRequestGeneration = 0;
 	const state = {
 		imageReady: false,
@@ -530,7 +531,7 @@
 		}
 	};
 
-	const startCamera = async function (videoConstraints) {
+	const startCamera = async function (videoConstraints, requestedFacingMode) {
 		const generation = ++cameraRequestGeneration;
 		stopCameraStream();
 		elements.capturePhoto.disabled = true;
@@ -545,10 +546,13 @@
 			});
 			if ((generation !== cameraRequestGeneration) || !elements.cameraDialog.open) {
 				stream.getTracks().forEach(function (track) { track.stop(); });
-				return;
+				return false;
 			}
 
 			cameraStream = stream;
+			cameraFacingMode = stream.getVideoTracks()[0].getSettings().facingMode
+				|| requestedFacingMode
+				|| cameraFacingMode;
 			elements.cameraVideo.srcObject = stream;
 			await elements.cameraVideo.play();
 			if ((generation !== cameraRequestGeneration) || !elements.cameraDialog.open) {
@@ -556,7 +560,7 @@
 				if (cameraStream === stream) {
 					cameraStream = null;
 				}
-				return;
+				return false;
 			}
 
 			let devices = [];
@@ -574,13 +578,14 @@
 				if (cameraStream === stream) {
 					cameraStream = null;
 				}
-				return;
+				return false;
 			}
 			cameraDevices = devices;
 			elements.cameraMessage.hidden = true;
 			elements.capturePhoto.disabled = false;
-			elements.switchCamera.hidden = cameraDevices.length < 2;
+			elements.switchCamera.hidden = (cameraDevices.length < 2) && (navigator.maxTouchPoints < 1);
 			elements.switchCamera.disabled = false;
+			return true;
 		} catch (error) {
 			if (generation === cameraRequestGeneration) {
 				console.error(error);
@@ -588,6 +593,7 @@
 				elements.cameraMessage.textContent = cameraErrorMessage(error);
 				elements.switchCamera.hidden = true;
 			}
+			return false;
 		}
 	};
 
@@ -595,19 +601,39 @@
 		cameraDevices = [];
 		elements.switchCamera.hidden = true;
 		elements.cameraDialog.showModal();
-		startCamera({ facingMode: { ideal: "user" } });
+		startCamera({ facingMode: { ideal: "user" } }, "user");
 	};
 
-	const switchCamera = function () {
-		if (!cameraStream || cameraDevices.length < 2) {
+	const switchCamera = async function () {
+		if (!cameraStream) {
 			return;
 		}
-		const currentDeviceId = cameraStream.getVideoTracks()[0].getSettings().deviceId;
-		const currentIndex = cameraDevices.findIndex(function (device) {
-			return device.deviceId === currentDeviceId;
-		});
-		const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % cameraDevices.length : 1;
-		startCamera({ deviceId: { exact: cameraDevices[nextIndex].deviceId } });
+		if (cameraDevices.length >= 2) {
+			const currentDeviceId = cameraStream.getVideoTracks()[0].getSettings().deviceId;
+			const currentIndex = cameraDevices.findIndex(function (device) {
+				return device.deviceId === currentDeviceId;
+			});
+			const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % cameraDevices.length : 1;
+			await startCamera({ deviceId: { exact: cameraDevices[nextIndex].deviceId } });
+			return;
+		}
+
+		const previousFacingMode = cameraFacingMode;
+		const nextFacingMode = previousFacingMode === "environment" ? "user" : "environment";
+		if (!(await startCamera({ facingMode: { exact: nextFacingMode } }, nextFacingMode))
+				&& elements.cameraDialog.open) {
+			await startCamera({ facingMode: { ideal: previousFacingMode } }, previousFacingMode);
+			if (cameraStream) {
+				const restoredStream = cameraStream;
+				elements.cameraMessage.hidden = false;
+				elements.cameraMessage.textContent = "The other camera is not available.";
+				window.setTimeout(function () {
+					if (elements.cameraDialog.open && cameraStream === restoredStream) {
+						elements.cameraMessage.hidden = true;
+					}
+				}, 2200);
+			}
+		}
 	};
 
 	const captureCameraPhoto = async function () {
