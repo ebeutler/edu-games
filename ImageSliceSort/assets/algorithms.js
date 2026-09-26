@@ -156,6 +156,29 @@
 		}
 	}
 
+	function* binaryInsertionSort(values) {
+		for (let index = 1; index < values.length; index++) {
+			const value = values[index];
+			let low = 0;
+			let high = index;
+			while (low < high) {
+				const middle = Math.floor((low + high) / 2);
+				const belongsAfterMiddle = values[middle] <= value;
+				yield compare([middle, index]);
+				if (belongsAfterMiddle) {
+					low = middle + 1;
+				} else {
+					high = middle;
+				}
+			}
+			if (low !== index) {
+				values.splice(index, 1);
+				values.splice(low, 0, value);
+				yield move([low, index]);
+			}
+		}
+	}
+
 	function* mergeRange(values, start, end) {
 		if (end - start < 2) {
 			return;
@@ -420,6 +443,20 @@ for end from last index down to 1
     swap items[current - 1] and items[current]
     current = current - 1`
 		},
+		binaryInsertion: {
+			description: "Binary insertion sort also grows a sorted section, but uses binary search to find where each new item belongs. It usually needs fewer comparisons than ordinary insertion sort on shuffled data, then shifts the item directly into place.",
+			pseudoCode: `for i from 1 to last index
+  value = items[i]
+  low = 0
+  high = i
+  while low < high
+    middle = midpoint of low and high
+    if items[middle] <= value
+      low = middle + 1
+    else
+      high = middle
+  insert value at low`
+		},
 		merge: {
 			description: "Merge sort divides the range into smaller halves, sorts each half, and merges the results. This visualizer performs the merge in place by inserting items from the right half into the left.",
 			pseudoCode: `mergeSort(start, end)
@@ -515,6 +552,7 @@ while position is before the end
 		cycle: define("cycle", "Cycle sort", cycleSort, { supportsDuplicates: false }),
 		heap: define("heap", "Heap sort", heapSort),
 		insertion: define("insertion", "Insertion sort", insertionSort),
+		binaryInsertion: define("binaryInsertion", "Binary insertion sort", binaryInsertionSort),
 		merge: define("merge", "Merge sort", mergeSort),
 		oddEven: define("oddEven", "Odd-even sort", oddEvenSort),
 		quick: define("quick", "QuickSort", quickSort),

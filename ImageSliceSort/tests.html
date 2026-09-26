@@ -84,6 +84,18 @@
 			}
 			messages.push("PASS: comparisons precede movements");
 
+			const reverseOrdered = [7, 6, 5, 4, 3, 2, 1, 0];
+			const insertionComparisons = runCase("insertion", reverseOrdered).filter(function (event) {
+				return event.comparison;
+			}).length;
+			const binaryInsertionComparisons = runCase("binaryInsertion", reverseOrdered).filter(function (event) {
+				return event.comparison;
+			}).length;
+			if (binaryInsertionComparisons >= insertionComparisons) {
+				throw new Error("binary insertion sort did not reduce comparisons");
+			}
+			messages.push("PASS: binary insertion reduces comparisons");
+
 			const mergeValues = [3, 2, 1, 0];
 			const mergeSnapshots = [];
 			for (const event of window.ImageSliceSortAlgorithms.create("merge", mergeValues)) {
