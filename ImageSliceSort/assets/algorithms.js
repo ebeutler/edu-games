@@ -399,143 +399,238 @@
 	const algorithmInfo = {
 		bubble: {
 			description: "Bubble sort repeatedly compares neighboring items and swaps them when they are out of order. Each pass pushes the largest remaining item toward the end, like a bubble rising to the surface.",
-			pseudoCode: `for end from last index down to 1
-  swapped = false
-  for i from 0 to end - 1
-    if items[i] > items[i + 1]
-      swap items[i] and items[i + 1]
-      swapped = true
-  if not swapped
-    stop`
+			pseudoCode: `bubbleSort(items)
+  for endIndex from last index down to 1
+    swapped = false
+    for index from 0 through endIndex - 1
+      if items[index] > items[index + 1]
+        swap items[index] and items[index + 1]
+        swapped = true
+    if not swapped
+      return`
 		},
 		cocktail: {
 			description: "Cocktail shaker sort is a two-way bubble sort. It sweeps forward to move large items right, then backward to move small items left, narrowing the unsorted range after each pair of passes.",
-			pseudoCode: `start = 0
-end = last index
-while a swap was made
-  sweep from start to end, swapping neighbors out of order
-  end = end - 1
-  sweep from end to start, swapping neighbors out of order
-  start = start + 1`
+			pseudoCode: `cocktailShakerSort(items)
+  startIndex = 0
+  endIndex = last index
+  swapped = true
+  while swapped and startIndex < endIndex
+    swapped = false
+    for index from startIndex through endIndex - 1
+      if items[index] > items[index + 1]
+        swap items[index] and items[index + 1]
+        swapped = true
+    if not swapped
+      return
+    endIndex = endIndex - 1
+    swapped = false
+    for index from endIndex down to startIndex + 1
+      if items[index - 1] > items[index]
+        swap items[index - 1] and items[index]
+        swapped = true
+    startIndex = startIndex + 1`
 		},
 		cycle: {
-			description: "Cycle sort determines where each item belongs by counting how many items are smaller. It rotates misplaced items into their final positions and is designed to minimize writes.",
-			pseudoCode: `for each cycle start
-  item = items[cycle start]
-  position = count of items smaller than item
-  while position is not cycle start
-    place item at position
-    item = the displaced item
-    position = count of items smaller than item`
+			description: "Cycle sort determines where each item belongs by counting how many items are smaller. This version repeatedly swaps the item at a cycle's start with its final position until that cycle is resolved.",
+			pseudoCode: `cycleSort(items)
+  assume all items are distinct
+  for startIndex from 0 through second-last index
+    repeat
+      currentValue = items[startIndex]
+      destinationIndex = 0
+      for index from 0 through last index
+        if index != startIndex and items[index] < currentValue
+          destinationIndex = destinationIndex + 1
+      if destinationIndex == startIndex
+        break
+      swap items[startIndex] and items[destinationIndex]`
 		},
 		heap: {
 			description: "Heap sort first arranges the items as a max heap, where the largest item is at the root. It repeatedly moves that root to the end and repairs the remaining heap.",
-			pseudoCode: `build a max heap from items
-for end from last index down to 1
-  swap items[0] and items[end]
-  restore the max heap from 0 up to end`
+			pseudoCode: `heapSort(items)
+  for rootIndex from last parent down to 0
+    siftDown(items, rootIndex, length(items))
+  for endIndex from last index down to 1
+    swap items[0] and items[endIndex]
+    siftDown(items, 0, endIndex)
+
+siftDown(items, rootIndex, endExclusive)
+  while rootIndex has a child before endExclusive
+    largerChildIndex = index of the larger child
+    if items[rootIndex] >= items[largerChildIndex]
+      return
+    swap items[rootIndex] and items[largerChildIndex]
+    rootIndex = largerChildIndex`
 		},
 		insertion: {
 			description: "Insertion sort grows a sorted section from left to right. Each new item moves backward through that section until it reaches its correct position, much like sorting cards in your hand.",
-			pseudoCode: `for i from 1 to last index
-  current = i
-  while current > 0 and items[current - 1] > items[current]
-    swap items[current - 1] and items[current]
-    current = current - 1`
+			pseudoCode: `insertionSort(items)
+  for index from 1 through last index
+    currentIndex = index
+    while currentIndex > 0 and items[currentIndex - 1] > items[currentIndex]
+      swap items[currentIndex - 1] and items[currentIndex]
+      currentIndex = currentIndex - 1`
 		},
 		binaryInsertion: {
-			description: "Binary insertion sort also grows a sorted section, but uses binary search to find where each new item belongs. It usually needs fewer comparisons than ordinary insertion sort on shuffled data, then shifts the item directly into place.",
-			pseudoCode: `for i from 1 to last index
-  value = items[i]
-  low = 0
-  high = i
-  while low < high
-    middle = midpoint of low and high
-    if items[middle] <= value
-      low = middle + 1
-    else
-      high = middle
-  insert value at low`
+			description: "Binary insertion sort also grows a sorted section, but uses binary search to find where each new item belongs. It usually needs fewer comparisons than ordinary insertion sort on shuffled data, then moves the item into place while shifting the intervening items.",
+			pseudoCode: `binaryInsertionSort(items)
+  for currentIndex from 1 through last index
+    currentValue = items[currentIndex]
+    lowIndex = 0
+    highIndex = currentIndex
+    while lowIndex < highIndex
+      middleIndex = floor((lowIndex + highIndex) / 2)
+      if items[middleIndex] <= currentValue
+        lowIndex = middleIndex + 1
+      else
+        highIndex = middleIndex
+    if lowIndex != currentIndex
+      remove the item at currentIndex
+      insert currentValue at lowIndex, shifting intervening items right`
 		},
 		merge: {
 			description: "Merge sort divides the range into smaller halves, sorts each half, and merges the results. This visualizer performs the merge in place by inserting items from the right half into the left.",
-			pseudoCode: `mergeSort(start, end)
-  if range has fewer than 2 items, return
-  middle = midpoint of start and end
-  mergeSort(start, middle)
-  mergeSort(middle, end)
-  merge the two sorted halves`
+			pseudoCode: `mergeSort(items)
+  mergeRange(items, 0, length(items))
+
+mergeRange(items, startIndex, endExclusive)
+  if endExclusive - startIndex < 2
+    return
+  middleIndex = floor((startIndex + endExclusive) / 2)
+  mergeRange(items, startIndex, middleIndex)
+  mergeRange(items, middleIndex, endExclusive)
+  leftIndex = startIndex
+  rightIndex = middleIndex
+  while leftIndex < rightIndex and rightIndex < endExclusive
+    if items[rightIndex] < items[leftIndex]
+      move items[rightIndex] to leftIndex, shifting intervening items right
+      rightIndex = rightIndex + 1
+    leftIndex = leftIndex + 1`
 		},
 		oddEven: {
 			description: "Odd-even sort alternates between comparing odd-even neighbor pairs and even-odd neighbor pairs. Those independent pairs can be compared together in parallel implementations.",
-			pseudoCode: `repeat until no swap is made
-  compare and swap pairs (1, 2), (3, 4), ...
-  compare and swap pairs (0, 1), (2, 3), ...`
+			pseudoCode: `oddEvenSort(items)
+  sorted = false
+  while not sorted
+    sorted = true
+    for parity in [1, 0]
+      for index from parity through second-last index, step 2
+        if items[index] > items[index + 1]
+          swap items[index] and items[index + 1]
+          sorted = false`
 		},
 		quick: {
 			description: "QuickSort chooses a pivot and partitions the other items around it. Items no larger than the pivot move left, larger items stay right, and the same process recursively sorts both sides.",
-			pseudoCode: `quickSort(start, end)
-  if start >= end, return
-  pivot = items[end]
-  partition items around pivot
-  quickSort(start, pivot position - 1)
-  quickSort(pivot position + 1, end)`
+			pseudoCode: `quickSort(items)
+  quickRange(items, 0, last index)
+
+quickRange(items, startIndex, endIndex)
+  if startIndex >= endIndex
+    return
+  pivotIndex = partition(items, startIndex, endIndex)
+  quickRange(items, startIndex, pivotIndex - 1)
+  quickRange(items, pivotIndex + 1, endIndex)
+
+partition(items, startIndex, endIndex)
+  pivotValue = items[endIndex]
+  destinationIndex = startIndex
+  for index from startIndex through endIndex - 1
+    if items[index] <= pivotValue
+      swap items[destinationIndex] and items[index]
+      destinationIndex = destinationIndex + 1
+  swap items[destinationIndex] and items[endIndex]
+  return destinationIndex`
 		},
 		radix: {
 			description: "LSD radix sort groups numbers by one digit at a time, starting with the least significant digit. Repeating the stable grouping for each digit eventually orders the complete numbers without comparing pairs.",
-			pseudoCode: `divisor = 1
-while maximum item / divisor > 0
-  put each item into the bucket for its current digit
-  collect buckets from 0 through 9
-  divisor = divisor * 10`
+			pseudoCode: `radixSort(items)
+  assume all items are nonnegative integers
+  maximumValue = maximum(items)
+  divisor = 1
+  while floor(maximumValue / divisor) > 0
+    buckets = ten empty lists
+    for each value in items
+      digit = floor(value / divisor) modulo 10
+      append value to buckets[digit]
+    replace items with buckets 0 through 9 concatenated in order
+    divisor = divisor * 10`
 		},
 		selection: {
 			description: "Selection sort scans the unsorted portion for its smallest item. It swaps that item into the next open position, then repeats with the shorter remaining portion.",
-			pseudoCode: `for i from 0 to second-last index
-  minimum = i
-  for candidate from i + 1 to last index
-    if items[candidate] < items[minimum]
-      minimum = candidate
-  if minimum is not i
-    swap items[i] and items[minimum]`
+			pseudoCode: `selectionSort(items)
+  for index from 0 through second-last index
+    minimumIndex = index
+    for candidateIndex from index + 1 through last index
+      if items[candidateIndex] < items[minimumIndex]
+        minimumIndex = candidateIndex
+    if minimumIndex != index
+      swap items[index] and items[minimumIndex]`
 		},
 		shell: {
 			description: "Shell sort starts by insertion-sorting items that are far apart. It progressively shrinks that gap until neighboring items are sorted, reducing the long shifts ordinary insertion sort may need.",
-			pseudoCode: `gap = item count / 2
-while gap > 0
-  insertion-sort items that are gap positions apart
-  gap = gap / 2`
+			pseudoCode: `shellSort(items)
+  gap = floor(length(items) / 2)
+  while gap > 0
+    for index from gap through last index
+      currentIndex = index
+      while currentIndex >= gap and items[currentIndex - gap] > items[currentIndex]
+        swap items[currentIndex - gap] and items[currentIndex]
+        currentIndex = currentIndex - gap
+    gap = floor(gap / 2)`
 		},
 		cantBelieve: {
 			description: "This deliberately surprising algorithm compares every ordered pair and swaps when the left item is smaller. Despite its unusual direction and many unnecessary comparisons, the repeated swaps produce ascending order.",
-			pseudoCode: `for left from 0 to last index
-  for right from 0 to last index
-    if items[left] < items[right]
-      swap items[left] and items[right]`
+			pseudoCode: `cantBelieveSort(items)
+  for leftIndex from 0 through last index
+    for rightIndex from 0 through last index
+      if items[leftIndex] < items[rightIndex]
+        swap items[leftIndex] and items[rightIndex]`
 		},
 		gnome: {
 			description: "Gnome sort walks forward while neighboring items are ordered. After a swap it steps backward to check the newly moved item, resembling a garden gnome sorting flower pots one pair at a time.",
-			pseudoCode: `position = 1
-while position is before the end
-  if items[position - 1] <= items[position]
-    position = position + 1
-  else
-    swap the two items
-    position = max(1, position - 1)`
+			pseudoCode: `gnomeSort(items)
+  currentIndex = 1
+  while currentIndex < length(items)
+    if items[currentIndex - 1] <= items[currentIndex]
+      currentIndex = currentIndex + 1
+    else
+      swap items[currentIndex - 1] and items[currentIndex]
+      currentIndex = max(1, currentIndex - 1)`
 		},
 		stooge: {
 			description: "Stooge sort swaps the first and last items when needed, then recursively sorts overlapping two-thirds sections three times. It works, but its enormous repetition makes it intentionally impractical.",
-			pseudoCode: `stoogeSort(start, end)
-  if items[start] > items[end], swap them
-  if range has more than 2 items
-    sort the first two-thirds
-    sort the last two-thirds
-    sort the first two-thirds again`
+			pseudoCode: `stoogeSort(items)
+  stoogeRange(items, 0, last index)
+
+stoogeRange(items, startIndex, endIndex)
+  if startIndex >= endIndex
+    return
+  if items[startIndex] > items[endIndex]
+    swap items[startIndex] and items[endIndex]
+  rangeLength = endIndex - startIndex + 1
+  if rangeLength > 2
+    third = floor(rangeLength / 3)
+    stoogeRange(items, startIndex, endIndex - third)
+    stoogeRange(items, startIndex + third, endIndex)
+    stoogeRange(items, startIndex, endIndex - third)`
 		},
 		bogo: {
 			description: "Bogosort checks whether the items are sorted and, if not, shuffles them randomly before trying again. It is a joke algorithm whose running time becomes impractical with even a few items.",
-			pseudoCode: `while items are not sorted
-  shuffle all items randomly`
+			pseudoCode: `bogoSort(items)
+  while not isSorted(items)
+    shuffle(items)
+
+isSorted(items)
+  for index from 0 through second-last index
+    if items[index] > items[index + 1]
+      return false
+  return true
+
+shuffle(items)
+  for index from last index down to 1
+    swapIndex = random integer from 0 through index
+    swap items[index] and items[swapIndex]`
 		}
 	};
 
