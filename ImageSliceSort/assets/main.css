@@ -203,7 +203,7 @@ output {
 }
 
 .slice-count-input {
-	width: 72px;
+	width: 64px;
 	padding: 4px 6px;
 	border: 1px solid var(--line);
 	background: #171a1c;
