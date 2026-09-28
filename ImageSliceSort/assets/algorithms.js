@@ -651,15 +651,15 @@ shuffle(items)
 		insertion: complexity("Ω(n)", "Θ(n²)", "O(n²)", "Adaptive quadratic."),
 		binaryInsertion: complexity(
 			"Ω(n log n)",
-			"Θ(n²)",
-			"O(n²)",
-			"Binary search reduces comparisons, but shifting items keeps runtime quadratic."
+			"Θ(n log n)",
+			"O(n log n)",
+			"Linearithmic algorithm; in-place shifts add overhead - in this visualizer O(n²)."
 		),
 		merge: complexity(
 			"Ω(n log n)",
 			"Θ(n log n)",
 			"O(n log n)",
-			"Linearithmic algorithm; in-place shifts add JavaScript overhead in this visualizer."
+			"Linearithmic algorithm; in-place shifts add overhead in this visualizer."
 		),
 		oddEven: complexity("Ω(n)", "Θ(n²)", "O(n²)", "Adaptive quadratic."),
 		quick: complexity(
