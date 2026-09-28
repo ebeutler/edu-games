@@ -4,6 +4,8 @@
 	const Game = window.MazeEscapeGame;
 	const DEFAULT_CODE = "WHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND";
 	const TEST_COUNT = 8;
+	const visibilityCanvas = document.createElement("canvas");
+	const visibilityContext = visibilityCanvas.getContext("2d");
 	const translations = {
 		en: {
 			directions: ["N", "E", "S", "W"],
@@ -404,10 +406,6 @@
 			+ " " + translations[state.language].directions[state.world.player.direction];
 	};
 
-	const visibleCell = function (x, y) {
-		return Math.abs(x - state.world.player.x) + Math.abs(y - state.world.player.y) <= 1;
-	};
-
 	const draw = function (time) {
 		if (!state.world || !elements.maze) { return; }
 		const canvas = elements.maze;
@@ -429,33 +427,63 @@
 		const offsetY = displaySize / 2 - (camera.y + 0.5) * cellSize;
 		const walls = Game.constants.WALLS;
 
-		for (let y = 0; y < state.maze.size; y++) {
-			for (let x = 0; x < state.maze.size; x++) {
-				const index = y * state.maze.size + x;
-				const nearby = visibleCell(x, y);
-				const explored = state.world.explored.has(index);
-				if (!nearby && !explored) { continue; }
-				context.fillStyle = nearby ? "#26322b" : "#151b18";
-				context.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
-				context.strokeStyle = nearby ? "#b9d3bc" : "#526158";
-				context.lineWidth = Math.max(1, cellSize * 0.07);
-				context.beginPath();
-				const cell = state.maze.cells[index];
-				if (cell & walls[0]) { context.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); context.lineTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); }
-				if (cell & walls[1]) { context.moveTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); context.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
-				if (cell & walls[2]) { context.moveTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); context.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
-				if (cell & walls[3]) { context.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); context.lineTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); }
-				context.stroke();
+		const drawCells = function (target, include, bright) {
+			for (let y = 0; y < state.maze.size; y++) {
+				for (let x = 0; x < state.maze.size; x++) {
+					const index = y * state.maze.size + x;
+					if (!include(index)) { continue; }
+					target.fillStyle = bright ? "#26322b" : "#151b18";
+					target.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
+					target.strokeStyle = bright ? "#b9d3bc" : "#526158";
+					target.lineWidth = Math.max(1, cellSize * 0.07);
+					target.beginPath();
+					const cell = state.maze.cells[index];
+					if (cell & walls[0]) { target.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); target.lineTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); }
+					if (cell & walls[1]) { target.moveTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); target.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
+					if (cell & walls[2]) { target.moveTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); target.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
+					if (cell & walls[3]) { target.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); target.lineTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); }
+					target.stroke();
+				}
 			}
-		}
+		};
 
-		if (visibleCell(state.maze.exit.x, state.maze.exit.y)) {
-			context.fillStyle = "#f2b84b";
-			const exit = state.maze.exit;
-			const cx = offsetX + (exit.x + 0.5 + (exit.direction === 1 ? 0.43 : exit.direction === 3 ? -0.43 : 0)) * cellSize;
-			const cy = offsetY + (exit.y + 0.5 + (exit.direction === 2 ? 0.43 : exit.direction === 0 ? -0.43 : 0)) * cellSize;
-			context.beginPath(); context.arc(cx, cy, Math.max(2, cellSize * 0.13), 0, Math.PI * 2); context.fill();
+		drawCells(context, function (index) { return state.world.explored.has(index); }, false);
+
+		if (visibilityCanvas.width !== pixels || visibilityCanvas.height !== pixels) {
+			visibilityCanvas.width = pixels;
+			visibilityCanvas.height = pixels;
 		}
+		visibilityContext.setTransform(1, 0, 0, 1, 0, 0);
+		visibilityContext.clearRect(0, 0, pixels, pixels);
+		visibilityContext.setTransform(scale, 0, 0, scale, 0, 0);
+		visibilityContext.globalCompositeOperation = "source-over";
+		drawCells(visibilityContext, function () { return true; }, true);
+
+		visibilityContext.fillStyle = "#f2b84b";
+		const exit = state.maze.exit;
+		const exitX = offsetX + (exit.x + 0.5 + (exit.direction === 1 ? 0.43 : exit.direction === 3 ? -0.43 : 0)) * cellSize;
+		const exitY = offsetY + (exit.y + 0.5 + (exit.direction === 2 ? 0.43 : exit.direction === 0 ? -0.43 : 0)) * cellSize;
+		visibilityContext.beginPath();
+		visibilityContext.arc(exitX, exitY, Math.max(2, cellSize * 0.13), 0, Math.PI * 2);
+		visibilityContext.fill();
+
+		const center = displaySize / 2;
+		const innerRadius = cellSize * 1.35;
+		const outerRadius = cellSize * 2.15;
+		const visibilityMask = visibilityContext.createRadialGradient(
+			center, center, innerRadius, center, center, outerRadius
+		);
+		visibilityMask.addColorStop(0, "rgba(0, 0, 0, 1)");
+		visibilityMask.addColorStop(1, "rgba(0, 0, 0, 0)");
+		visibilityContext.globalCompositeOperation = "destination-in";
+		visibilityContext.fillStyle = visibilityMask;
+		visibilityContext.fillRect(0, 0, displaySize, displaySize);
+		visibilityContext.globalCompositeOperation = "source-over";
+
+		context.save();
+		context.setTransform(1, 0, 0, 1, 0, 0);
+		context.drawImage(visibilityCanvas, 0, 0);
+		context.restore();
 
 		const player = state.world.player;
 		context.save();
