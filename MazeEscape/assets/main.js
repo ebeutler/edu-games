@@ -526,6 +526,21 @@
 		}, 1600);
 	};
 
+	const indentNewLine = function (event) {
+		if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+			return;
+		}
+		event.preventDefault();
+		const start = elements.code.selectionStart;
+		const lineStart = elements.code.value.lastIndexOf("\n", start - 1) + 1;
+		const line = elements.code.value.slice(lineStart, start);
+		const leadingSpaces = /^ */.exec(line)[0];
+		const opensBlock = /^(IF\b|ELSE\b|WHILE\b)/i.test(line.trim());
+		const indentation = leadingSpaces + (opensBlock ? "  " : "");
+		elements.code.setRangeText("\n" + indentation, start, elements.code.selectionEnd, "end");
+		elements.code.dispatchEvent(new Event("input", { bubbles: true }));
+	};
+
 	const cacheElements = function () {
 		[
 			"code", "copyCode", "hintText", "instructions", "language", "maze", "moves", "newMaze", "nextHint", "openFailure",
@@ -547,6 +562,7 @@
 		});
 		elements.reset.addEventListener("click", resetWorld);
 		elements.speed.addEventListener("input", function () { elements.speedValue.textContent = elements.speed.value + "/s"; });
+		elements.code.addEventListener("keydown", indentNewLine);
 		elements.code.addEventListener("input", function () { safeStorage(function () { localStorage.setItem("mazeEscapeCode", elements.code.value); }); });
 		elements.copyCode.addEventListener("click", function () { showCopyResult(elements.copyCode, elements.code.value); });
 		elements.shareMaze.addEventListener("click", function () { showCopyResult(elements.shareMaze, window.location.href, "mazeLinkCopied"); });
