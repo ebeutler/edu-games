@@ -59,6 +59,14 @@
 			assert(instructions.some(function (instruction) { return instruction.op === "TURN"; }), "TURN did not compile");
 			messages.push("PASS: keyword pseudocode compiles");
 
+			const mixedCase = wallFollower.split("\n").map(function (line, index) {
+				return index % 2 ? line.toLowerCase() : line.charAt(0) + line.slice(1).toLowerCase();
+			}).join("\n");
+			const mixedCaseResult = Game.runProgram(mixedCase, "mixed-case", 11);
+			assert(mixedCaseResult.world.won, "mixed-capitalization program did not escape");
+			assert(Game.parse(mixedCase)[0].text === "While not at_goal", "parser changed the entered source text");
+			messages.push("PASS: commands accept arbitrary capitalization");
+
 			for (let index = 0; index < 50; index++) {
 				const result = Game.runProgram(wallFollower, "escape-" + index, 15);
 				assert(result.world.won, "wall follower failed seed escape-" + index);

@@ -214,16 +214,17 @@
 			if (!text) {
 				return;
 			}
-			if (text === "MOVE") {
+			const command = text.toUpperCase();
+			if (command === "MOVE") {
 				instructions.push({ op: "MOVE", line: line, text: text });
 				return;
 			}
-			const turnMatch = /^TURN (LEFT|RIGHT)$/.exec(text);
+			const turnMatch = /^TURN (LEFT|RIGHT)$/.exec(command);
 			if (turnMatch) {
 				instructions.push({ op: "TURN", direction: turnMatch[1], line: line, text: text });
 				return;
 			}
-			const blockMatch = /^(IF|WHILE) (.+)$/.exec(text);
+			const blockMatch = /^(IF|WHILE) (.+)$/.exec(command);
 			if (blockMatch) {
 				const instruction = {
 					op: "JUMP_IF_FALSE",
@@ -236,7 +237,7 @@
 				blocks.push({ type: blockMatch[1], conditionIndex: instructions.length - 1, line: line });
 				return;
 			}
-			if (text === "ELSE") {
+			if (command === "ELSE") {
 				const block = blocks[blocks.length - 1];
 				if (!block || block.type !== "IF" || block.elseIndex !== undefined) {
 					throw { code: "UNEXPECTED_ELSE", line: line };
@@ -246,7 +247,7 @@
 				block.elseIndex = instructions.length - 1;
 				return;
 			}
-			if (text === "END") {
+			if (command === "END") {
 				const block = blocks.pop();
 				if (!block) {
 					throw { code: "UNEXPECTED_END", line: line };
