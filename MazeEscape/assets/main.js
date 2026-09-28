@@ -165,7 +165,7 @@
 		state.runner = null;
 		state.instructions = null;
 		state.failedSeed = null;
-		elements.seed.value = state.maze.seed;
+		elements.seed.value = "";
 		elements.size.value = state.maze.size;
 		elements.results.hidden = true;
 		elements.shareMaze.hidden = true;
