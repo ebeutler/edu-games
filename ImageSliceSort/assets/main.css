@@ -709,6 +709,78 @@ select:disabled {
 	tab-size: 2;
 }
 
+.complexity-box {
+	margin-top: 24px;
+}
+
+.complexity-heading {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 10px;
+}
+
+.complexity-heading h3 {
+	margin: 0;
+	font-size: 0.75rem;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.complexity-heading span {
+	color: var(--muted);
+	font-size: 0.7rem;
+}
+
+.complexity-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	margin: 0;
+	border: 1px solid var(--line);
+	background: #111315;
+}
+
+.complexity-grid div {
+	min-width: 0;
+	padding: 14px;
+}
+
+.complexity-grid div + div {
+	border-left: 1px solid var(--line);
+}
+
+.complexity-grid dt {
+	margin-bottom: 5px;
+	color: var(--muted);
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+.complexity-grid dd {
+	margin: 0;
+	color: var(--active);
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-size: 0.9rem;
+	font-weight: 700;
+}
+
+.complexity-grid .complexity-summary {
+	grid-column: 1 / -1;
+	border-top: 1px solid var(--line);
+	border-left: 0;
+}
+
+.complexity-summary dd {
+	color: var(--muted);
+	font-family: inherit;
+	font-size: 0.85rem;
+	font-weight: 400;
+	line-height: 1.55;
+}
+
 .canvas-frame {
 	display: grid;
 	min-height: 360px;
@@ -1183,6 +1255,25 @@ footer a:hover,
 		align-items: flex-start;
 		flex-direction: column;
 		gap: 10px;
+	}
+
+	.complexity-heading {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 4px;
+	}
+
+	.complexity-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.complexity-grid div + div {
+		border-top: 1px solid var(--line);
+		border-left: 0;
+	}
+
+	.complexity-grid .complexity-summary {
+		grid-column: auto;
 	}
 
 	.visualizer-heading {

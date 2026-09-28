@@ -34,8 +34,9 @@
 
 	const cacheElements = function () {
 		[
+			"algorithmAverageCase", "algorithmBestCase", "algorithmComplexitySummary",
 			"algorithmDescription", "algorithmDialog", "algorithmDialogTitle", "algorithmFields",
-			"algorithmPseudocode", "appShell", "cameraButton", "cameraCancel", "cameraClose",
+			"algorithmPseudocode", "algorithmWorstCase", "appShell", "cameraButton", "cameraCancel", "cameraClose",
 			"cameraDialog", "cameraMessage", "cameraVideo", "capturePhoto", "copyPseudocode",
 			"dropZone", "fileName", "fullscreen", "imageInput", "panelCount", "raceGrid", "reshuffle", "reset",
 			"showComparisons", "sliceCount", "sliceCountHint", "sliceCountNumber", "sortPanelTemplate", "speed",
@@ -128,6 +129,10 @@
 		elements.algorithmDialogTitle.textContent = definition.label;
 		elements.algorithmDescription.textContent = definition.description;
 		elements.algorithmPseudocode.textContent = definition.pseudoCode;
+		elements.algorithmBestCase.textContent = definition.bestCase;
+		elements.algorithmAverageCase.textContent = definition.averageCase;
+		elements.algorithmWorstCase.textContent = definition.worstCase;
+		elements.algorithmComplexitySummary.textContent = definition.complexitySummary;
 		elements.copyPseudocode.textContent = "Copy to clipboard";
 		elements.algorithmDialog.showModal();
 	};

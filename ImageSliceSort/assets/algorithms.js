@@ -634,11 +634,74 @@ shuffle(items)
 		}
 	};
 
+	const complexity = function (bestCase, averageCase, worstCase, complexitySummary) {
+		return {
+			bestCase: bestCase,
+			averageCase: averageCase,
+			worstCase: worstCase,
+			complexitySummary: complexitySummary
+		};
+	};
+
+	const complexityInfo = {
+		bubble: complexity("Ω(n)", "Θ(n²)", "O(n²)", "Adaptive quadratic."),
+		cocktail: complexity("Ω(n)", "Θ(n²)", "O(n²)", "Adaptive bidirectional quadratic."),
+		cycle: complexity("Ω(n²)", "Θ(n²)", "O(n²)", "Quadratic with relatively few swaps."),
+		heap: complexity("Ω(n log n)", "Θ(n log n)", "O(n log n)", "Linearithmic in all cases."),
+		insertion: complexity("Ω(n)", "Θ(n²)", "O(n²)", "Adaptive quadratic."),
+		binaryInsertion: complexity(
+			"Ω(n log n)",
+			"Θ(n²)",
+			"O(n²)",
+			"Binary search reduces comparisons, but shifting items keeps runtime quadratic."
+		),
+		merge: complexity(
+			"Ω(n log n)",
+			"Θ(n log n)",
+			"O(n log n)",
+			"Linearithmic algorithm; in-place shifts add JavaScript overhead in this visualizer."
+		),
+		oddEven: complexity("Ω(n)", "Θ(n²)", "O(n²)", "Adaptive quadratic."),
+		quick: complexity(
+			"Ω(n log n)",
+			"Θ(n log n)",
+			"O(n²)",
+			"Linearithmic expected runtime, but poor pivots make the worst case quadratic."
+		),
+		radix: complexity(
+			"Ω(d(n + b))",
+			"Θ(d(n + b))",
+			"O(d(n + b))",
+			"Linear per digit; d is the digit count and b is the bucket count (10). Array reconciliation adds JavaScript overhead here."
+		),
+		selection: complexity("Ω(n²)", "Θ(n²)", "O(n²)", "Quadratic with relatively few swaps."),
+		shell: complexity(
+			"Ω(n log n)",
+			"≈ Θ(n^1.5)",
+			"O(n²)",
+			"Gap-sequence dependent; this halving sequence retains a quadratic worst case."
+		),
+		cantBelieve: complexity("Ω(n²)", "Θ(n²)", "O(n²)", "Quadratic in all cases."),
+		gnome: complexity("Ω(n)", "Θ(n²)", "O(n²)", "Adaptive quadratic."),
+		stooge: complexity(
+			"Ω(n^2.71)",
+			"Θ(n^2.71)",
+			"O(n^2.71)",
+			"Superquadratic in all cases."
+		),
+		bogo: complexity(
+			"Ω(n)",
+			"Θ(n × n!)",
+			"Unbounded",
+			"Factorial expected runtime with no finite worst-case bound."
+		)
+	};
+
 	const define = function (id, label, create, options) {
 		return Object.freeze(Object.assign({
 			label: label,
 			create: create
-		}, algorithmInfo[id], options));
+		}, algorithmInfo[id], complexityInfo[id], options));
 	};
 
 	const definitions = Object.freeze({

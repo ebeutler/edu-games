@@ -125,12 +125,21 @@
 			}
 			messages.push("PASS: novelty limits");
 
+			const complexityFields = ["bestCase", "averageCase", "worstCase", "complexitySummary"];
 			Object.keys(definitions).forEach(function (name) {
-				if (!definitions[name].description || !definitions[name].pseudoCode) {
+				if (!definitions[name].description || !definitions[name].pseudoCode
+						|| complexityFields.some(function (field) {
+							return !definitions[name][field] || !definitions[name][field].trim();
+						})) {
 					throw new Error(name + " is missing algorithm information");
 				}
 			});
 			messages.push("PASS: algorithm information");
+
+			if (definitions.quick.worstCase !== "O(n²)" || definitions.bogo.worstCase !== "Unbounded") {
+				throw new Error("algorithm complexity edge cases are incorrect");
+			}
+			messages.push("PASS: algorithm complexity edge cases");
 
 			const firstRun = window.ImageSliceSortRace.createRun("first", "bubble");
 			const secondRun = window.ImageSliceSortRace.createRun("second", "bubble");
