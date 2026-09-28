@@ -72,7 +72,7 @@
 	const elements = {};
 	const state = {
 		language: "en", maze: null, world: null, runner: null, instructions: null,
-		running: false, frame: 0, lastStep: 0, hintIndex: -1, failedSeed: null
+		running: false, frame: 0, lastStep: 0, hintIndex: -1, failedSeed: null, camera: null
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -152,6 +152,14 @@
 		stop();
 		state.maze = Game.createMaze(seed, size);
 		state.world = Game.createWorld(state.maze);
+		state.camera = {
+			fromX: state.world.player.x,
+			fromY: state.world.player.y,
+			toX: state.world.player.x,
+			toY: state.world.player.y,
+			started: 0,
+			duration: 0
+		};
 		state.runner = null;
 		state.instructions = null;
 		state.failedSeed = null;
@@ -172,6 +180,14 @@
 	const resetWorld = function () {
 		stop();
 		state.world = Game.createWorld(state.maze);
+		state.camera = {
+			fromX: state.world.player.x,
+			fromY: state.world.player.y,
+			toX: state.world.player.x,
+			toY: state.world.player.y,
+			started: 0,
+			duration: 0
+		};
 		state.runner = null;
 		state.instructions = null;
 		elements.code.readOnly = false;
@@ -275,32 +291,68 @@
 		updateControls();
 	};
 
-	const advance = function () {
+	const cameraPosition = function (time) {
+		if (!state.camera) {
+			return { x: state.world.player.x, y: state.world.player.y, moving: false };
+		}
+		const progress = state.camera.duration
+			? Math.min(1, Math.max(0, (time - state.camera.started) / state.camera.duration))
+			: 1;
+		const eased = 1 - Math.pow(1 - progress, 3);
+		return {
+			x: state.camera.fromX + (state.camera.toX - state.camera.fromX) * eased,
+			y: state.camera.fromY + (state.camera.toY - state.camera.fromY) * eased,
+			moving: progress < 1
+		};
+	};
+
+	const moveCamera = function (fromX, fromY, time, interval) {
+		state.camera = {
+			fromX: fromX,
+			fromY: fromY,
+			toX: state.world.player.x,
+			toY: state.world.player.y,
+			started: time,
+			duration: Math.max(80, Math.min(360, interval * 0.8))
+		};
+	};
+
+	const advance = function (time, interval) {
 		if (!state.runner && !compile()) {
 			updateControls();
 			return;
 		}
+		const now = time || window.performance.now();
+		const camera = cameraPosition(now);
+		const fromX = state.world.player.x;
+		const fromY = state.world.player.y;
 		state.runner.step();
+		if (fromX !== state.world.player.x || fromY !== state.world.player.y) {
+			moveCamera(camera.x, camera.y, now, interval || 500);
+		}
 		const instruction = state.runner.lastInstruction;
 		elements.trace.textContent = instruction && instruction.text
 			? "L" + instruction.line + "  " + instruction.text
 			: "—";
 		updateMetrics();
-		draw();
+		draw(time);
 		if (state.runner.complete) {
 			finish();
 		}
 	};
 
 	const tick = function (time) {
-		if (!state.running) { return; }
 		const interval = 1000 / Number(elements.speed.value);
-		if (time - state.lastStep >= interval) {
+		if (state.running && time - state.lastStep >= interval) {
 			state.lastStep = time;
-			advance();
+			advance(time, interval);
 		}
-		if (state.running) {
+		const camera = cameraPosition(time);
+		draw(time);
+		if (state.running || camera.moving) {
 			state.frame = window.requestAnimationFrame(tick);
+		} else {
+			state.frame = 0;
 		}
 	};
 
@@ -313,7 +365,9 @@
 		state.lastStep = 0;
 		setStatus("running", "running");
 		updateControls();
-		state.frame = window.requestAnimationFrame(tick);
+		if (!state.frame) {
+			state.frame = window.requestAnimationFrame(tick);
+		}
 	};
 
 	function stop() {
@@ -325,9 +379,12 @@
 	}
 
 	const pause = function () {
-		stop();
+		state.running = false;
 		setStatus("paused");
 		updateControls();
+		if (!state.frame) {
+			state.frame = window.requestAnimationFrame(tick);
+		}
 	};
 
 	const updateControls = function () {
@@ -351,7 +408,7 @@
 		return Math.abs(x - state.world.player.x) + Math.abs(y - state.world.player.y) <= 1;
 	};
 
-	const draw = function () {
+	const draw = function (time) {
 		if (!state.world || !elements.maze) { return; }
 		const canvas = elements.maze;
 		const context = canvas.getContext("2d");
@@ -366,7 +423,10 @@
 		context.clearRect(0, 0, displaySize, displaySize);
 		context.fillStyle = "#080b0a";
 		context.fillRect(0, 0, displaySize, displaySize);
-		const cellSize = displaySize / state.maze.size;
+		const cellSize = displaySize / 7;
+		const camera = cameraPosition(time || window.performance.now());
+		const offsetX = displaySize / 2 - (camera.x + 0.5) * cellSize;
+		const offsetY = displaySize / 2 - (camera.y + 0.5) * cellSize;
 		const walls = Game.constants.WALLS;
 
 		for (let y = 0; y < state.maze.size; y++) {
@@ -376,15 +436,15 @@
 				const explored = state.world.explored.has(index);
 				if (!nearby && !explored) { continue; }
 				context.fillStyle = nearby ? "#26322b" : "#151b18";
-				context.fillRect(x * cellSize, y * cellSize, cellSize + 0.5, cellSize + 0.5);
+				context.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
 				context.strokeStyle = nearby ? "#b9d3bc" : "#526158";
 				context.lineWidth = Math.max(1, cellSize * 0.07);
 				context.beginPath();
 				const cell = state.maze.cells[index];
-				if (cell & walls[0]) { context.moveTo(x * cellSize, y * cellSize); context.lineTo((x + 1) * cellSize, y * cellSize); }
-				if (cell & walls[1]) { context.moveTo((x + 1) * cellSize, y * cellSize); context.lineTo((x + 1) * cellSize, (y + 1) * cellSize); }
-				if (cell & walls[2]) { context.moveTo(x * cellSize, (y + 1) * cellSize); context.lineTo((x + 1) * cellSize, (y + 1) * cellSize); }
-				if (cell & walls[3]) { context.moveTo(x * cellSize, y * cellSize); context.lineTo(x * cellSize, (y + 1) * cellSize); }
+				if (cell & walls[0]) { context.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); context.lineTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); }
+				if (cell & walls[1]) { context.moveTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); context.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
+				if (cell & walls[2]) { context.moveTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); context.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
+				if (cell & walls[3]) { context.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); context.lineTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); }
 				context.stroke();
 			}
 		}
@@ -392,25 +452,21 @@
 		if (visibleCell(state.maze.exit.x, state.maze.exit.y)) {
 			context.fillStyle = "#f2b84b";
 			const exit = state.maze.exit;
-			const cx = (exit.x + 0.5 + (exit.direction === 1 ? 0.43 : exit.direction === 3 ? -0.43 : 0)) * cellSize;
-			const cy = (exit.y + 0.5 + (exit.direction === 2 ? 0.43 : exit.direction === 0 ? -0.43 : 0)) * cellSize;
+			const cx = offsetX + (exit.x + 0.5 + (exit.direction === 1 ? 0.43 : exit.direction === 3 ? -0.43 : 0)) * cellSize;
+			const cy = offsetY + (exit.y + 0.5 + (exit.direction === 2 ? 0.43 : exit.direction === 0 ? -0.43 : 0)) * cellSize;
 			context.beginPath(); context.arc(cx, cy, Math.max(2, cellSize * 0.13), 0, Math.PI * 2); context.fill();
 		}
 
-		if (!state.world.won) {
-			const player = state.world.player;
-			const cx = (player.x + 0.5) * cellSize;
-			const cy = (player.y + 0.5) * cellSize;
-			context.save();
-			context.translate(cx, cy);
-			context.rotate(player.direction * Math.PI / 2);
-			context.fillStyle = "#9fd356";
-			context.beginPath();
-			context.moveTo(0, -cellSize * 0.3);
-			context.lineTo(cellSize * 0.22, cellSize * 0.22);
-			context.lineTo(-cellSize * 0.22, cellSize * 0.22);
-			context.closePath(); context.fill(); context.restore();
-		}
+		const player = state.world.player;
+		context.save();
+		context.translate(displaySize / 2, displaySize / 2);
+		context.rotate(player.direction * Math.PI / 2);
+		context.fillStyle = state.world.won ? "#f2b84b" : "#9fd356";
+		context.beginPath();
+		context.moveTo(0, -cellSize * 0.3);
+		context.lineTo(cellSize * 0.22, cellSize * 0.22);
+		context.lineTo(-cellSize * 0.22, cellSize * 0.22);
+		context.closePath(); context.fill(); context.restore();
 	};
 
 	const copyText = async function (value) {
@@ -455,7 +511,12 @@
 		elements.newMaze.addEventListener("click", function () { createScenario(elements.seed.value.trim() || randomSeed(), elements.size.value); });
 		elements.run.addEventListener("click", run);
 		elements.pause.addEventListener("click", pause);
-		elements.step.addEventListener("click", function () { stop(); advance(); updateControls(); });
+		elements.step.addEventListener("click", function () {
+			stop();
+			advance(window.performance.now(), 500);
+			state.frame = window.requestAnimationFrame(tick);
+			updateControls();
+		});
 		elements.reset.addEventListener("click", resetWorld);
 		elements.speed.addEventListener("input", function () { elements.speedValue.textContent = elements.speed.value + "/s"; });
 		elements.code.addEventListener("input", function () { safeStorage(function () { localStorage.setItem("mazeEscapeCode", elements.code.value); }); });

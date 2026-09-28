@@ -63,6 +63,9 @@
 				const result = Game.runProgram(wallFollower, "escape-" + index, 15);
 				assert(result.world.won, "wall follower failed seed escape-" + index);
 				assert(!result.error, "wall follower raised an error for seed escape-" + index);
+				assert(result.world.player.x < 0 || result.world.player.y < 0
+					|| result.world.player.x >= 15 || result.world.player.y >= 15,
+				"escaped player did not cross the maze boundary");
 			}
 			messages.push("PASS: right-hand rule escapes 50 generated mazes");
 

@@ -176,6 +176,8 @@
 		const y = world.player.y + DY[direction];
 		world.moves++;
 		if (x < 0 || y < 0 || x >= world.maze.size || y >= world.maze.size) {
+			world.player.x = x;
+			world.player.y = y;
 			world.won = true;
 			return true;
 		}
