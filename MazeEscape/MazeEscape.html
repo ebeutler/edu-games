@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Program an algorithm to escape a hidden maze.">
+	<title>Maze Escape</title>
+	<link href="assets/main.css" rel="stylesheet">
+	<script src="assets/game.js" defer></script>
+	<script src="assets/main.js" defer></script>
+</head>
+<body>
+	<header class="page-header">
+		<div>
+			<p class="eyebrow">edu-games / <span data-i18n="stageLabel">Stage 1: wall following</span></p>
+			<h1>Maze Escape</h1>
+			<p class="intro" data-i18n="intro">Write an algorithm that escapes every maze using only local wall sensors.</p>
+		</div>
+		<label class="language-field" for="language">
+			<span data-i18n="language">Language</span>
+			<select id="language">
+				<option value="en">English</option>
+				<option value="de">Deutsch</option>
+			</select>
+		</label>
+	</header>
+
+	<main class="app-shell">
+		<section class="maze-panel" aria-labelledby="mazeTitle">
+			<div class="section-heading">
+				<div>
+					<p class="eyebrow" data-i18n="currentRun">Current run</p>
+					<h2 id="mazeTitle" data-i18n="mazeTitle">Unknown territory</h2>
+				</div>
+				<p id="status" class="status" data-state="ready" aria-live="polite">Ready</p>
+			</div>
+
+			<div class="canvas-frame">
+				<canvas id="maze" width="720" height="720" data-i18n-aria="mazeAria" aria-label="Fog-covered maze"></canvas>
+			</div>
+
+			<dl class="metrics" data-i18n-aria="metricsAria" aria-label="Run statistics">
+				<div><dt data-i18n="moves">Moves</dt><dd id="moves">0</dd></div>
+				<div><dt data-i18n="turns">Turns</dt><dd id="turns">0</dd></div>
+				<div><dt data-i18n="instructions">Instructions</dt><dd id="instructions">0</dd></div>
+				<div><dt data-i18n="position">Position</dt><dd id="position">?, ?</dd></div>
+			</dl>
+
+			<div class="maze-settings">
+				<label><span data-i18n="seed">Seed</span><input id="seed" type="text" maxlength="80" spellcheck="false"></label>
+				<label><span data-i18n="size">Size</span><input id="size" type="number" min="5" max="31" value="11"></label>
+				<button id="newMaze" class="button" type="button" data-i18n="newMaze">New maze</button>
+			</div>
+			<button id="shareMaze" class="text-button" type="button" hidden data-i18n="copyMazeLink">Copy maze link</button>
+		</section>
+
+		<section class="code-panel" aria-labelledby="codeTitle">
+			<div class="section-heading code-heading">
+				<div>
+					<p class="eyebrow" data-i18n="yourAlgorithm">Your algorithm</p>
+					<h2 id="codeTitle" data-i18n="codeTitle">Program the explorer</h2>
+				</div>
+				<button id="copyCode" class="copy-button" type="button" data-i18n="copyCode">Copy code</button>
+			</div>
+
+			<label class="visually-hidden" for="code" data-i18n="codeLabel">Pseudocode editor</label>
+			<textarea id="code" class="code-editor" rows="17" spellcheck="false" autocapitalize="off">WHILE NOT AT_GOAL
+  # Add your wall-following rules here
+END</textarea>
+			<p class="editor-note" data-i18n="englishCode">Commands are always written in English and uppercase.</p>
+
+			<div class="run-controls">
+				<button id="run" class="button button-primary" type="button" data-i18n="run">Run</button>
+				<button id="pause" class="button" type="button" disabled data-i18n="pause">Pause</button>
+				<button id="step" class="button" type="button" data-i18n="step">Step</button>
+				<button id="reset" class="text-button" type="button" data-i18n="reset">Reset</button>
+				<label class="speed-field"><span data-i18n="speed">Speed</span><input id="speed" type="range" min="1" max="30" value="8"><output id="speedValue">8/s</output></label>
+			</div>
+
+			<div class="trace-box">
+				<span data-i18n="trace">Execution trace</span>
+				<code id="trace">—</code>
+			</div>
+
+			<div class="learning-grid">
+				<section class="reference-card" aria-labelledby="referenceTitle">
+					<h3 id="referenceTitle" data-i18n="reference">Command reference</h3>
+					<dl>
+						<div><dt><code>MOVE</code></dt><dd data-i18n="moveHelp">Move one cell forward.</dd></div>
+						<div><dt><code>TURN LEFT</code></dt><dd data-i18n="turnLeftHelp">Turn 90° left.</dd></div>
+						<div><dt><code>TURN RIGHT</code></dt><dd data-i18n="turnRightHelp">Turn 90° right.</dd></div>
+						<div><dt><code>WALL FRONT</code></dt><dd data-i18n="wallHelp">Also available with LEFT or RIGHT.</dd></div>
+						<div><dt><code>AT_GOAL</code></dt><dd data-i18n="goalHelp">True after leaving the maze.</dd></div>
+						<div><dt><code>IF / ELSE / END</code></dt><dd data-i18n="ifHelp">Choose actions from a condition.</dd></div>
+						<div><dt><code>WHILE / END</code></dt><dd data-i18n="whileHelp">Repeat while a condition is true.</dd></div>
+					</dl>
+				</section>
+
+				<section class="hint-card" aria-labelledby="hintTitle">
+					<h3 id="hintTitle" data-i18n="hints">Guided hints</h3>
+					<p id="hintText" data-i18n="hintStart">Try your own idea first. Reveal a hint when you are stuck.</p>
+					<button id="nextHint" class="button" type="button" data-i18n="revealHint">Reveal a hint</button>
+				</section>
+			</div>
+
+			<section id="results" class="results" aria-labelledby="resultsTitle" hidden>
+				<div class="section-heading">
+					<div><p class="eyebrow" data-i18n="challenge">Challenge</p><h3 id="resultsTitle" data-i18n="testTitle">Testing other mazes</h3></div>
+					<p id="stars" class="stars" aria-live="polite">☆☆☆</p>
+				</div>
+				<p id="testSummary"></p>
+				<ul id="testDetails"></ul>
+				<button id="openFailure" class="button" type="button" hidden data-i18n="openFailure">Open failed maze</button>
+			</section>
+		</section>
+	</main>
+
+	<footer>
+		<p data-i18n="footer">Your code stays in this browser. Maze seeds can be shared through the URL.</p>
+	</footer>
+</body>
+</html>

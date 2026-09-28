@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Maze Escape checks</title>
+	<script src="assets/game.js"></script>
+</head>
+<body>
+	<h1>Maze Escape checks</h1>
+	<pre id="results">Running...</pre>
+	<script>
+		(function () {
+			"use strict";
+
+			const Game = window.MazeEscapeGame;
+			const messages = [];
+			const wallFollower = [
+				"WHILE NOT AT_GOAL",
+				"  IF NOT WALL RIGHT",
+				"    TURN RIGHT",
+				"    MOVE",
+				"  ELSE",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN LEFT",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
+
+			const assert = function (condition, message) {
+				if (!condition) {
+					throw new Error(message);
+				}
+			};
+
+			const first = Game.createMaze("repeatable", 11);
+			const second = Game.createMaze("repeatable", 11);
+			assert(JSON.stringify(first) === JSON.stringify(second), "same seed produced different mazes");
+			messages.push("PASS: seeded generation is deterministic");
+
+			[5, 11, 31].forEach(function (size) {
+				const maze = Game.createMaze("tree-" + size, size);
+				let passages = 0;
+				for (let y = 0; y < size; y++) {
+					for (let x = 0; x < size; x++) {
+						const cell = maze.cells[y * size + x];
+						if (x + 1 < size && !(cell & Game.constants.WALLS[1])) { passages++; }
+						if (y + 1 < size && !(cell & Game.constants.WALLS[2])) { passages++; }
+					}
+				}
+				assert(passages === size * size - 1, "maze is not a tree at size " + size);
+			});
+			messages.push("PASS: generated mazes are perfect mazes");
+
+			const instructions = Game.parse(wallFollower);
+			assert(instructions.some(function (instruction) { return instruction.op === "JUMP_IF_FALSE"; }), "IF/WHILE did not compile");
+			assert(instructions.some(function (instruction) { return instruction.op === "TURN"; }), "TURN did not compile");
+			messages.push("PASS: keyword pseudocode compiles");
+
+			for (let index = 0; index < 50; index++) {
+				const result = Game.runProgram(wallFollower, "escape-" + index, 15);
+				assert(result.world.won, "wall follower failed seed escape-" + index);
+				assert(!result.error, "wall follower raised an error for seed escape-" + index);
+			}
+			messages.push("PASS: right-hand rule escapes 50 generated mazes");
+
+			let parseError;
+			try { Game.parse("FLY"); } catch (error) { parseError = error; }
+			assert(parseError && parseError.code === "UNKNOWN_COMMAND" && parseError.line === 1, "unknown command error is incorrect");
+			messages.push("PASS: parser reports source errors");
+
+			const collision = Game.runProgram("MOVE", "collision", 5);
+			assert(collision.error && ["HIT_WALL", "STOPPED_BEFORE_GOAL"].includes(collision.error.code), "unsafe program did not stop");
+			messages.push("PASS: unsafe programs stop with an error");
+
+			const stalled = Game.runProgram("WHILE NOT AT_GOAL\nEND", "stalled", 5);
+			assert(stalled.error && stalled.error.code === "LIMIT_REACHED", "empty loop did not hit execution limit");
+			messages.push("PASS: non-progressing loops are bounded");
+
+			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
+		})();
+	</script>
+</body>
+</html>
