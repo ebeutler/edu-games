@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Sort a scrambled photo to visualize sorting algorithms.">
+	<title>Image Slice Sort</title>
+	<link href="assets/main.css" rel="stylesheet">
+	<script src="assets/algorithms.js" defer></script>
+	<script src="assets/race.js" defer></script>
+	<script src="assets/main.js" defer></script>
+</head>
+<body>
+	<header class="page-header">
+		<a class="help-link" href="help.html">Help</a>
+		<p class="eyebrow">edu-games / visual algorithms</p>
+		<h1>Image Slice Sort</h1>
+		<p class="intro">Scramble a photograph into vertical slices, then watch an algorithm put it back together.</p>
+	</header>
+
+	<main class="app-shell" id="appShell">
+		<aside class="control-panel" aria-label="Sorting controls">
+			<section>
+				<div class="control-section-heading">
+					<h2>1. Choose a photo</h2>
+					<button id="cameraButton" class="camera-button" type="button" aria-label="Take a photo with a camera" title="Take a photo with a camera">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6.5 9.5 4h5L16 6.5h3A2.5 2.5 0 0 1 21.5 9v8A2.5 2.5 0 0 1 19 19.5H5A2.5 2.5 0 0 1 2.5 17V9A2.5 2.5 0 0 1 5 6.5h3Z"/><circle cx="12" cy="13" r="4"/></svg>
+					</button>
+				</div>
+				<label class="drop-zone" id="dropZone" for="imageInput">
+					<span class="drop-zone-title">Take or drop a photo</span>
+					<span class="drop-zone-hint">Choose an image, use your phone camera, or drag a file here.</span>
+				</label>
+				<input id="imageInput" class="visually-hidden" type="file" accept="image/*">
+				<p id="fileName" class="file-name">No photo selected</p>
+			</section>
+
+			<section>
+				<h2>2. Configure</h2>
+				<div class="field">
+					<div class="field-heading">
+						<label for="sliceCount">Slices</label>
+						<input id="sliceCountNumber" class="slice-count-input" type="number" min="2" max="300" value="120" aria-label="Number of slices">
+					</div>
+					<input id="sliceCount" type="range" min="2" max="300" value="120">
+					<small id="sliceCountHint" class="field-hint" aria-live="polite"></small>
+				</div>
+
+				<fieldset id="panelCount" class="field panel-count-field">
+					<legend class="visually-hidden">Algorithms shown</legend>
+					<span aria-hidden="true">Algorithms shown</span>
+					<div class="panel-count-options">
+						<label class="panel-count-option"><input class="visually-hidden" type="radio" name="panelCount" value="1" checked><span>1</span></label>
+						<label class="panel-count-option"><input class="visually-hidden" type="radio" name="panelCount" value="2"><span>2</span></label>
+						<label class="panel-count-option"><input class="visually-hidden" type="radio" name="panelCount" value="4"><span>4</span></label>
+					</div>
+				</fieldset>
+				<div id="algorithmFields" class="algorithm-fields"></div>
+
+				<div class="field">
+					<div class="field-heading">
+						<label for="speed">Speed</label>
+						<output id="speedValue" for="speed">30 steps/s</output>
+					</div>
+					<input id="speed" type="range" min="1" max="240" value="30">
+				</div>
+
+				<label class="check-field" for="showComparisons">
+					<input id="showComparisons" type="checkbox" checked>
+					<span>Show every comparison</span>
+				</label>
+			</section>
+
+			<section>
+				<h2>3. Sort</h2>
+				<div class="primary-actions">
+					<button id="start" class="button button-primary" type="button" disabled>Start</button>
+					<button id="stop" class="button" type="button" disabled>Stop</button>
+					<button id="step" class="button" type="button" disabled>Step</button>
+				</div>
+				<div class="secondary-actions">
+					<button id="reset" class="text-button" type="button" disabled>Reset</button>
+					<button id="reshuffle" class="text-button" type="button" disabled>Reshuffle</button>
+				</div>
+			</section>
+			<ul class="legend" aria-label="Visualization color legend">
+				<li><span class="legend-swatch legend-comparison" aria-hidden="true"></span>Comparison</li>
+				<li><span class="legend-swatch legend-move" aria-hidden="true"></span>Move</li>
+				<li><span class="legend-swatch legend-pivot" aria-hidden="true"></span>QuickSort pivot</li>
+			</ul>
+		</aside>
+
+		<section class="visualizer" aria-labelledby="visualizerTitle">
+			<div class="visualizer-heading">
+				<div>
+					<p class="eyebrow">Current run</p>
+					<h2 id="visualizerTitle">Sorting workspace</h2>
+				</div>
+				<div class="visualizer-actions">
+					<p id="status" class="status" aria-live="polite">Choose a photo to begin</p>
+					<button id="fullscreen" class="fullscreen-button" type="button" aria-pressed="false">Full screen</button>
+				</div>
+			</div>
+
+			<div id="raceGrid" class="race-grid" data-count="1"></div>
+		</section>
+
+		<dialog id="cameraDialog" class="camera-dialog" aria-labelledby="cameraDialogTitle">
+			<button id="cameraClose" class="dialog-close" type="button" aria-label="Close camera">&times;</button>
+			<p class="eyebrow">Camera</p>
+			<h2 id="cameraDialogTitle">Take a photo</h2>
+			<div class="camera-preview">
+				<video id="cameraVideo" autoplay muted playsinline></video>
+				<p id="cameraMessage" class="camera-message" aria-live="polite">Starting camera...</p>
+			</div>
+			<div class="camera-actions">
+				<button id="switchCamera" class="button" type="button" hidden>Switch camera</button>
+				<button id="cameraCancel" class="button" type="button">Cancel</button>
+				<button id="capturePhoto" class="button button-primary" type="button" disabled>Take photo</button>
+			</div>
+		</dialog>
+
+		<dialog id="algorithmDialog" class="algorithm-dialog" aria-labelledby="algorithmDialogTitle">
+			<form method="dialog">
+				<button class="dialog-close" type="submit" aria-label="Close algorithm information">&times;</button>
+			</form>
+			<p class="eyebrow">Algorithm overview</p>
+			<h2 id="algorithmDialogTitle"></h2>
+			<p id="algorithmDescription" class="algorithm-description"></p>
+			<section class="pseudocode-box" aria-labelledby="pseudocodeTitle">
+				<div class="pseudocode-heading">
+					<h3 id="pseudocodeTitle">Pseudocode</h3>
+					<button id="copyPseudocode" class="copy-button" type="button">Copy to clipboard</button>
+				</div>
+				<pre><code id="algorithmPseudocode"></code></pre>
+			</section>
+			<section class="complexity-box" aria-labelledby="complexityTitle">
+				<div class="complexity-heading">
+					<h3 id="complexityTitle">Runtime complexity</h3>
+					<span>n = number of elements</span>
+				</div>
+				<dl class="complexity-grid">
+					<div><dt>Best case</dt><dd id="algorithmBestCase"></dd></div>
+					<div><dt>Average case</dt><dd id="algorithmAverageCase"></dd></div>
+					<div><dt>Worst case</dt><dd id="algorithmWorstCase"></dd></div>
+					<div class="complexity-summary"><dt>Summary</dt><dd id="algorithmComplexitySummary"></dd></div>
+				</dl>
+			</section>
+		</dialog>
+	</main>
+
+	<template id="sortPanelTemplate">
+		<article class="sort-panel">
+			<header class="sort-panel-heading">
+				<div class="panel-title">
+					<p class="panel-number" data-role="number"></p>
+					<div class="panel-title-row">
+						<h3 data-role="title"></h3>
+						<button class="algorithm-info-button" data-role="info" type="button">i</button>
+					</div>
+				</div>
+				<span class="panel-status" data-role="status">Ready</span>
+			</header>
+			<div class="canvas-frame" data-role="canvasFrame">
+				<canvas data-role="canvas" hidden></canvas>
+				<div class="empty-state" data-role="emptyState">
+					<span class="empty-mark" aria-hidden="true">120</span>
+					<p>Your scrambled photo will appear here.</p>
+				</div>
+			</div>
+			<dl class="metrics" aria-label="Sorting statistics">
+				<div><dt>Comparisons</dt><dd data-role="comparisons">0</dd></div>
+				<div><dt>Moves</dt><dd data-role="moves">0</dd></div>
+				<div><dt>Elapsed</dt><dd data-role="elapsed">0.0 s</dd></div>
+			</dl>
+		</article>
+	</template>
+
+	<footer>
+		<p>Photos stay on this device. Nothing is uploaded. <a href="privacy.html">Data privacy</a> | Image Slice Sort is <a href="https://github.com/ebeutler/edu-games" target="_blank" rel="noopener noreferrer">open source on GitHub</a>.</p>
+	</footer>
+</body>
+</html>
