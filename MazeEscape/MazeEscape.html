@@ -100,12 +100,12 @@ END</textarea>
 					<h3 id="hintTitle" data-i18n="hints">Guided hints</h3>
 					<p id="hintText" data-i18n="hintStart">Try your own idea first. Reveal a hint when you are stuck.</p>
 					<div class="hint-actions">
-						<button id="revealHint" class="button" type="button" data-i18n="revealHint">Reveal a hint</button>
-						<div class="hint-navigation">
+						<div id="hintNavigation" class="hint-navigation" hidden>
 							<button id="previousHint" class="hint-nav-button" type="button" data-i18n-aria="previousHint" aria-label="Previous hint" disabled>◀</button>
 							<output id="hintPosition">0/0</output>
 							<button id="nextHint" class="hint-nav-button" type="button" data-i18n-aria="nextHint" aria-label="Next hint" disabled>▶</button>
 						</div>
+						<button id="revealHint" class="button" type="button" data-i18n="revealHint">Reveal a hint</button>
 					</div>
 				</section>
 			</div>

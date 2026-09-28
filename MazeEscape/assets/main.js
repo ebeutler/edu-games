@@ -529,6 +529,7 @@
 
 	const updateHintControls = function () {
 		const hintCount = translations[state.language].hintsList.length;
+		elements.hintNavigation.hidden = state.revealedHintIndex < 1;
 		elements.previousHint.disabled = state.hintIndex <= 0;
 		elements.nextHint.disabled = state.hintIndex < 0 || state.hintIndex >= state.revealedHintIndex;
 		elements.revealHint.disabled = state.revealedHintIndex >= hintCount - 1;
@@ -560,7 +561,7 @@
 
 	const cacheElements = function () {
 		[
-			"code", "copyCode", "hintPosition", "hintText", "instructions", "language", "maze", "moves", "newMaze", "nextHint", "openFailure",
+			"code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "maze", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns"
 		].forEach(function (id) { elements[id] = byId(id); });
