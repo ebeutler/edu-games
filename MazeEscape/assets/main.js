@@ -19,7 +19,7 @@
 			moveHelp: "Move one cell forward.", turnLeftHelp: "Turn 90° left.", turnRightHelp: "Turn 90° right.",
 			wallHelp: "Also available with LEFT or RIGHT.", goalHelp: "True after leaving the maze.", ifHelp: "Choose actions from a condition.",
 			whileHelp: "Repeat while a condition is true.", hints: "Guided hints", hintStart: "Try your own idea first. Reveal a hint when you are stuck.",
-			revealHint: "Reveal a hint", challenge: "Challenge", testTitle: "Testing other mazes", openFailure: "Open failed maze",
+			revealHint: "Reveal a hint", previousHint: "Previous hint", nextHint: "Next hint", challenge: "Challenge", testTitle: "Testing other mazes", openFailure: "Open failed maze",
 			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", mazeAria: "Fog-covered maze", metricsAria: "Run statistics",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
 			reliableStar: "Reliability: all test mazes", efficientStar: "Efficiency: each test used at most {limit} moves", scaleStar: "Scale: three larger mazes",
@@ -50,7 +50,7 @@
 			moveHelp: "Ein Feld vorwärts gehen.", turnLeftHelp: "Um 90° nach links drehen.", turnRightHelp: "Um 90° nach rechts drehen.",
 			wallHelp: "Auch mit LEFT oder RIGHT verfügbar.", goalHelp: "Wahr, nachdem das Labyrinth verlassen wurde.", ifHelp: "Aktionen anhand einer Bedingung auswählen.",
 			whileHelp: "Wiederholen, solange eine Bedingung wahr ist.", hints: "Schrittweise Hinweise", hintStart: "Probiere zuerst deine eigene Idee. Zeige einen Hinweis, wenn du nicht weiterkommst.",
-			revealHint: "Hinweis zeigen", challenge: "Herausforderung", testTitle: "Weitere Labyrinthe werden getestet", openFailure: "Fehlgeschlagenes Labyrinth öffnen",
+			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Weitere Labyrinthe werden getestet", openFailure: "Fehlgeschlagenes Labyrinth öffnen",
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", mazeAria: "Labyrinth im Nebel", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
 			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei größere Labyrinthe",
@@ -74,7 +74,7 @@
 	const elements = {};
 	const state = {
 		language: "en", maze: null, world: null, runner: null, instructions: null,
-		running: false, frame: 0, lastStep: 0, hintIndex: -1, failedSeed: null, camera: null
+		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null, camera: null
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -116,6 +116,7 @@
 		if (state.hintIndex >= 0) {
 			elements.hintText.textContent = translations[state.language].hintsList[state.hintIndex];
 		}
+		updateHintControls();
 		if (!state.runner) {
 			setStatus("ready");
 		} else if (state.runner.error) {
@@ -526,6 +527,22 @@
 		}, 1600);
 	};
 
+	const updateHintControls = function () {
+		const hintCount = translations[state.language].hintsList.length;
+		elements.previousHint.disabled = state.hintIndex <= 0;
+		elements.nextHint.disabled = state.hintIndex < 0 || state.hintIndex >= state.revealedHintIndex;
+		elements.revealHint.disabled = state.revealedHintIndex >= hintCount - 1;
+		elements.hintPosition.value = state.hintIndex < 0
+			? "0/0"
+			: (state.hintIndex + 1) + "/" + (state.revealedHintIndex + 1);
+	};
+
+	const showHint = function (index) {
+		state.hintIndex = index;
+		elements.hintText.textContent = translations[state.language].hintsList[index];
+		updateHintControls();
+	};
+
 	const indentNewLine = function (event) {
 		if (event.key !== "Enter" || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
 			return;
@@ -543,8 +560,8 @@
 
 	const cacheElements = function () {
 		[
-			"code", "copyCode", "hintText", "instructions", "language", "maze", "moves", "newMaze", "nextHint", "openFailure",
-			"pause", "position", "reset", "results", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stars",
+			"code", "copyCode", "hintPosition", "hintText", "instructions", "language", "maze", "moves", "newMaze", "nextHint", "openFailure",
+			"pause", "position", "previousHint", "reset", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
@@ -566,11 +583,12 @@
 		elements.code.addEventListener("input", function () { safeStorage(function () { localStorage.setItem("mazeEscapeCode", elements.code.value); }); });
 		elements.copyCode.addEventListener("click", function () { showCopyResult(elements.copyCode, elements.code.value); });
 		elements.shareMaze.addEventListener("click", function () { showCopyResult(elements.shareMaze, window.location.href, "mazeLinkCopied"); });
-		elements.nextHint.addEventListener("click", function () {
-			state.hintIndex = Math.min(state.hintIndex + 1, translations[state.language].hintsList.length - 1);
-			elements.hintText.textContent = translations[state.language].hintsList[state.hintIndex];
-			elements.nextHint.disabled = state.hintIndex === translations[state.language].hintsList.length - 1;
+		elements.revealHint.addEventListener("click", function () {
+			state.revealedHintIndex = Math.min(state.revealedHintIndex + 1, translations[state.language].hintsList.length - 1);
+			showHint(state.revealedHintIndex);
 		});
+		elements.previousHint.addEventListener("click", function () { showHint(state.hintIndex - 1); });
+		elements.nextHint.addEventListener("click", function () { showHint(state.hintIndex + 1); });
 		elements.openFailure.addEventListener("click", function () {
 			if (state.failedSeed) { createScenario(state.failedSeed.seed, state.failedSeed.size || state.maze.size); }
 		});
