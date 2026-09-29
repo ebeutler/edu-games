@@ -4,8 +4,10 @@ Small educational games
 # MazeEscape
 
 Stage-based maze programming game. Stage 1 asks students to write an English keyword-pseudocode
-algorithm that escapes deterministic, fog-covered perfect mazes using only local wall sensors. The
-interface and guided hints are available in English and German.
+wall-following algorithm for deterministic, fog-covered perfect mazes. Stage 2 introduces the Pledge
+algorithm with disconnected obstacle fields, global headings, integer variables, comparisons, and a
+student-maintained turn balance. The interface and guided hints are available in English and Swiss
+Standard German.
 
 Open `MazeEscape/MazeEscape.html` in a modern browser. Maze seeds are reproducible through URL
 parameters and student code is stored only in the browser. `MazeEscape/tests.html` runs the maze

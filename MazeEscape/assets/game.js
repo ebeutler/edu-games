@@ -133,6 +133,73 @@
 		};
 	};
 
+	const createPledgeMaze = function (seed, requestedSize) {
+		const size = Math.max(7, Math.min(31, Math.floor(Number(requestedSize) || 11)));
+		const random = randomFor(seed);
+		const cells = new Array(size * size).fill(0);
+		const blocked = new Set();
+		for (let position = 0; position < size; position++) {
+			cells[indexOf(size, size - 1, position)] |= WALLS[EAST];
+			cells[indexOf(size, position, size - 1)] |= WALLS[SOUTH];
+			cells[indexOf(size, 0, position)] |= WALLS[WEST];
+		}
+
+		const targetObstacles = Math.max(2, Math.floor(size / 3));
+		for (let attempt = 0, placed = 0; attempt < 300 && placed < targetObstacles; attempt++) {
+			const width = 1 + Math.floor(random() * Math.min(3, size - 4));
+			const height = 1 + Math.floor(random() * Math.min(3, size - 4));
+			const x = 1 + Math.floor(random() * (size - width - 2));
+			const y = 1 + Math.floor(random() * (size - height - 2));
+			let clear = true;
+			for (let cellY = y - 1; cellY <= y + height && clear; cellY++) {
+				for (let cellX = x - 1; cellX <= x + width; cellX++) {
+					if (blocked.has(indexOf(size, cellX, cellY))) {
+						clear = false;
+						break;
+					}
+				}
+			}
+			if (!clear) { continue; }
+			for (let cellY = y; cellY < y + height; cellY++) {
+				for (let cellX = x; cellX < x + width; cellX++) {
+					blocked.add(indexOf(size, cellX, cellY));
+				}
+			}
+			placed++;
+		}
+
+		blocked.forEach(function (cellIndex) { cells[cellIndex] = 15; });
+		for (let y = 0; y < size; y++) {
+			for (let x = 0; x < size; x++) {
+				const cellIndex = indexOf(size, x, y);
+				if (blocked.has(cellIndex)) { continue; }
+				for (let direction = 0; direction < 4; direction++) {
+					const neighborX = x + DX[direction];
+					const neighborY = y + DY[direction];
+					if (neighborX >= 0 && neighborY >= 0 && neighborX < size && neighborY < size
+							&& blocked.has(indexOf(size, neighborX, neighborY))) {
+						cells[cellIndex] |= WALLS[direction];
+					}
+				}
+			}
+		}
+
+		const blockedColumns = Array.from(blocked, function (cellIndex) { return cellIndex % size; });
+		const startX = blockedColumns.length
+			? blockedColumns[Math.floor(random() * blockedColumns.length)]
+			: Math.floor(random() * size);
+		return {
+			seed: String(seed),
+			size: size,
+			stage: 2,
+			cells: cells,
+			blocked: blocked,
+			goalEdge: NORTH,
+			exit: { x: startX, y: 0, direction: NORTH },
+			start: { x: startX, y: size - 1, direction: NORTH }
+		};
+	};
+
 	const createWorld = function (maze) {
 		const player = {
 			x: maze.start.x,
@@ -187,7 +254,29 @@
 		return true;
 	};
 
-	const conditionFrom = function (text, line) {
+	const expressionFrom = function (text, line) {
+		const source = text.trim();
+		if (/^-?\d+$/.test(source)) {
+			return { type: "NUMBER", value: Number(source) };
+		}
+		const variable = /^([A-Z][A-Z0-9_]*)(?:\s*([+-])\s*(\d+))?$/.exec(source);
+		if (variable) {
+			return {
+				type: "VARIABLE",
+				name: variable[1],
+				delta: variable[2] === "+" ? Number(variable[3]) : variable[2] === "-" ? -Number(variable[3]) : 0
+			};
+		}
+		throw { code: "UNKNOWN_EXPRESSION", line: line, detail: source };
+	};
+
+	const requireStage = function (stage, line) {
+		if (stage < 2) {
+			throw { code: "COMMAND_NOT_AVAILABLE", line: line };
+		}
+	};
+
+	const conditionFrom = function (text, line, stage) {
 		let source = text.trim();
 		let negate = false;
 		if (source.startsWith("NOT ")) {
@@ -201,10 +290,27 @@
 		if (wall) {
 			return { type: "WALL", relative: wall[1], negate: negate };
 		}
+		const heading = /^HEADING (NORTH|EAST|SOUTH|WEST)$/.exec(source);
+		if (heading) {
+			requireStage(stage, line);
+			return { type: "HEADING", direction: ["NORTH", "EAST", "SOUTH", "WEST"].indexOf(heading[1]), negate: negate };
+		}
+		const comparison = /^([A-Z][A-Z0-9_]*)\s*(=|!=|<=|>=|<|>)\s*(-?\d+|[A-Z][A-Z0-9_]*)$/.exec(source);
+		if (comparison) {
+			requireStage(stage, line);
+			return {
+				type: "COMPARISON",
+				left: { type: "VARIABLE", name: comparison[1], delta: 0 },
+				operator: comparison[2],
+				right: expressionFrom(comparison[3], line),
+				negate: negate
+			};
+		}
 		throw { code: "UNKNOWN_CONDITION", line: line, detail: source };
 	};
 
-	const parse = function (source) {
+	const parse = function (source, requestedStage) {
+		const stage = Number(requestedStage) || 1;
 		const instructions = [];
 		const blocks = [];
 		const lines = String(source).replace(/\r/g, "").split("\n");
@@ -224,11 +330,25 @@
 				instructions.push({ op: "TURN", direction: turnMatch[1], line: line, text: text });
 				return;
 			}
+			const setMatch = /^SET ([A-Z][A-Z0-9_]*) TO (.+)$/.exec(command);
+			if (setMatch) {
+				requireStage(stage, line);
+				const sourceName = /^SET\s+([A-Z][A-Z0-9_]*)\s+TO\s+/i.exec(text)[1];
+				instructions.push({
+					op: "SET",
+					name: setMatch[1],
+					displayName: sourceName,
+					expression: expressionFrom(setMatch[2], line),
+					line: line,
+					text: text
+				});
+				return;
+			}
 			const blockMatch = /^(IF|WHILE) (.+)$/.exec(command);
 			if (blockMatch) {
 				const instruction = {
 					op: "JUMP_IF_FALSE",
-					condition: conditionFrom(blockMatch[2], line),
+					condition: conditionFrom(blockMatch[2], line, stage),
 					target: null,
 					line: line,
 					text: text
@@ -275,10 +395,32 @@
 		return instructions;
 	};
 
-	const evaluate = function (condition, world) {
-		const result = condition.type === "AT_GOAL"
-			? world.won
-			: hasWall(world, condition.relative);
+	const expressionValue = function (expression, variables) {
+		if (expression.type === "NUMBER") { return expression.value; }
+		if (!Object.prototype.hasOwnProperty.call(variables, expression.name)) {
+			throw { code: "UNDEFINED_VARIABLE", detail: expression.name };
+		}
+		return variables[expression.name] + expression.delta;
+	};
+
+	const evaluate = function (condition, world, variables) {
+		let result;
+		if (condition.type === "AT_GOAL") {
+			result = world.won;
+		} else if (condition.type === "WALL") {
+			result = hasWall(world, condition.relative);
+		} else if (condition.type === "HEADING") {
+			result = world.player.direction === condition.direction;
+		} else {
+			const left = expressionValue(condition.left, variables);
+			const right = expressionValue(condition.right, variables);
+			result = condition.operator === "=" ? left === right
+				: condition.operator === "!=" ? left !== right
+					: condition.operator === "<" ? left < right
+						: condition.operator === ">" ? left > right
+							: condition.operator === "<=" ? left <= right
+								: left >= right;
+		}
 		return condition.negate ? !result : result;
 	};
 
@@ -292,6 +434,8 @@
 			complete: false,
 			error: null,
 			lastInstruction: null,
+			variables: {},
+			variableNames: {},
 			step: function () {
 				if (this.complete) {
 					return this;
@@ -323,10 +467,30 @@
 						this.pointer++;
 						return this;
 					}
+					if (instruction.op === "SET") {
+						try {
+							this.variables[instruction.name] = expressionValue(instruction.expression, this.variables);
+							this.variableNames[instruction.name] = instruction.displayName;
+						} catch (error) {
+							error.line = instruction.line;
+							this.error = error;
+							this.complete = true;
+							return this;
+						}
+						this.pointer++;
+						continue;
+					}
 					if (instruction.op === "JUMP_IF_FALSE") {
-						this.pointer = evaluate(instruction.condition, this.world)
-							? this.pointer + 1
-							: instruction.target;
+						try {
+							this.pointer = evaluate(instruction.condition, this.world, this.variables)
+								? this.pointer + 1
+								: instruction.target;
+						} catch (error) {
+							error.line = instruction.line;
+							this.error = error;
+							this.complete = true;
+							return this;
+						}
 					} else if (instruction.op === "JUMP") {
 						this.pointer = instruction.target;
 					} else {
@@ -341,9 +505,10 @@
 		};
 	};
 
-	const runProgram = function (source, seed, size) {
-		const world = createWorld(createMaze(seed, size));
-		const runner = createRunner(parse(source), world);
+	const runProgram = function (source, seed, size, requestedStage) {
+		const stage = Number(requestedStage) || 1;
+		const world = createWorld(stage === 2 ? createPledgeMaze(seed, size) : createMaze(seed, size));
+		const runner = createRunner(parse(source, stage), world);
 		while (!runner.complete) {
 			runner.step();
 		}
@@ -353,6 +518,7 @@
 	window.MazeEscapeGame = {
 		constants: { NORTH: NORTH, EAST: EAST, SOUTH: SOUTH, WEST: WEST, WALLS: WALLS },
 		createMaze: createMaze,
+		createPledgeMaze: createPledgeMaze,
 		createWorld: createWorld,
 		createRunner: createRunner,
 		hasWall: hasWall,

@@ -28,6 +28,32 @@
 				"  END",
 				"END"
 			].join("\n");
+			const pledge = [
+				"SET turnBalance TO 0",
+				"WHILE NOT AT_GOAL",
+				"  IF turnBalance = 0",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN RIGHT",
+				"      SET turnBalance TO turnBalance + 1",
+				"    END",
+				"  ELSE",
+				"    IF NOT WALL LEFT",
+				"      TURN LEFT",
+				"      SET turnBalance TO turnBalance - 1",
+				"      MOVE",
+				"    ELSE",
+				"      IF NOT WALL FRONT",
+				"        MOVE",
+				"      ELSE",
+				"        TURN RIGHT",
+				"        SET turnBalance TO turnBalance + 1",
+				"      END",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
 
 			const assert = function (condition, message) {
 				if (!condition) {
@@ -76,6 +102,29 @@
 				"escaped player did not cross the maze boundary");
 			}
 			messages.push("PASS: right-hand rule escapes 50 generated mazes");
+
+			const pledgeMaze = Game.createPledgeMaze("pledge-repeatable", 15);
+			assert(pledgeMaze.stage === 2 && pledgeMaze.goalEdge === Game.constants.NORTH, "Pledge maze has the wrong goal");
+			assert(pledgeMaze.blocked.size >= 2, "Pledge maze has too few obstacles");
+			assert(JSON.stringify(pledgeMaze.cells) === JSON.stringify(Game.createPledgeMaze("pledge-repeatable", 15).cells),
+				"Pledge generation is not deterministic");
+			messages.push("PASS: Pledge obstacle fields are deterministic");
+
+			for (let index = 0; index < 50; index++) {
+				const result = Game.runProgram(pledge, "pledge-" + index, 15, 2);
+				assert(result.world.won, "Pledge algorithm failed seed pledge-" + index);
+				assert(result.world.player.y < 0, "Pledge algorithm escaped through the wrong edge");
+				assert(result.variables.TURNBALANCE === 0, "Pledge turn balance was not restored");
+			}
+			messages.push("PASS: Pledge escapes 50 obstacle fields");
+
+			let stageError;
+			try { Game.parse("SET turns TO 0", 1); } catch (error) { stageError = error; }
+			assert(stageError && stageError.code === "COMMAND_NOT_AVAILABLE", "Stage 1 accepted Stage 2 commands");
+			assert(Game.parse("set turns to turns + 1", 2)[0].op === "SET", "Stage 2 SET did not compile case-insensitively");
+			assert(Game.parse("IF HEADING NORTH\n  MOVE\nEND", 2)[0].condition.type === "HEADING",
+				"Stage 2 heading condition did not compile");
+			messages.push("PASS: Stage 2 variables are stage-restricted");
 
 			let parseError;
 			try { Game.parse("FLY"); } catch (error) { parseError = error; }

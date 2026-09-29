@@ -12,17 +12,26 @@
 <body>
 	<header class="page-header">
 		<div>
-			<p class="eyebrow"><span data-i18n="stageLabel">Stage 1: wall following</span></p>
+			<p class="eyebrow"><span id="stageLabel" data-i18n="stageLabel">Stage 1: wall following</span></p>
 			<h1>Maze Escape</h1>
-			<p class="intro" data-i18n="intro">Write an algorithm that escapes every maze using only local wall sensors.</p>
+			<p id="intro" class="intro" data-i18n="intro">Write an algorithm that escapes every maze using only local wall sensors.</p>
 		</div>
-		<label class="language-field" for="language">
-			<span data-i18n="language">Language</span>
-			<select id="language">
-				<option value="en">English</option>
-				<option value="de">Deutsch</option>
-			</select>
-		</label>
+		<div class="header-controls">
+			<label class="language-field" for="stage">
+				<span data-i18n="stagePicker">Stage</span>
+				<select id="stage">
+					<option value="1" data-i18n="stage1Name">1 · Wall following</option>
+					<option value="2" data-i18n="stage2Name">2 · Pledge algorithm</option>
+				</select>
+			</label>
+			<label class="language-field" for="language">
+				<span data-i18n="language">Language</span>
+				<select id="language">
+					<option value="en">English</option>
+					<option value="de">Deutsch</option>
+				</select>
+			</label>
+		</div>
 	</header>
 
 	<main class="app-shell">
@@ -45,11 +54,12 @@
 				</button>
 			</div>
 
-			<dl class="metrics" data-i18n-aria="metricsAria" aria-label="Run statistics">
+			<dl id="metrics" class="metrics" data-i18n-aria="metricsAria" aria-label="Run statistics">
 				<div><dt data-i18n="moves">Moves</dt><dd id="moves">0</dd></div>
 				<div><dt data-i18n="turns">Turns</dt><dd id="turns">0</dd></div>
 				<div><dt data-i18n="instructions">Instructions</dt><dd id="instructions">0</dd></div>
 				<div><dt data-i18n="position">Position</dt><dd id="position">?, ?</dd></div>
+				<div id="variablesMetric" hidden><dt data-i18n="variables">Variables</dt><dd id="variables">—</dd></div>
 			</dl>
 
 			<section id="results" class="results" aria-labelledby="resultsTitle" hidden>
@@ -116,6 +126,9 @@ END</textarea>
 						<div><dt><code>NOT</code></dt><dd data-i18n="notHelp">Invert the following condition.</dd></div>
 						<div><dt><code>IF / ELSE / END</code></dt><dd data-i18n="ifHelp">Choose actions from a condition.</dd></div>
 						<div><dt><code>WHILE / END</code></dt><dd data-i18n="whileHelp">Repeat while a condition is true.</dd></div>
+						<div data-stage="2" hidden><dt><code>SET name TO 0</code></dt><dd data-i18n="setHelp">Create or update an integer variable.</dd></div>
+						<div data-stage="2" hidden><dt><code>name = 0</code></dt><dd data-i18n="compareHelp">Compare variables with =, !=, &lt;, &gt;, &lt;=, or &gt;=.</dd></div>
+						<div data-stage="2" hidden><dt><code>HEADING NORTH</code></dt><dd data-i18n="headingHelp">Check the current global direction.</dd></div>
 					</dl>
 				</section>
 
