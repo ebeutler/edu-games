@@ -14,7 +14,7 @@
 			paused: "Paused", escaped: "Escaped", moves: "Moves", turns: "Turns", instructions: "Instructions", position: "Position",
 			seed: "Seed", size: "Size", newMaze: "New maze", copyMazeLink: "Copy maze link", mazeLinkCopied: "Maze link copied",
 			yourAlgorithm: "Your algorithm", codeTitle: "Program the explorer", copyCode: "Copy code", copied: "Copied", copyFailed: "Copy failed",
-			codeLabel: "Pseudocode editor", englishCode: "Commands are always written in English and uppercase.", run: "Run", pause: "Pause",
+			codeLabel: "Pseudocode editor", englishCode: "Commands are always written in English.", run: "Run", pause: "Pause",
 			step: "Step", reset: "Reset", speed: "Speed", trace: "Execution trace", reference: "Command reference",
 			moveHelp: "Move one cell forward.", turnLeftHelp: "Turn 90° left.", turnRightHelp: "Turn 90° right.",
 			wallHelp: "Also available with LEFT or RIGHT.", goalHelp: "True after leaving the maze.", notHelp: "Invert the following condition.", ifHelp: "Choose actions from a condition.",
@@ -43,9 +43,9 @@
 			stageLabel: "Stufe 1: Wandfolger", intro: "Schreibe einen Algorithmus, der jedes Labyrinth nur mit lokalen Wandsensoren verlässt.",
 			language: "Sprache", currentRun: "Aktueller Lauf", mazeTitle: "Unbekanntes Gebiet", ready: "Bereit", running: "Läuft",
 			paused: "Pausiert", escaped: "Entkommen", moves: "Schritte", turns: "Drehungen", instructions: "Anweisungen", position: "Position",
-			seed: "Seed", size: "Größe", newMaze: "Neues Labyrinth", copyMazeLink: "Labyrinth-Link kopieren", mazeLinkCopied: "Labyrinth-Link kopiert",
+			seed: "Seed", size: "Grösse", newMaze: "Neues Labyrinth", copyMazeLink: "Labyrinth-Link kopieren", mazeLinkCopied: "Labyrinth-Link kopiert",
 			yourAlgorithm: "Dein Algorithmus", codeTitle: "Programmiere den Forscher", copyCode: "Code kopieren", copied: "Kopiert", copyFailed: "Kopieren fehlgeschlagen",
-			codeLabel: "Pseudocode-Editor", englishCode: "Befehle werden immer auf Englisch und in Großbuchstaben geschrieben.", run: "Start",
+			codeLabel: "Pseudocode-Editor", englishCode: "Befehle werden immer auf Englisch geschrieben.", run: "Start",
 			pause: "Pause", step: "Schritt", reset: "Zurücksetzen", speed: "Tempo", trace: "Ausführungsspur", reference: "Befehlsübersicht",
 			moveHelp: "Ein Feld vorwärts gehen.", turnLeftHelp: "Um 90° nach links drehen.", turnRightHelp: "Um 90° nach rechts drehen.",
 			wallHelp: "Auch mit LEFT oder RIGHT verfügbar.", goalHelp: "Wahr, nachdem das Labyrinth verlassen wurde.", notHelp: "Kehrt die folgende Bedingung um.", ifHelp: "Aktionen anhand einer Bedingung auswählen.",
@@ -53,14 +53,14 @@
 			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Weitere Labyrinthe werden getestet", openFailure: "Fehlgeschlagenes Labyrinth öffnen",
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", mazeAria: "Labyrinth im Nebel", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
-			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei größere Labyrinthe",
+			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei grössere Labyrinthe",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
 				"Stell dir vor, du hältst beim Gehen immer dieselbe Hand an einer Wand. Welche Seite wählst du?",
 				"Prüfe vor jedem Schritt zuerst deine gewählte Seite, dann den Weg geradeaus und danach die verbleibende Seite.",
 				"Wiederhole bis AT_GOAL. Fehlt die Wand auf deiner gewählten Seite, drehe dich dorthin und gehe. Gehe sonst geradeaus, wenn möglich; andernfalls drehe dich weg.",
-				"Eine Struktur für die rechte Hand ist: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Schließe jeden Block mit END."
+				"Eine Struktur für die rechte Hand ist: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Schliesse jeden Block mit END."
 			],
 			errors: {
 				UNKNOWN_CONDITION: "Unbekannte Bedingung '{detail}'", UNEXPECTED_ELSE: "ELSE gehört zu keinem offenen IF",
