@@ -20,7 +20,7 @@
 			wallHelp: "Also available with LEFT or RIGHT.", goalHelp: "True after leaving the maze.", notHelp: "Invert the following condition.", ifHelp: "Choose actions from a condition.",
 			whileHelp: "Repeat while a condition is true.", hints: "Guided hints", hintStart: "Try your own idea first. Reveal a hint when you are stuck.",
 			revealHint: "Reveal a hint", previousHint: "Previous hint", nextHint: "Next hint", challenge: "Challenge", testTitle: "Testing other mazes", openFailure: "Open failed maze",
-			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", mazeAria: "Fog-covered maze", metricsAria: "Run statistics",
+			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", mazeAria: "Fog-covered maze", centerView: "Center view", metricsAria: "Run statistics",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
 			reliableStar: "Reliability: all test mazes", efficientStar: "Efficiency: each test used at most {limit} moves", scaleStar: "Scale: three larger mazes",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
@@ -51,7 +51,7 @@
 			wallHelp: "Auch mit LEFT oder RIGHT verfügbar.", goalHelp: "Wahr, nachdem das Labyrinth verlassen wurde.", notHelp: "Kehrt die folgende Bedingung um.", ifHelp: "Aktionen anhand einer Bedingung auswählen.",
 			whileHelp: "Wiederholen, solange eine Bedingung wahr ist.", hints: "Schrittweise Hinweise", hintStart: "Probiere zuerst deine eigene Idee. Zeige einen Hinweis, wenn du nicht weiterkommst.",
 			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Weitere Labyrinthe werden getestet", openFailure: "Fehlgeschlagenes Labyrinth öffnen",
-			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", mazeAria: "Labyrinth im Nebel", metricsAria: "Laufstatistik",
+			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", mazeAria: "Labyrinth im Nebel", centerView: "Ansicht zentrieren", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
 			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei grössere Labyrinthe",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
@@ -75,7 +75,7 @@
 	const state = {
 		language: "en", maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
-		camera: null, seedRevealed: false
+		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -175,6 +175,9 @@
 		state.instructions = null;
 		state.failedSeed = null;
 		state.seedRevealed = false;
+		state.viewOffsetX = 0;
+		state.viewOffsetY = 0;
+		state.drag = null;
 		elements.seed.value = "";
 		elements.size.value = state.maze.size;
 		elements.results.hidden = true;
@@ -203,6 +206,9 @@
 		};
 		state.runner = null;
 		state.instructions = null;
+		state.viewOffsetX = 0;
+		state.viewOffsetY = 0;
+		state.drag = null;
 		elements.code.readOnly = false;
 		elements.results.hidden = true;
 		elements.shareMaze.hidden = true;
@@ -333,6 +339,23 @@
 		};
 	};
 
+	const centerView = function () {
+		if (!state.world) { return; }
+		state.viewOffsetX = 0;
+		state.viewOffsetY = 0;
+		state.drag = null;
+		state.camera = {
+			fromX: state.world.player.x,
+			fromY: state.world.player.y,
+			toX: state.world.player.x,
+			toY: state.world.player.y,
+			started: 0,
+			duration: 0
+		};
+		elements.maze.dataset.dragging = "false";
+		draw();
+	};
+
 	const advance = function (time, interval) {
 		if (!state.runner && !compile()) {
 			updateControls();
@@ -377,6 +400,7 @@
 			resetWorld();
 		}
 		if (!state.runner && !compile()) { return; }
+		centerView();
 		state.running = true;
 		state.lastStep = 0;
 		setStatus("running", "running");
@@ -410,6 +434,8 @@
 		elements.newMaze.disabled = state.running;
 		elements.seed.disabled = state.running;
 		elements.size.disabled = state.running;
+		elements.centerView.disabled = state.running;
+		elements.maze.dataset.draggable = String(!state.running);
 	};
 
 	const updateActiveLine = function () {
@@ -452,8 +478,10 @@
 		context.fillRect(0, 0, displaySize, displaySize);
 		const cellSize = displaySize / 7;
 		const camera = cameraPosition(time || window.performance.now());
-		const offsetX = displaySize / 2 - (camera.x + 0.5) * cellSize;
-		const offsetY = displaySize / 2 - (camera.y + 0.5) * cellSize;
+		const viewX = state.viewOffsetX * cellSize;
+		const viewY = state.viewOffsetY * cellSize;
+		const offsetX = displaySize / 2 - (camera.x + 0.5) * cellSize + viewX;
+		const offsetY = displaySize / 2 - (camera.y + 0.5) * cellSize + viewY;
 		const walls = Game.constants.WALLS;
 
 		const drawCells = function (target, include, bright) {
@@ -496,11 +524,12 @@
 		visibilityContext.arc(exitX, exitY, Math.max(2, cellSize * 0.13), 0, Math.PI * 2);
 		visibilityContext.fill();
 
-		const center = displaySize / 2;
+		const centerX = displaySize / 2 + viewX;
+		const centerY = displaySize / 2 + viewY;
 		const innerRadius = cellSize * 1.35;
 		const outerRadius = cellSize * 2.15;
 		const visibilityMask = visibilityContext.createRadialGradient(
-			center, center, innerRadius, center, center, outerRadius
+			centerX, centerY, innerRadius, centerX, centerY, outerRadius
 		);
 		visibilityMask.addColorStop(0, "rgba(0, 0, 0, 1)");
 		visibilityMask.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -516,7 +545,7 @@
 
 		const player = state.world.player;
 		context.save();
-		context.translate(displaySize / 2, displaySize / 2);
+		context.translate(centerX, centerY);
 		context.rotate(player.direction * Math.PI / 2);
 		context.fillStyle = state.world.won ? "#f2b84b" : "#9fd356";
 		context.beginPath();
@@ -594,9 +623,48 @@
 		}).join("\n");
 	};
 
+	const startMazeDrag = function (event) {
+		if (state.running || event.button !== 0) { return; }
+		stop();
+		state.camera = {
+			fromX: state.world.player.x,
+			fromY: state.world.player.y,
+			toX: state.world.player.x,
+			toY: state.world.player.y,
+			started: 0,
+			duration: 0
+		};
+		state.drag = {
+			pointerId: event.pointerId,
+			startX: event.clientX,
+			startY: event.clientY,
+			viewOffsetX: state.viewOffsetX,
+			viewOffsetY: state.viewOffsetY
+		};
+		elements.maze.dataset.dragging = "true";
+		try { elements.maze.setPointerCapture(event.pointerId); } catch (_) { /* synthetic pointer */ }
+		event.preventDefault();
+	};
+
+	const dragMaze = function (event) {
+		if (!state.drag || state.drag.pointerId !== event.pointerId) { return; }
+		const cellSize = elements.maze.getBoundingClientRect().width / 7;
+		state.viewOffsetX = state.drag.viewOffsetX + (event.clientX - state.drag.startX) / cellSize;
+		state.viewOffsetY = state.drag.viewOffsetY + (event.clientY - state.drag.startY) / cellSize;
+		draw();
+		event.preventDefault();
+	};
+
+	const finishMazeDrag = function (event) {
+		if (!state.drag || state.drag.pointerId !== event.pointerId) { return; }
+		state.drag = null;
+		elements.maze.dataset.dragging = "false";
+		try { elements.maze.releasePointerCapture(event.pointerId); } catch (_) { /* synthetic pointer */ }
+	};
+
 	const cacheElements = function () {
 		[
-			"activeLineHighlight", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "lineNumbers", "maze", "mazeTitle", "moves", "newMaze", "nextHint", "openFailure",
+			"activeLineHighlight", "centerView", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "lineNumbers", "maze", "mazeTitle", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns"
 		].forEach(function (id) { elements[id] = byId(id); });
@@ -609,11 +677,17 @@
 		elements.pause.addEventListener("click", pause);
 		elements.step.addEventListener("click", function () {
 			stop();
+			centerView();
 			advance(window.performance.now(), 500);
 			state.frame = window.requestAnimationFrame(tick);
 			updateControls();
 		});
 		elements.reset.addEventListener("click", resetWorld);
+		elements.centerView.addEventListener("click", centerView);
+		elements.maze.addEventListener("pointerdown", startMazeDrag);
+		elements.maze.addEventListener("pointermove", dragMaze);
+		elements.maze.addEventListener("pointerup", finishMazeDrag);
+		elements.maze.addEventListener("pointercancel", finishMazeDrag);
 		elements.speed.addEventListener("input", function () { elements.speedValue.textContent = elements.speed.value + "/s"; });
 		elements.code.addEventListener("keydown", indentNewLine);
 		elements.code.addEventListener("input", function () {
