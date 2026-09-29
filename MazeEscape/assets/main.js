@@ -559,9 +559,16 @@
 		elements.code.dispatchEvent(new Event("input", { bubbles: true }));
 	};
 
+	const updateLineNumbers = function () {
+		const count = elements.code.value.split("\n").length;
+		elements.lineNumbers.textContent = Array.from({ length: count }, function (_, index) {
+			return index + 1;
+		}).join("\n");
+	};
+
 	const cacheElements = function () {
 		[
-			"code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "maze", "moves", "newMaze", "nextHint", "openFailure",
+			"code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "lineNumbers", "maze", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns"
 		].forEach(function (id) { elements[id] = byId(id); });
@@ -581,7 +588,13 @@
 		elements.reset.addEventListener("click", resetWorld);
 		elements.speed.addEventListener("input", function () { elements.speedValue.textContent = elements.speed.value + "/s"; });
 		elements.code.addEventListener("keydown", indentNewLine);
-		elements.code.addEventListener("input", function () { safeStorage(function () { localStorage.setItem("mazeEscapeCode", elements.code.value); }); });
+		elements.code.addEventListener("input", function () {
+			updateLineNumbers();
+			safeStorage(function () { localStorage.setItem("mazeEscapeCode", elements.code.value); });
+		});
+		elements.code.addEventListener("scroll", function () {
+			elements.lineNumbers.style.transform = "translateY(" + (-elements.code.scrollTop) + "px)";
+		});
 		elements.copyCode.addEventListener("click", function () { showCopyResult(elements.copyCode, elements.code.value); });
 		elements.shareMaze.addEventListener("click", function () { showCopyResult(elements.shareMaze, window.location.href, "mazeLinkCopied"); });
 		elements.revealHint.addEventListener("click", function () {
@@ -603,6 +616,7 @@
 			? savedLanguage
 			: (navigator.language.toLowerCase().startsWith("de") ? "de" : "en");
 		elements.code.value = safeStorage(function () { return localStorage.getItem("mazeEscapeCode"); }, null) || DEFAULT_CODE;
+		updateLineNumbers();
 		bindEvents();
 		applyLanguage();
 		const parameters = mazeParameters();

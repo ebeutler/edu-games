@@ -145,20 +145,45 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .copy-button { padding: 7px 10px; color: var(--moss); font-family: ui-monospace, monospace; font-size: 0.74rem; }
 
 .code-heading { align-items: center; }
+.code-editor-frame {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	width: 100%;
+	border: 1px solid #536159;
+	background: #0c100e;
+	overflow: hidden;
+}
+.line-number-gutter {
+	min-width: 48px;
+	overflow: hidden;
+	border-right: 1px solid #59615c;
+	background: #111613;
+	color: #89918c;
+	user-select: none;
+}
+.line-number-gutter pre {
+	margin: 0;
+	padding: 20px 12px;
+	font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+	font-size: 0.93rem;
+	line-height: 1.65;
+	text-align: right;
+}
 .code-editor {
 	display: block;
 	width: 100%;
 	min-height: 330px;
 	resize: vertical;
 	padding: 20px;
-	border: 1px solid #536159;
+	border: 0;
 	border-radius: 0;
-	background: #0c100e;
+	background: transparent;
 	color: #d8edc3;
 	font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 	font-size: 0.93rem;
 	line-height: 1.65;
 	tab-size: 2;
+	outline-offset: -3px;
 }
 .code-editor[readonly] { color: #b8c5ad; }
 .editor-note { margin: 8px 0 16px; color: var(--muted); font-size: 0.76rem; }
