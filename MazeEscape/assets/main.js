@@ -74,7 +74,8 @@
 	const elements = {};
 	const state = {
 		language: "en", maze: null, world: null, runner: null, instructions: null,
-		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null, camera: null
+		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
+		camera: null, seedRevealed: false
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -96,6 +97,12 @@
 	const setStatus = function (key, statusState) {
 		elements.status.textContent = text(key);
 		elements.status.dataset.state = statusState || "ready";
+	};
+
+	const updateMazeTitle = function () {
+		elements.mazeTitle.textContent = state.seedRevealed && state.maze
+			? text("seed") + ": " + state.maze.seed
+			: text("mazeTitle");
 	};
 
 	const formatError = function (error) {
@@ -131,6 +138,7 @@
 		if (elements.results && !elements.results.hidden && state.world && state.world.won) {
 			runChecks();
 		}
+		updateMazeTitle();
 		safeStorage(function () { localStorage.setItem("mazeEscapeLanguage", state.language); });
 		draw();
 	};
@@ -166,6 +174,7 @@
 		state.runner = null;
 		state.instructions = null;
 		state.failedSeed = null;
+		state.seedRevealed = false;
 		elements.seed.value = "";
 		elements.size.value = state.maze.size;
 		elements.results.hidden = true;
@@ -173,6 +182,7 @@
 		elements.openFailure.hidden = true;
 		elements.trace.textContent = "—";
 		elements.code.readOnly = false;
+		updateMazeTitle();
 		setStatus("ready");
 		updateUrl();
 		updateControls();
@@ -288,6 +298,8 @@
 			elements.status.textContent = formatError(state.runner.error);
 			elements.status.dataset.state = "error";
 		} else if (state.world.won) {
+			state.seedRevealed = true;
+			updateMazeTitle();
 			setStatus("escaped", "success");
 			elements.shareMaze.hidden = false;
 			runChecks();
@@ -584,7 +596,7 @@
 
 	const cacheElements = function () {
 		[
-			"activeLineHighlight", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "lineNumbers", "maze", "moves", "newMaze", "nextHint", "openFailure",
+			"activeLineHighlight", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "lineNumbers", "maze", "mazeTitle", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns"
 		].forEach(function (id) { elements[id] = byId(id); });
