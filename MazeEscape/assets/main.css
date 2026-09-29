@@ -154,7 +154,9 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 	overflow: hidden;
 }
 .line-number-gutter {
+	position: relative;
 	min-width: 48px;
+	min-height: 0;
 	overflow: hidden;
 	border-right: 1px solid #59615c;
 	background: #111613;
@@ -162,6 +164,10 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 	user-select: none;
 }
 .line-number-gutter pre {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
 	margin: 0;
 	padding: 20px 12px;
 	font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
