@@ -27,12 +27,15 @@
 
 	<main class="app-shell">
 		<section class="maze-panel" aria-labelledby="mazeTitle">
-			<div class="section-heading">
-				<div>
+			<div class="section-heading maze-heading">
+				<div class="maze-heading-top">
 					<p class="eyebrow" data-i18n="currentRun">Current run</p>
-					<h2 id="mazeTitle" data-i18n="mazeTitle">Unknown territory</h2>
+					<p id="status" class="status" data-state="ready" aria-live="polite">Ready</p>
 				</div>
-				<p id="status" class="status" data-state="ready" aria-live="polite">Ready</p>
+				<div class="maze-title-row">
+					<h2 id="mazeTitle" data-i18n="mazeTitle">Unknown territory</h2>
+					<button id="shareMaze" class="text-button" type="button" hidden data-i18n="copyMazeLink">Copy maze link</button>
+				</div>
 			</div>
 
 			<div class="canvas-frame">
@@ -49,12 +52,21 @@
 				<div><dt data-i18n="position">Position</dt><dd id="position">?, ?</dd></div>
 			</dl>
 
+			<section id="results" class="results" aria-labelledby="resultsTitle" hidden>
+				<div class="section-heading">
+					<div><p class="eyebrow" data-i18n="challenge">Challenge</p><h3 id="resultsTitle" data-i18n="testTitle">Testing other mazes</h3></div>
+					<p id="stars" class="stars" aria-live="polite">☆☆☆</p>
+				</div>
+				<p id="testSummary"></p>
+				<ul id="testDetails"></ul>
+				<button id="openFailure" class="button" type="button" hidden data-i18n="openFailure">Open failed maze</button>
+			</section>
+
 			<div class="maze-settings">
 				<label><span data-i18n="seed">Seed</span><input id="seed" type="text" maxlength="80" spellcheck="false"></label>
 				<label><span data-i18n="size">Size</span><input id="size" type="number" min="5" max="31" value="11"></label>
 				<button id="newMaze" class="button" type="button" data-i18n="newMaze">New maze</button>
 			</div>
-			<button id="shareMaze" class="text-button" type="button" hidden data-i18n="copyMazeLink">Copy maze link</button>
 		</section>
 
 		<section class="code-panel" aria-labelledby="codeTitle">
@@ -119,16 +131,6 @@ END</textarea>
 					</div>
 				</section>
 			</div>
-
-			<section id="results" class="results" aria-labelledby="resultsTitle" hidden>
-				<div class="section-heading">
-					<div><p class="eyebrow" data-i18n="challenge">Challenge</p><h3 id="resultsTitle" data-i18n="testTitle">Testing other mazes</h3></div>
-					<p id="stars" class="stars" aria-live="polite">☆☆☆</p>
-				</div>
-				<p id="testSummary"></p>
-				<ul id="testDetails"></ul>
-				<button id="openFailure" class="button" type="button" hidden data-i18n="openFailure">Open failed maze</button>
-			</section>
 		</section>
 	</main>
 
