@@ -169,7 +169,18 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 	line-height: 1.65;
 	text-align: right;
 }
+.code-input-area { position: relative; min-width: 0; overflow: hidden; }
+.active-line-highlight {
+	position: absolute;
+	right: 0;
+	left: 0;
+	z-index: 0;
+	background: rgba(255, 224, 112, 0.13);
+	pointer-events: none;
+}
 .code-editor {
+	position: relative;
+	z-index: 1;
 	display: block;
 	width: 100%;
 	min-height: 330px;

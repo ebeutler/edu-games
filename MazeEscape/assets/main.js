@@ -283,6 +283,7 @@
 	const finish = function () {
 		stop();
 		elements.code.readOnly = false;
+		elements.activeLineHighlight.hidden = true;
 		if (state.runner.error) {
 			elements.status.textContent = formatError(state.runner.error);
 			elements.status.dataset.state = "error";
@@ -399,12 +400,27 @@
 		elements.size.disabled = state.running;
 	};
 
+	const updateActiveLine = function () {
+		const instruction = state.runner && state.runner.lastInstruction;
+		if (!instruction || !instruction.text) {
+			elements.activeLineHighlight.hidden = true;
+			return;
+		}
+		const style = window.getComputedStyle(elements.code);
+		const lineHeight = parseFloat(style.lineHeight);
+		const top = parseFloat(style.paddingTop) + (instruction.line - 1) * lineHeight - elements.code.scrollTop;
+		elements.activeLineHighlight.hidden = false;
+		elements.activeLineHighlight.style.top = top + "px";
+		elements.activeLineHighlight.style.height = lineHeight + "px";
+	};
+
 	const updateMetrics = function () {
 		elements.moves.textContent = state.world.moves.toLocaleString(state.language);
 		elements.turns.textContent = state.world.turns.toLocaleString(state.language);
 		elements.instructions.textContent = state.runner ? state.runner.instructionCount.toLocaleString(state.language) : "0";
 		elements.position.textContent = (state.world.player.x + 1) + ", " + (state.world.player.y + 1)
 			+ " " + translations[state.language].directions[state.world.player.direction];
+		updateActiveLine();
 	};
 
 	const draw = function (time) {
@@ -568,7 +584,7 @@
 
 	const cacheElements = function () {
 		[
-			"code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "lineNumbers", "maze", "moves", "newMaze", "nextHint", "openFailure",
+			"activeLineHighlight", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "language", "lineNumbers", "maze", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns"
 		].forEach(function (id) { elements[id] = byId(id); });
@@ -594,6 +610,7 @@
 		});
 		elements.code.addEventListener("scroll", function () {
 			elements.lineNumbers.style.transform = "translateY(" + (-elements.code.scrollTop) + "px)";
+			updateActiveLine();
 		});
 		elements.copyCode.addEventListener("click", function () { showCopyResult(elements.copyCode, elements.code.value); });
 		elements.shareMaze.addEventListener("click", function () { showCopyResult(elements.shareMaze, window.location.href, "mazeLinkCopied"); });
