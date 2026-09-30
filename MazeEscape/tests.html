@@ -9,6 +9,9 @@
 	<h1>Maze Escape checks</h1>
 	<pre id="results">Running...</pre>
 	<script>
+		window.addEventListener("error", function (event) {
+			document.getElementById("results").textContent = "FAIL: " + event.message;
+		});
 		(function () {
 			"use strict";
 
@@ -49,6 +52,39 @@
 				"      ELSE",
 				"        TURN RIGHT",
 				"        SET turnBalance TO turnBalance + 1",
+				"      END",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
+			const obstacleSidestep = [
+				"WHILE NOT AT_GOAL",
+				"  IF NOT WALL FRONT",
+				"    MOVE",
+				"  ELSE",
+				"    TURN RIGHT",
+				"    MOVE",
+				"    TURN LEFT",
+				"  END",
+				"END"
+			].join("\n");
+			const headingOnly = [
+				"WHILE NOT AT_GOAL",
+				"  IF HEADING NORTH",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN RIGHT",
+				"    END",
+				"  ELSE",
+				"    IF NOT WALL LEFT",
+				"      TURN LEFT",
+				"      MOVE",
+				"    ELSE",
+				"      IF NOT WALL FRONT",
+				"        MOVE",
+				"      ELSE",
+				"        TURN RIGHT",
 				"      END",
 				"    END",
 				"  END",
@@ -105,18 +141,32 @@
 
 			const pledgeMaze = Game.createPledgeMaze("pledge-repeatable", 15);
 			assert(pledgeMaze.stage === 2 && pledgeMaze.goalEdge === Game.constants.NORTH, "Pledge maze has the wrong goal");
-			assert(pledgeMaze.blocked.size >= 2, "Pledge maze has too few obstacles");
+			assert(pledgeMaze.requiresTurnBalance, "Pledge maze does not require turn balance");
 			assert(JSON.stringify(pledgeMaze.cells) === JSON.stringify(Game.createPledgeMaze("pledge-repeatable", 15).cells),
 				"Pledge generation is not deterministic");
-			messages.push("PASS: Pledge obstacle fields are deterministic");
+			messages.push("PASS: Pledge courses are deterministic");
 
 			for (let index = 0; index < 50; index++) {
-				const result = Game.runProgram(pledge, "pledge-" + index, 15, 2);
+				const size = [7, 11, 15, 21, 31][index % 5];
+				const result = Game.runProgram(pledge, "pledge-" + index, size, 2);
 				assert(result.world.won, "Pledge algorithm failed seed pledge-" + index);
 				assert(result.world.player.y < 0, "Pledge algorithm escaped through the wrong edge");
-				assert(result.variables.TURNBALANCE === 0, "Pledge turn balance was not restored");
 			}
-			messages.push("PASS: Pledge escapes 50 obstacle fields");
+			messages.push("PASS: Pledge escapes 50 nested courses");
+
+			for (let index = 0; index < 50; index++) {
+				const size = [7, 11, 15, 21, 31][index % 5];
+				const result = Game.runProgram(obstacleSidestep, "shortcut-" + index, size, 2);
+				assert(!result.world.won, "simple obstacle sidestep escaped seed shortcut-" + index);
+			}
+			messages.push("PASS: nested courses reject the simple sidestep shortcut");
+
+			for (let index = 0; index < 20; index++) {
+				const size = [7, 11, 15, 21, 31][index % 5];
+				const result = Game.runProgram(headingOnly, "heading-only-" + index, size, 2);
+				assert(!result.world.won, "heading-only wall following escaped seed heading-only-" + index);
+			}
+			messages.push("PASS: Pledge courses require cumulative turn balance");
 
 			let stageError;
 			try { Game.parse("SET turns TO 0", 1); } catch (error) { stageError = error; }

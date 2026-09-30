@@ -133,71 +133,99 @@
 		};
 	};
 
+	const policyEscapes = function (cells, size, startX, useTurnBalance) {
+		let x = startX;
+		let y = size - 1;
+		let direction = NORTH;
+		let turnBalance = 0;
+		const wall = function (relative) {
+			const offsets = { FRONT: 0, LEFT: 3 };
+			return !!(cells[indexOf(size, x, y)] & WALLS[(direction + offsets[relative]) % 4]);
+		};
+		const moveForward = function () {
+			x += DX[direction];
+			y += DY[direction];
+			return y < 0;
+		};
+		for (let action = 0; action < size * size * 20; action++) {
+			if (useTurnBalance ? turnBalance === 0 : direction === NORTH) {
+				if (!wall("FRONT")) {
+					if (moveForward()) { return true; }
+				} else {
+					direction = (direction + 1) % 4;
+					turnBalance++;
+				}
+			} else if (!wall("LEFT")) {
+				direction = (direction + 3) % 4;
+				turnBalance--;
+				if (moveForward()) { return true; }
+			} else if (!wall("FRONT")) {
+				if (moveForward()) { return true; }
+			} else {
+				direction = (direction + 1) % 4;
+				turnBalance++;
+			}
+		}
+		return false;
+	};
+
+	const sidestepEscapes = function (cells, size, startX) {
+		let x = startX;
+		let y = size - 1;
+		let direction = NORTH;
+		const wallAhead = function () {
+			return !!(cells[indexOf(size, x, y)] & WALLS[direction]);
+		};
+		const moveForward = function () {
+			x += DX[direction];
+			y += DY[direction];
+			return y < 0;
+		};
+		for (let action = 0; action < size * size * 20; action++) {
+			if (!wallAhead()) {
+				if (moveForward()) { return true; }
+			} else {
+				direction = (direction + 1) % 4;
+				if (wallAhead()) { return false; }
+				if (moveForward()) { return true; }
+				direction = (direction + 3) % 4;
+			}
+		}
+		return false;
+	};
+
 	const createPledgeMaze = function (seed, requestedSize) {
 		const size = Math.max(7, Math.min(31, Math.floor(Number(requestedSize) || 11)));
 		const random = randomFor(seed);
-		const cells = new Array(size * size).fill(0);
-		const blocked = new Set();
-		for (let position = 0; position < size; position++) {
-			cells[indexOf(size, size - 1, position)] |= WALLS[EAST];
-			cells[indexOf(size, position, size - 1)] |= WALLS[SOUTH];
-			cells[indexOf(size, 0, position)] |= WALLS[WEST];
-		}
-
-		const targetObstacles = Math.max(2, Math.floor(size / 3));
-		for (let attempt = 0, placed = 0; attempt < 300 && placed < targetObstacles; attempt++) {
-			const width = 1 + Math.floor(random() * Math.min(3, size - 4));
-			const height = 1 + Math.floor(random() * Math.min(3, size - 4));
-			const x = 1 + Math.floor(random() * (size - width - 2));
-			const y = 1 + Math.floor(random() * (size - height - 2));
-			let clear = true;
-			for (let cellY = y - 1; cellY <= y + height && clear; cellY++) {
-				for (let cellX = x - 1; cellX <= x + width; cellX++) {
-					if (blocked.has(indexOf(size, cellX, cellY))) {
-						clear = false;
-						break;
-					}
-				}
+		for (let attempt = 0; attempt < 500; attempt++) {
+			const candidate = createMaze(String(seed) + "-pledge-" + attempt, size);
+			const cells = candidate.cells.slice();
+			for (let position = 0; position < size; position++) {
+				cells[indexOf(size, position, 0)] &= ~WALLS[NORTH];
+				cells[indexOf(size, size - 1, position)] |= WALLS[EAST];
+				cells[indexOf(size, position, size - 1)] |= WALLS[SOUTH];
+				cells[indexOf(size, 0, position)] |= WALLS[WEST];
 			}
-			if (!clear) { continue; }
-			for (let cellY = y; cellY < y + height; cellY++) {
-				for (let cellX = x; cellX < x + width; cellX++) {
-					blocked.add(indexOf(size, cellX, cellY));
-				}
-			}
-			placed++;
-		}
-
-		blocked.forEach(function (cellIndex) { cells[cellIndex] = 15; });
-		for (let y = 0; y < size; y++) {
-			for (let x = 0; x < size; x++) {
-				const cellIndex = indexOf(size, x, y);
-				if (blocked.has(cellIndex)) { continue; }
-				for (let direction = 0; direction < 4; direction++) {
-					const neighborX = x + DX[direction];
-					const neighborY = y + DY[direction];
-					if (neighborX >= 0 && neighborY >= 0 && neighborX < size && neighborY < size
-							&& blocked.has(indexOf(size, neighborX, neighborY))) {
-						cells[cellIndex] |= WALLS[direction];
-					}
+			const startOffset = Math.floor(random() * size);
+			for (let position = 0; position < size; position++) {
+				const startX = (startOffset + position) % size;
+				if (policyEscapes(cells, size, startX, true)
+						&& !policyEscapes(cells, size, startX, false)
+						&& !sidestepEscapes(cells, size, startX)) {
+					return {
+						seed: String(seed),
+						size: size,
+						stage: 2,
+						cells: cells,
+						requiresTurnBalance: true,
+						goalEdge: NORTH,
+						exit: { x: startX, y: 0, direction: NORTH },
+						start: { x: startX, y: size - 1, direction: NORTH }
+					};
 				}
 			}
 		}
-
-		const blockedColumns = Array.from(blocked, function (cellIndex) { return cellIndex % size; });
-		const startX = blockedColumns.length
-			? blockedColumns[Math.floor(random() * blockedColumns.length)]
-			: Math.floor(random() * size);
-		return {
-			seed: String(seed),
-			size: size,
-			stage: 2,
-			cells: cells,
-			blocked: blocked,
-			goalEdge: NORTH,
-			exit: { x: startX, y: 0, direction: NORTH },
-			start: { x: startX, y: size - 1, direction: NORTH }
-		};
+		throw new Error("Unable to generate a Pledge course for seed " + seed);
 	};
 
 	const createWorld = function (maze) {

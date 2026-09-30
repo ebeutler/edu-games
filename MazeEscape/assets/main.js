@@ -13,7 +13,7 @@
 			en: {
 			directions: ["N", "E", "S", "W"],
 			stageLabel: "Stage 1: wall following", intro: "Write an algorithm that escapes every maze using only local wall sensors.",
-			stage2Label: "Stage 2: Pledge algorithm", stage2Intro: "Keep moving north, navigate around disconnected obstacles, and leave each wall with a balanced turn count.",
+			stage2Label: "Stage 2: Pledge algorithm", stage2Intro: "Keep moving north through nested wall traps, and leave wall-following mode only with a balanced turn count.",
 			stagePicker: "Stage", stage1Name: "1 · Wall following", stage2Name: "2 · Pledge algorithm", language: "Language", currentRun: "Current run", mazeTitle: "Unknown territory", ready: "Ready", running: "Running",
 			paused: "Paused", escaped: "Escaped", moves: "Moves", turns: "Turns", instructions: "Instructions", position: "Position",
 			variables: "Variables",
@@ -29,8 +29,8 @@
 			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", githubLink: "View on GitHub", mazeAria: "Fog-covered maze", centerView: "Center view", metricsAria: "Run statistics",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
 			reliableStar: "Reliability: all test mazes", efficientStar: "Efficiency: each test used at most {limit} moves", scaleStar: "Scale: three larger mazes",
-			stage2TestsPassed: "Your algorithm crossed all {count} obstacle fields.", stage2TestsFailed: "Your algorithm crossed {passed} of {count} obstacle fields.",
-			stage2ReliableStar: "Pledge: all obstacle fields", stage2EfficientStar: "Control: each field used at most {limit} moves", stage2ScaleStar: "Scale: three larger obstacle fields",
+			stage2TestsPassed: "Your algorithm escaped all {count} nested courses.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} nested courses.",
+			stage2ReliableStar: "Pledge: all nested courses", stage2EfficientStar: "Control: each course used at most {limit} moves", stage2ScaleStar: "Scale: three larger courses",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
@@ -40,7 +40,7 @@
 				"One right-hand structure is: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Close every block with END."
 			],
 			stage2HintsList: [
-				"The target is the open northern edge. Moving north whenever possible is not enough: an obstacle can make a simple wall follower circle forever.",
+				"The target is the open northern edge. Moving north whenever possible is not enough: nested walls make simpler wall-following rules circle forever.",
 				"Pledge combines a preferred direction with temporary wall following. Move north while free; follow an obstacle only after it blocks that direction.",
 				"Keep an integer turn balance. Add 1 for every right turn and subtract 1 for every left turn. Orientation alone is not enough.",
 				"When turnBalance is 0, move forward or turn right at a wall. While it is not 0, keep your left hand on the obstacle and update the balance after every turn.",
@@ -57,7 +57,7 @@
 		de: {
 			directions: ["N", "O", "S", "W"],
 			stageLabel: "Stufe 1: Wandfolger", intro: "Schreibe einen Algorithmus, der jedes Labyrinth nur mit lokalen Wandsensoren verlässt.",
-			stage2Label: "Stufe 2: Pledge-Algorithmus", stage2Intro: "Gehe weiter nach Norden, umgehe getrennte Hindernisse und verlasse jede Wand mit ausgeglichener Drehsumme.",
+			stage2Label: "Stufe 2: Pledge-Algorithmus", stage2Intro: "Gehe durch verschachtelte Wandfallen weiter nach Norden und beende das Wandfolgen nur mit ausgeglichener Drehsumme.",
 			stagePicker: "Stufe", stage1Name: "1 · Wandfolger", stage2Name: "2 · Pledge-Algorithmus", language: "Sprache", currentRun: "Aktueller Lauf", mazeTitle: "Unbekanntes Gebiet", ready: "Bereit", running: "Läuft",
 			paused: "Pausiert", escaped: "Entkommen", moves: "Schritte", turns: "Drehungen", instructions: "Anweisungen", position: "Position",
 			variables: "Variablen",
@@ -73,8 +73,8 @@
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", githubLink: "Auf GitHub ansehen", mazeAria: "Labyrinth im Nebel", centerView: "Ansicht zentrieren", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
 			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei grössere Labyrinthe",
-			stage2TestsPassed: "Dein Algorithmus hat alle {count} Hindernisfelder durchquert.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} Hindernisfeldern durchquert.",
-			stage2ReliableStar: "Pledge: alle Hindernisfelder", stage2EfficientStar: "Kontrolle: jedes Feld brauchte höchstens {limit} Schritte", stage2ScaleStar: "Skalierung: drei grössere Hindernisfelder",
+			stage2TestsPassed: "Dein Algorithmus hat alle {count} verschachtelten Kurse verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} verschachtelten Kursen verlassen.",
+			stage2ReliableStar: "Pledge: alle verschachtelten Kurse", stage2EfficientStar: "Kontrolle: jeder Kurs brauchte höchstens {limit} Schritte", stage2ScaleStar: "Skalierung: drei grössere Kurse",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
@@ -84,7 +84,7 @@
 				"Eine Struktur für die rechte Hand ist: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Schliesse jeden Block mit END."
 			],
 			stage2HintsList: [
-				"Das Ziel ist der offene Nordrand. Nur wenn möglich nach Norden zu gehen reicht nicht: Ein Hindernis kann einen einfachen Wandfolger endlos kreisen lassen.",
+				"Das Ziel ist der offene Nordrand. Nur wenn möglich nach Norden zu gehen reicht nicht: Verschachtelte Wände lassen einfachere Wandregeln endlos kreisen.",
 				"Pledge kombiniert eine Vorzugsrichtung mit vorübergehendem Wandfolgen. Gehe nach Norden, solange der Weg frei ist, und folge einer Wand erst, wenn sie diese Richtung blockiert.",
 				"Führe eine ganzzahlige Drehsumme. Addiere 1 für jede Rechtsdrehung und subtrahiere 1 für jede Linksdrehung. Die Ausrichtung allein reicht nicht.",
 				"Wenn turnBalance 0 ist, gehe vorwärts oder drehe an einer Wand nach rechts. Solange der Wert nicht 0 ist, halte das Hindernis links und aktualisiere den Wert nach jeder Drehung.",
