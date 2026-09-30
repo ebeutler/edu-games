@@ -50,6 +50,10 @@
 
 			<div class="canvas-frame">
 				<canvas id="maze" width="720" height="720" data-i18n-aria="mazeAria" aria-label="Fog-covered maze"></canvas>
+				<div id="variableOverlay" class="variable-overlay" hidden>
+					<span data-i18n="variables">Variables</span>
+					<output id="variables">—</output>
+				</div>
 				<button id="centerView" class="center-view-button" type="button" data-i18n-aria="centerView" aria-label="Center view">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg>
 				</button>
@@ -60,7 +64,6 @@
 				<div><dt data-i18n="turns">Turns</dt><dd id="turns">0</dd></div>
 				<div><dt data-i18n="instructions">Instructions</dt><dd id="instructions">0</dd></div>
 				<div><dt data-i18n="position">Position</dt><dd id="position">?, ?</dd></div>
-				<div id="variablesMetric" hidden><dt data-i18n="variables">Variables</dt><dd id="variables">—</dd></div>
 				<div id="memoryMetric" hidden><dt data-i18n="memory">Memory</dt><dd id="memory">—</dd></div>
 			</dl>
 

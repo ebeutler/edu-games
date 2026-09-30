@@ -188,9 +188,8 @@
 		document.querySelectorAll("[data-stage-min]").forEach(function (element) {
 			element.hidden = state.stage < Number(element.dataset.stageMin);
 		});
-		elements.variablesMetric.hidden = state.stage < 2;
+		elements.variableOverlay.hidden = state.stage < 2;
 		elements.memoryMetric.hidden = state.stage < 3;
-		elements.metrics.classList.toggle("stage-two", state.stage === 2);
 		elements.metrics.classList.toggle("stage-three", state.stage === 3);
 		elements.size.min = state.stage > 1 ? "7" : "5";
 		if (state.hintIndex >= 0) {
@@ -543,7 +542,7 @@
 			+ " " + translations[state.language].directions[state.world.player.direction];
 		elements.variables.textContent = state.runner && Object.keys(state.runner.variables).length
 			? Object.keys(state.runner.variables).map(function (name) {
-				return state.runner.variableNames[name] + "=" + state.runner.variables[name];
+				return state.runner.variableNames[name] + " = " + state.runner.variables[name];
 			}).join(", ")
 			: "—";
 		elements.memory.textContent = state.runner
@@ -774,7 +773,7 @@
 		[
 			"activeLineHighlight", "centerView", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "intro", "language", "lineNumbers", "maze", "mazeTitle", "metrics", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageField", "stageLabel", "stars",
-			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variablesMetric", "memory", "memoryMetric"
+			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variableOverlay", "memory", "memoryMetric"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
 
