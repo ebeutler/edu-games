@@ -104,7 +104,8 @@
 	const state = {
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
-		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null
+		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
+		stage1Solved: false, teacherMode: false
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -155,6 +156,7 @@
 		});
 		elements.language.value = state.language;
 		elements.stage.value = String(state.stage);
+		elements.stageField.hidden = !state.stage1Solved && !state.teacherMode;
 		elements.stageLabel.textContent = text(state.stage === 2 ? "stage2Label" : "stageLabel");
 		elements.intro.textContent = text(state.stage === 2 ? "stage2Intro" : "intro");
 		document.querySelectorAll('[data-stage="2"]').forEach(function (element) {
@@ -350,6 +352,11 @@
 			elements.status.textContent = formatError(state.runner.error);
 			elements.status.dataset.state = "error";
 		} else if (state.world.won) {
+			if (state.stage === 1 && !state.stage1Solved) {
+				state.stage1Solved = true;
+				elements.stageField.hidden = false;
+				safeStorage(function () { localStorage.setItem("mazeEscapeStage1Solved", "true"); });
+			}
 			state.seedRevealed = true;
 			updateMazeTitle();
 			setStatus("escaped", "success");
@@ -722,7 +729,7 @@
 	const cacheElements = function () {
 		[
 			"activeLineHighlight", "centerView", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "intro", "language", "lineNumbers", "maze", "mazeTitle", "metrics", "moves", "newMaze", "nextHint", "openFailure",
-			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageLabel", "stars",
+			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageField", "stageLabel", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variablesMetric"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
@@ -785,7 +792,16 @@
 
 	const initialize = function () {
 		cacheElements();
+		state.stage1Solved = safeStorage(function () {
+			return localStorage.getItem("mazeEscapeStage1Solved") === "true";
+		}, false);
+		state.teacherMode = new URLSearchParams(window.location.search).get("teacher") === "1";
 		const parameters = mazeParameters();
+		if (parameters.stage === 2 && !state.stage1Solved && !state.teacherMode) {
+			parameters.stage = 1;
+			parameters.seed = randomSeed();
+			parameters.size = 11;
+		}
 		state.stage = parameters.stage;
 		const savedLanguage = safeStorage(function () { return localStorage.getItem("mazeEscapeLanguage"); });
 		state.language = savedLanguage === "de" || savedLanguage === "en"
