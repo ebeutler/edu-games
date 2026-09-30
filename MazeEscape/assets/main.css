@@ -148,6 +148,7 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .metrics div { min-width: 0; padding: 10px; border-right: 1px solid var(--line); }
 .metrics div:last-child { border: 0; }
 .metrics.stage-two { grid-template-columns: repeat(5, 1fr); }
+.metrics.stage-three { grid-template-columns: repeat(6, 1fr); }
 .metrics dt { color: var(--muted); font-size: 0.68rem; text-transform: uppercase; }
 .metrics dd { margin: 4px 0 0; overflow: hidden; color: var(--amber); font-family: ui-monospace, monospace; text-overflow: ellipsis; }
 
@@ -307,12 +308,16 @@ footer a { color: var(--blue); text-underline-offset: 3px; }
 	.header-controls select { width: 100%; }
 	.language-field span { display: none; }
 	.maze-panel, .code-panel { padding: 18px; }
-	.metrics, .metrics.stage-two { grid-template-columns: repeat(2, 1fr); }
+	.metrics, .metrics.stage-two, .metrics.stage-three { grid-template-columns: repeat(2, 1fr); }
 	.metrics div:nth-child(2) { border-right: 0; }
 	.metrics div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
 	.metrics.stage-two div:nth-child(3), .metrics.stage-two div:nth-child(4) { border-bottom: 1px solid var(--line); }
 	.metrics.stage-two div:nth-child(4) { border-right: 0; }
 	.metrics.stage-two #variablesMetric { grid-column: 1 / -1; border-right: 0; }
+	.metrics.stage-three div:nth-child(3), .metrics.stage-three div:nth-child(4) { border-bottom: 1px solid var(--line); }
+	.metrics.stage-three div:nth-child(4) { border-right: 0; }
+	.metrics.stage-three #variablesMetric, .metrics.stage-three #memoryMetric { border-bottom: 0; }
+	.metrics.stage-three #memoryMetric { border-right: 0; }
 	.maze-settings { grid-template-columns: 1fr 72px; }
 	.maze-settings .button { grid-column: 1 / -1; }
 	.learning-grid { grid-template-columns: 1fr; }

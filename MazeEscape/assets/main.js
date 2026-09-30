@@ -4,7 +4,8 @@
 	const Game = window.MazeEscapeGame;
 	const DEFAULT_CODES = {
 		1: "WHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
-		2: "SET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep heading NORTH and count every turn\nEND"
+		2: "SET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep heading NORTH and count every turn\nEND",
+		3: "MARK\n\nWHILE NOT AT_GOAL\n  # Visit an unmarked neighbor or backtrack\nEND"
 	};
 	const TEST_COUNT = 8;
 	const visibilityCanvas = document.createElement("canvas");
@@ -14,23 +15,28 @@
 			directions: ["N", "E", "S", "W"],
 			stageLabel: "Stage 1: wall following", intro: "Write an algorithm that escapes every maze using only local wall sensors.",
 			stage2Label: "Stage 2: Pledge algorithm", stage2Intro: "Keep moving north through nested wall traps, and leave wall-following mode only with a balanced turn count.",
-			stagePicker: "Stage", stage1Name: "1 · Wall following", stage2Name: "2 · Pledge algorithm", language: "Language", currentRun: "Current run", mazeTitle: "Unknown territory", ready: "Ready", running: "Running",
-			paused: "Paused", escaped: "Escaped", moves: "Moves", turns: "Turns", instructions: "Instructions", position: "Position",
-			variables: "Variables",
+			stage3Label: "Stage 3: depth-first search", stage3Intro: "Explore a maze with loops, mark every visited cell, and backtrack until you find the hidden goal.",
+			stagePicker: "Stage", stage1Name: "1 · Wall following", stage2Name: "2 · Pledge algorithm", stage3Name: "3 · Depth-first search", language: "Language", currentRun: "Current run", mazeTitle: "Unknown territory", ready: "Ready", running: "Running",
+			paused: "Paused", escaped: "Escaped", goalFound: "Goal found", moves: "Moves", turns: "Turns", instructions: "Instructions", position: "Position",
+			variables: "Variables", memory: "Marks / stack",
 			seed: "Seed", size: "Size", newMaze: "New maze", copyMazeLink: "Copy maze link", mazeLinkCopied: "Maze link copied",
 			yourAlgorithm: "Your algorithm", codeTitle: "Program the explorer", copyCode: "Copy code", resetCode: "Reset to start code", copied: "Copied", copyFailed: "Copy failed",
 			codeLabel: "Pseudocode editor", englishCode: "Commands are always written in English.", run: "Run", pause: "Pause",
 			step: "Step", reset: "Reset", speed: "Speed", trace: "Execution trace", reference: "Command reference",
 			moveHelp: "Move one cell forward.", turnLeftHelp: "Turn 90° left.", turnRightHelp: "Turn 90° right.",
-			wallHelp: "Also available with LEFT or RIGHT.", goalHelp: "True after leaving the maze.", notHelp: "Invert the following condition.", ifHelp: "Choose actions from a condition.",
+			wallHelp: "Also available with LEFT or RIGHT.", goalHelp: "True after reaching the goal.", notHelp: "Invert the following condition.", ifHelp: "Choose actions from a condition.",
 			whileHelp: "Repeat while a condition is true.", hints: "Guided hints", hintStart: "Try your own idea first. Reveal a hint when you are stuck.",
 			setHelp: "Create or update an integer variable.", compareHelp: "Compare variables with =, !=, <, >, <=, or >=.", headingHelp: "Check the current global direction.",
+			markHelp: "Mark the current cell as visited.", unvisitedHelp: "True when the neighboring cell is open and unmarked.", markedHelp: "Check a neighboring cell's mark.",
+			pushHelp: "Remember an absolute return direction.", popHelp: "Face and remove the latest saved direction.", stackHelp: "True when no return direction is saved.",
 			revealHint: "Reveal a hint", previousHint: "Previous hint", nextHint: "Next hint", challenge: "Challenge", testTitle: "Testing other mazes", openFailure: "Open failed maze",
 			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", githubLink: "View on GitHub", mazeAria: "Fog-covered maze", centerView: "Center view", metricsAria: "Run statistics",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
 			reliableStar: "Reliability: all test mazes", efficientStar: "Efficiency: each test used at most {limit} moves", scaleStar: "Scale: three larger mazes",
 			stage2TestsPassed: "Your algorithm escaped all {count} nested courses.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} nested courses.",
 			stage2ReliableStar: "Pledge: all nested courses", stage2EfficientStar: "Control: each course used at most {limit} moves", stage2ScaleStar: "Scale: three larger courses",
+			stage3TestsPassed: "Your algorithm found all {count} hidden goals.", stage3TestsFailed: "Your algorithm found {passed} of {count} hidden goals.",
+			stage3ReliableStar: "DFS: all hidden goals", stage3EfficientStar: "Traversal: each maze used at most {limit} moves", stage3ScaleStar: "Scale: three larger braided mazes",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
@@ -46,35 +52,47 @@
 				"When turnBalance is 0, move forward or turn right at a wall. While it is not 0, keep your left hand on the obstacle and update the balance after every turn.",
 				"Use SET turnBalance TO 0. In the wall-following part: take an open LEFT by turning left, subtracting 1, and moving; otherwise MOVE forward, or TURN RIGHT and add 1 when FRONT is blocked."
 			],
+			stage3HintsList: [
+				"Wall following cannot reliably search a maze with loops and an interior goal. You need to remember where you have already been.",
+				"MARK each new cell. UNVISITED FRONT is true only when the neighboring cell is reachable and not marked.",
+				"Depth-first search chooses one unvisited neighbor and saves a way back before moving into it. PUSH BACK saves that absolute return direction.",
+				"When no neighboring direction is unvisited, use FACE POP and MOVE to backtrack. The stack returns you along the route in reverse order.",
+				"Check UNVISITED FRONT, RIGHT, LEFT, and BACK in nested IF blocks. Turn toward the chosen cell, PUSH BACK, MOVE, and MARK. If none is available and the stack is not empty, FACE POP and MOVE."
+			],
 			errors: {
 				UNKNOWN_CONDITION: "Unknown condition '{detail}'", UNEXPECTED_ELSE: "ELSE does not belong to an open IF",
 				UNEXPECTED_END: "END does not belong to an open block", MISSING_END: "This block needs an END", UNKNOWN_COMMAND: "Unknown command '{detail}'",
 				EMPTY_PROGRAM: "Write at least one command", LIMIT_REACHED: "Execution limit reached; check for a loop that makes no progress", COMMAND_NOT_AVAILABLE: "This command is not available in this stage",
 				UNKNOWN_EXPRESSION: "Unknown expression '{detail}'", UNDEFINED_VARIABLE: "Variable '{detail}' has not been set",
-				HIT_WALL: "The explorer walked into a wall", STOPPED_BEFORE_GOAL: "The program ended before the explorer escaped"
+				HIT_WALL: "The explorer walked into a wall", EMPTY_STACK: "The explorer tried to pop an empty stack", STOPPED_BEFORE_GOAL: "The program ended before the explorer reached the goal"
 			}
 		},
 		de: {
 			directions: ["N", "O", "S", "W"],
 			stageLabel: "Stufe 1: Wandfolger", intro: "Schreibe einen Algorithmus, der jedes Labyrinth nur mit lokalen Wandsensoren verlässt.",
 			stage2Label: "Stufe 2: Pledge-Algorithmus", stage2Intro: "Gehe durch verschachtelte Wandfallen weiter nach Norden und beende das Wandfolgen nur mit ausgeglichener Drehsumme.",
-			stagePicker: "Stufe", stage1Name: "1 · Wandfolger", stage2Name: "2 · Pledge-Algorithmus", language: "Sprache", currentRun: "Aktueller Lauf", mazeTitle: "Unbekanntes Gebiet", ready: "Bereit", running: "Läuft",
-			paused: "Pausiert", escaped: "Entkommen", moves: "Schritte", turns: "Drehungen", instructions: "Anweisungen", position: "Position",
-			variables: "Variablen",
+			stage3Label: "Stufe 3: Tiefensuche", stage3Intro: "Erkunde ein Labyrinth mit Schleifen, markiere jedes besuchte Feld und gehe zurück, bis du das versteckte Ziel findest.",
+			stagePicker: "Stufe", stage1Name: "1 · Wandfolger", stage2Name: "2 · Pledge-Algorithmus", stage3Name: "3 · Tiefensuche", language: "Sprache", currentRun: "Aktueller Lauf", mazeTitle: "Unbekanntes Gebiet", ready: "Bereit", running: "Läuft",
+			paused: "Pausiert", escaped: "Entkommen", goalFound: "Ziel gefunden", moves: "Schritte", turns: "Drehungen", instructions: "Anweisungen", position: "Position",
+			variables: "Variablen", memory: "Marken / Stapel",
 			seed: "Seed", size: "Grösse", newMaze: "Neues Labyrinth", copyMazeLink: "Labyrinth-Link kopieren", mazeLinkCopied: "Labyrinth-Link kopiert",
 			yourAlgorithm: "Dein Algorithmus", codeTitle: "Programmiere den Forscher", copyCode: "Code kopieren", resetCode: "Auf Startcode zurücksetzen", copied: "Kopiert", copyFailed: "Kopieren fehlgeschlagen",
 			codeLabel: "Pseudocode-Editor", englishCode: "Befehle werden immer auf Englisch geschrieben.", run: "Start",
 			pause: "Pause", step: "Schritt", reset: "Zurücksetzen", speed: "Tempo", trace: "Ausführungsspur", reference: "Befehlsübersicht",
 			moveHelp: "Ein Feld vorwärts gehen.", turnLeftHelp: "Um 90° nach links drehen.", turnRightHelp: "Um 90° nach rechts drehen.",
-			wallHelp: "Auch mit LEFT oder RIGHT verfügbar.", goalHelp: "Wahr, nachdem das Labyrinth verlassen wurde.", notHelp: "Kehrt die folgende Bedingung um.", ifHelp: "Aktionen anhand einer Bedingung auswählen.",
+			wallHelp: "Auch mit LEFT oder RIGHT verfügbar.", goalHelp: "Wahr, nachdem das Ziel erreicht wurde.", notHelp: "Kehrt die folgende Bedingung um.", ifHelp: "Aktionen anhand einer Bedingung auswählen.",
 			whileHelp: "Wiederholen, solange eine Bedingung wahr ist.", hints: "Schrittweise Hinweise", hintStart: "Probiere zuerst deine eigene Idee. Zeige einen Hinweis, wenn du nicht weiterkommst.",
 			setHelp: "Erstellt oder aktualisiert eine Ganzzahlvariable.", compareHelp: "Vergleicht Variablen mit =, !=, <, >, <= oder >=.", headingHelp: "Prüft die aktuelle globale Richtung.",
+			markHelp: "Markiert das aktuelle Feld als besucht.", unvisitedHelp: "Wahr, wenn das Nachbarfeld erreichbar und unmarkiert ist.", markedHelp: "Prüft die Markierung eines Nachbarfelds.",
+			pushHelp: "Speichert eine absolute Rückkehrrichtung.", popHelp: "Richtet den Forscher nach der zuletzt gespeicherten Richtung aus und entfernt sie.", stackHelp: "Wahr, wenn keine Rückkehrrichtung gespeichert ist.",
 			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Weitere Labyrinthe werden getestet", openFailure: "Fehlgeschlagenes Labyrinth öffnen",
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", githubLink: "Auf GitHub ansehen", mazeAria: "Labyrinth im Nebel", centerView: "Ansicht zentrieren", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
 			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei grössere Labyrinthe",
 			stage2TestsPassed: "Dein Algorithmus hat alle {count} verschachtelten Kurse verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} verschachtelten Kursen verlassen.",
 			stage2ReliableStar: "Pledge: alle verschachtelten Kurse", stage2EfficientStar: "Kontrolle: jeder Kurs brauchte höchstens {limit} Schritte", stage2ScaleStar: "Skalierung: drei grössere Kurse",
+			stage3TestsPassed: "Dein Algorithmus hat alle {count} versteckten Ziele gefunden.", stage3TestsFailed: "Dein Algorithmus hat {passed} von {count} versteckten Zielen gefunden.",
+			stage3ReliableStar: "Tiefensuche: alle versteckten Ziele", stage3EfficientStar: "Erkundung: jedes Labyrinth brauchte höchstens {limit} Schritte", stage3ScaleStar: "Skalierung: drei grössere Labyrinthe mit Schleifen",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
@@ -90,12 +108,19 @@
 				"Wenn turnBalance 0 ist, gehe vorwärts oder drehe an einer Wand nach rechts. Solange der Wert nicht 0 ist, halte das Hindernis links und aktualisiere den Wert nach jeder Drehung.",
 				"Verwende SET turnBalance TO 0. Beim Wandfolgen: Ist LEFT frei, drehe links, subtrahiere 1 und gehe; gehe sonst vorwärts oder drehe rechts und addiere 1, wenn FRONT blockiert ist."
 			],
+			stage3HintsList: [
+				"Wandfolgen kann ein Labyrinth mit Schleifen und einem inneren Ziel nicht zuverlässig durchsuchen. Du musst dir merken, wo du bereits warst.",
+				"Markiere jedes neue Feld mit MARK. UNVISITED FRONT ist nur wahr, wenn das Nachbarfeld erreichbar und unmarkiert ist.",
+				"Die Tiefensuche wählt ein unbesuchtes Nachbarfeld und speichert vor dem Schritt den Rückweg. PUSH BACK speichert diese absolute Rückkehrrichtung.",
+				"Wenn kein Nachbarfeld unbesucht ist, gehst du mit FACE POP und MOVE zurück. Der Stapel führt dich in umgekehrter Reihenfolge entlang des Wegs zurück.",
+				"Prüfe UNVISITED FRONT, RIGHT, LEFT und BACK in verschachtelten IF-Blöcken. Drehe zum gewählten Feld, verwende PUSH BACK, MOVE und MARK. Ist keines frei und der Stapel nicht leer, verwende FACE POP und MOVE."
+			],
 			errors: {
 				UNKNOWN_CONDITION: "Unbekannte Bedingung '{detail}'", UNEXPECTED_ELSE: "ELSE gehört zu keinem offenen IF",
 				UNEXPECTED_END: "END gehört zu keinem offenen Block", MISSING_END: "Dieser Block benötigt ein END", UNKNOWN_COMMAND: "Unbekannter Befehl '{detail}'",
 				EMPTY_PROGRAM: "Schreibe mindestens einen Befehl", LIMIT_REACHED: "Ausführungslimit erreicht; prüfe auf eine Schleife ohne Fortschritt", COMMAND_NOT_AVAILABLE: "Dieser Befehl ist in dieser Stufe nicht verfügbar",
 				UNKNOWN_EXPRESSION: "Unbekannter Ausdruck '{detail}'", UNDEFINED_VARIABLE: "Variable '{detail}' wurde nicht gesetzt",
-				HIT_WALL: "Der Forscher ist gegen eine Wand gelaufen", STOPPED_BEFORE_GOAL: "Das Programm endete vor dem Ausgang"
+				HIT_WALL: "Der Forscher ist gegen eine Wand gelaufen", EMPTY_STACK: "Der Forscher wollte einen leeren Stapel auslesen", STOPPED_BEFORE_GOAL: "Das Programm endete vor dem Ziel"
 			}
 		}
 	};
@@ -120,7 +145,7 @@
 		try { return operation(); } catch (_) { return fallback; }
 	};
 	const hintsForStage = function () {
-		return translations[state.language][state.stage === 2 ? "stage2HintsList" : "hintsList"];
+		return translations[state.language][state.stage === 3 ? "stage3HintsList" : state.stage === 2 ? "stage2HintsList" : "hintsList"];
 	};
 	const defaultCode = function () { return DEFAULT_CODES[state.stage]; };
 	const codeStorageKey = function () { return "mazeEscapeCode" + state.stage; };
@@ -157,14 +182,17 @@
 		elements.language.value = state.language;
 		elements.stage.value = String(state.stage);
 		elements.stageField.hidden = !state.stage1Solved && !state.teacherMode;
-		elements.stageLabel.textContent = text(state.stage === 2 ? "stage2Label" : "stageLabel");
-		elements.intro.textContent = text(state.stage === 2 ? "stage2Intro" : "intro");
-		document.querySelectorAll('[data-stage="2"]').forEach(function (element) {
-			element.hidden = state.stage !== 2;
+		const stageKey = state.stage === 3 ? "stage3" : state.stage === 2 ? "stage2" : "stage";
+		elements.stageLabel.textContent = text(stageKey + "Label");
+		elements.intro.textContent = text(stageKey === "stage" ? "intro" : stageKey + "Intro");
+		document.querySelectorAll("[data-stage-min]").forEach(function (element) {
+			element.hidden = state.stage < Number(element.dataset.stageMin);
 		});
-		elements.variablesMetric.hidden = state.stage !== 2;
+		elements.variablesMetric.hidden = state.stage < 2;
+		elements.memoryMetric.hidden = state.stage < 3;
 		elements.metrics.classList.toggle("stage-two", state.stage === 2);
-		elements.size.min = state.stage === 2 ? "7" : "5";
+		elements.metrics.classList.toggle("stage-three", state.stage === 3);
+		elements.size.min = state.stage > 1 ? "7" : "5";
 		if (state.hintIndex >= 0) {
 			elements.hintText.textContent = hintsForStage()[state.hintIndex];
 		}
@@ -174,7 +202,7 @@
 		} else if (state.runner.error) {
 			elements.status.textContent = formatError(state.runner.error);
 		} else if (state.world.won) {
-			setStatus("escaped", "success");
+			setStatus(state.stage === 3 ? "goalFound" : "escaped", "success");
 		} else if (state.running) {
 			setStatus("running", "running");
 		} else {
@@ -190,11 +218,12 @@
 
 	const mazeParameters = function () {
 		const params = new URLSearchParams(window.location.search);
-		const stage = Number(params.get("stage")) === 2 ? 2 : 1;
+		const requestedStage = Number(params.get("stage"));
+		const stage = requestedStage === 3 ? 3 : requestedStage === 2 ? 2 : 1;
 		return {
 			stage: stage,
 			seed: params.get("seed") || randomSeed(),
-			size: Math.max(stage === 2 ? 7 : 5, Math.min(31, Number(params.get("size")) || (stage === 2 ? 13 : 11)))
+			size: Math.max(stage > 1 ? 7 : 5, Math.min(31, Number(params.get("size")) || (stage === 2 ? 13 : stage === 3 ? 15 : 11)))
 		};
 	};
 
@@ -208,7 +237,7 @@
 
 	const createScenario = function (seed, size) {
 		stop();
-		state.maze = state.stage === 2 ? Game.createPledgeMaze(seed, size) : Game.createMaze(seed, size);
+		state.maze = state.stage === 3 ? Game.createDfsMaze(seed, size) : state.stage === 2 ? Game.createPledgeMaze(seed, size) : Game.createMaze(seed, size);
 		state.world = Game.createWorld(state.maze);
 		state.camera = {
 			fromX: state.world.player.x,
@@ -295,7 +324,7 @@
 			if (!runner.world.won && !firstFailure) {
 				firstFailure = { seed: seed, error: runner.error };
 			}
-			if (runner.world.moves > state.maze.size * state.maze.size * (state.stage === 2 ? 4 : 2)) {
+			if (runner.world.moves > state.maze.size * state.maze.size * (state.stage === 1 ? 2 : 4)) {
 				efficient = false;
 			}
 		}
@@ -320,15 +349,15 @@
 		const stars = [reliable, reliable && efficient, reliable && scaled];
 		elements.results.hidden = false;
 		elements.stars.textContent = stars.map(function (earned) { return earned ? "★" : "☆"; }).join("");
-		const stagePrefix = state.stage === 2 ? "stage2" : "";
+		const stagePrefix = state.stage === 3 ? "stage3" : state.stage === 2 ? "stage2" : "";
 		elements.testSummary.textContent = reliable
-			? text(stagePrefix ? "stage2TestsPassed" : "testsPassed", { count: TEST_COUNT })
-			: text(stagePrefix ? "stage2TestsFailed" : "testsFailed", { passed: passed, count: TEST_COUNT });
+			? text(stagePrefix ? stagePrefix + "TestsPassed" : "testsPassed", { count: TEST_COUNT })
+			: text(stagePrefix ? stagePrefix + "TestsFailed" : "testsFailed", { passed: passed, count: TEST_COUNT });
 		elements.testDetails.replaceChildren();
 		[
-			text(stagePrefix ? "stage2ReliableStar" : "reliableStar"),
-			text(stagePrefix ? "stage2EfficientStar" : "efficientStar", { limit: state.maze.size * state.maze.size * (state.stage === 2 ? 4 : 2) }),
-			text(stagePrefix ? "stage2ScaleStar" : "scaleStar")
+			text(stagePrefix ? stagePrefix + "ReliableStar" : "reliableStar"),
+			text(stagePrefix ? stagePrefix + "EfficientStar" : "efficientStar", { limit: state.maze.size * state.maze.size * (state.stage === 1 ? 2 : 4) }),
+			text(stagePrefix ? stagePrefix + "ScaleStar" : "scaleStar")
 		].forEach(function (label, index) {
 			const item = document.createElement("li");
 			item.textContent = (stars[index] ? "✓ " : "○ ") + label;
@@ -359,7 +388,7 @@
 			}
 			state.seedRevealed = true;
 			updateMazeTitle();
-			setStatus("escaped", "success");
+			setStatus(state.stage === 3 ? "goalFound" : "escaped", "success");
 			elements.shareMaze.hidden = false;
 			runChecks();
 		}
@@ -517,6 +546,9 @@
 				return state.runner.variableNames[name] + "=" + state.runner.variables[name];
 			}).join(", ")
 			: "—";
+		elements.memory.textContent = state.runner
+			? state.world.marked.size + " / " + state.runner.stack.length
+			: "0 / 0";
 		updateActiveLine();
 	};
 
@@ -560,6 +592,12 @@
 					if (cell & walls[2]) { target.moveTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); target.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
 					if (cell & walls[3]) { target.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); target.lineTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); }
 					target.stroke();
+					if (state.world.marked.has(index)) {
+						target.fillStyle = bright ? "#72c7d4" : "#31565b";
+						target.beginPath();
+						target.arc(offsetX + (x + 0.5) * cellSize, offsetY + (y + 0.5) * cellSize, Math.max(2, cellSize * 0.08), 0, Math.PI * 2);
+						target.fill();
+					}
 				}
 			}
 		};
@@ -577,7 +615,13 @@
 		drawCells(visibilityContext, function () { return true; }, true);
 
 		visibilityContext.fillStyle = "#f2b84b";
-		if (state.maze.goalEdge === Game.constants.NORTH) {
+		if (state.maze.goal) {
+			const goalX = offsetX + (state.maze.goal.x + 0.5) * cellSize;
+			const goalY = offsetY + (state.maze.goal.y + 0.5) * cellSize;
+			visibilityContext.beginPath();
+			visibilityContext.arc(goalX, goalY, Math.max(4, cellSize * 0.2), 0, Math.PI * 2);
+			visibilityContext.fill();
+		} else if (state.maze.goalEdge === Game.constants.NORTH) {
 			visibilityContext.fillRect(offsetX, offsetY - cellSize * 0.07, state.maze.size * cellSize, cellSize * 0.14);
 		} else {
 			const exit = state.maze.exit;
@@ -730,7 +774,7 @@
 		[
 			"activeLineHighlight", "centerView", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "intro", "language", "lineNumbers", "maze", "mazeTitle", "metrics", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageField", "stageLabel", "stars",
-			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variablesMetric"
+			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variablesMetric", "memory", "memoryMetric"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
 
@@ -797,7 +841,7 @@
 		}, false);
 		state.teacherMode = new URLSearchParams(window.location.search).get("teacher") === "1";
 		const parameters = mazeParameters();
-		if (parameters.stage === 2 && !state.stage1Solved && !state.teacherMode) {
+		if (parameters.stage > 1 && !state.stage1Solved && !state.teacherMode) {
 			parameters.stage = 1;
 			parameters.seed = randomSeed();
 			parameters.size = 11;

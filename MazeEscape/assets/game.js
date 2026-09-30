@@ -228,6 +228,53 @@
 		throw new Error("Unable to generate a Pledge course for seed " + seed);
 	};
 
+	const createDfsMaze = function (seed, requestedSize) {
+		const size = Math.max(7, Math.min(31, Math.floor(Number(requestedSize) || 11)));
+		const random = randomFor(seed);
+		const base = createMaze(String(seed) + "-dfs", size);
+		const cells = base.cells.slice();
+		for (let position = 0; position < size; position++) {
+			cells[indexOf(size, position, 0)] |= WALLS[NORTH];
+			cells[indexOf(size, size - 1, position)] |= WALLS[EAST];
+			cells[indexOf(size, position, size - 1)] |= WALLS[SOUTH];
+			cells[indexOf(size, 0, position)] |= WALLS[WEST];
+		}
+
+		let opened = 0;
+		const targetOpenings = Math.max(2, Math.floor(size * size / 7));
+		for (let attempt = 0; attempt < size * size * 10 && opened < targetOpenings; attempt++) {
+			const x = Math.floor(random() * size);
+			const y = Math.floor(random() * size);
+			const direction = random() < 0.5 ? EAST : SOUTH;
+			const neighborX = x + DX[direction];
+			const neighborY = y + DY[direction];
+			if (neighborX >= size || neighborY >= size) { continue; }
+			const cellIndex = indexOf(size, x, y);
+			if (!(cells[cellIndex] & WALLS[direction])) { continue; }
+			cells[cellIndex] &= ~WALLS[direction];
+			cells[indexOf(size, neighborX, neighborY)] &= ~WALLS[(direction + 2) % 4];
+			opened++;
+		}
+
+		const startIndex = Math.floor(random() * cells.length);
+		const start = { x: startIndex % size, y: Math.floor(startIndex / size) };
+		const distances = distancesFrom(cells, size, start);
+		const maximumDistance = Math.max.apply(null, distances);
+		const goalCandidates = [];
+		distances.forEach(function (distance, cellIndex) {
+			if (distance >= maximumDistance * 0.8) { goalCandidates.push(cellIndex); }
+		});
+		const goalIndex = goalCandidates[Math.floor(random() * goalCandidates.length)];
+		return {
+			seed: String(seed),
+			size: size,
+			stage: 3,
+			cells: cells,
+			goal: { x: goalIndex % size, y: Math.floor(goalIndex / size) },
+			start: { x: start.x, y: start.y, direction: Math.floor(random() * 4) }
+		};
+	};
+
 	const createWorld = function (maze) {
 		const player = {
 			x: maze.start.x,
@@ -240,14 +287,15 @@
 			won: false,
 			moves: 0,
 			turns: 0,
-			explored: new Set()
+			explored: new Set(),
+			marked: new Set()
 		};
 		world.explored.add(indexOf(maze.size, player.x, player.y));
 		return world;
 	};
 
 	const relativeDirection = function (world, relative) {
-		const offsets = { FRONT: 0, RIGHT: 1, LEFT: 3 };
+		const offsets = { FRONT: 0, RIGHT: 1, BACK: 2, LEFT: 3 };
 		return (world.player.direction + offsets[relative]) % 4;
 	};
 
@@ -279,6 +327,9 @@
 		world.player.x = x;
 		world.player.y = y;
 		world.explored.add(indexOf(world.maze.size, x, y));
+		if (world.maze.goal && x === world.maze.goal.x && y === world.maze.goal.y) {
+			world.won = true;
+		}
 		return true;
 	};
 
@@ -298,8 +349,8 @@
 		throw { code: "UNKNOWN_EXPRESSION", line: line, detail: source };
 	};
 
-	const requireStage = function (stage, line) {
-		if (stage < 2) {
+	const requireStage = function (stage, line, minimumStage) {
+		if (stage < (minimumStage || 2)) {
 			throw { code: "COMMAND_NOT_AVAILABLE", line: line };
 		}
 	};
@@ -334,6 +385,20 @@
 				negate: negate
 			};
 		}
+		const marked = /^MARKED (FRONT|LEFT|RIGHT|BACK)$/.exec(source);
+		if (marked) {
+			requireStage(stage, line, 3);
+			return { type: "MARKED", relative: marked[1], negate: negate };
+		}
+		const unvisited = /^UNVISITED (FRONT|LEFT|RIGHT|BACK)$/.exec(source);
+		if (unvisited) {
+			requireStage(stage, line, 3);
+			return { type: "UNVISITED", relative: unvisited[1], negate: negate };
+		}
+		if (source === "STACK EMPTY") {
+			requireStage(stage, line, 3);
+			return { type: "STACK_EMPTY", negate: negate };
+		}
 		throw { code: "UNKNOWN_CONDITION", line: line, detail: source };
 	};
 
@@ -356,6 +421,22 @@
 			const turnMatch = /^TURN (LEFT|RIGHT)$/.exec(command);
 			if (turnMatch) {
 				instructions.push({ op: "TURN", direction: turnMatch[1], line: line, text: text });
+				return;
+			}
+			if (command === "MARK") {
+				requireStage(stage, line, 3);
+				instructions.push({ op: "MARK", line: line, text: text });
+				return;
+			}
+			const pushMatch = /^PUSH (FRONT|LEFT|RIGHT|BACK)$/.exec(command);
+			if (pushMatch) {
+				requireStage(stage, line, 3);
+				instructions.push({ op: "PUSH", relative: pushMatch[1], line: line, text: text });
+				return;
+			}
+			if (command === "FACE POP") {
+				requireStage(stage, line, 3);
+				instructions.push({ op: "FACE_POP", line: line, text: text });
 				return;
 			}
 			const setMatch = /^SET ([A-Z][A-Z0-9_]*) TO (.+)$/.exec(command);
@@ -431,7 +512,16 @@
 		return variables[expression.name] + expression.delta;
 	};
 
-	const evaluate = function (condition, world, variables) {
+	const neighborIndex = function (world, relative) {
+		const direction = relativeDirection(world, relative);
+		const x = world.player.x + DX[direction];
+		const y = world.player.y + DY[direction];
+		return x < 0 || y < 0 || x >= world.maze.size || y >= world.maze.size
+			? -1
+			: indexOf(world.maze.size, x, y);
+	};
+
+	const evaluate = function (condition, world, variables, stack) {
 		let result;
 		if (condition.type === "AT_GOAL") {
 			result = world.won;
@@ -439,6 +529,14 @@
 			result = hasWall(world, condition.relative);
 		} else if (condition.type === "HEADING") {
 			result = world.player.direction === condition.direction;
+		} else if (condition.type === "MARKED") {
+			const markedIndex = neighborIndex(world, condition.relative);
+			result = markedIndex < 0 || world.marked.has(markedIndex);
+		} else if (condition.type === "UNVISITED") {
+			const unvisitedIndex = neighborIndex(world, condition.relative);
+			result = !hasWall(world, condition.relative) && unvisitedIndex >= 0 && !world.marked.has(unvisitedIndex);
+		} else if (condition.type === "STACK_EMPTY") {
+			result = stack.length === 0;
 		} else {
 			const left = expressionValue(condition.left, variables);
 			const right = expressionValue(condition.right, variables);
@@ -464,6 +562,7 @@
 			lastInstruction: null,
 			variables: {},
 			variableNames: {},
+			stack: [],
 			step: function () {
 				if (this.complete) {
 					return this;
@@ -508,9 +607,33 @@
 						this.pointer++;
 						continue;
 					}
+					if (instruction.op === "MARK") {
+						this.world.marked.add(indexOf(this.world.maze.size, this.world.player.x, this.world.player.y));
+						this.pointer++;
+						continue;
+					}
+					if (instruction.op === "PUSH") {
+						this.stack.push(relativeDirection(this.world, instruction.relative));
+						this.pointer++;
+						continue;
+					}
+					if (instruction.op === "FACE_POP") {
+						if (!this.stack.length) {
+							this.error = { code: "EMPTY_STACK", line: instruction.line };
+							this.complete = true;
+							return this;
+						}
+						const targetDirection = this.stack.pop();
+						const difference = Math.abs(targetDirection - this.world.player.direction);
+						this.world.turns += Math.min(difference, 4 - difference);
+						this.world.player.direction = targetDirection;
+						this.actionCount++;
+						this.pointer++;
+						return this;
+					}
 					if (instruction.op === "JUMP_IF_FALSE") {
 						try {
-							this.pointer = evaluate(instruction.condition, this.world, this.variables)
+							this.pointer = evaluate(instruction.condition, this.world, this.variables, this.stack)
 								? this.pointer + 1
 								: instruction.target;
 						} catch (error) {
@@ -535,7 +658,8 @@
 
 	const runProgram = function (source, seed, size, requestedStage) {
 		const stage = Number(requestedStage) || 1;
-		const world = createWorld(stage === 2 ? createPledgeMaze(seed, size) : createMaze(seed, size));
+		const maze = stage === 3 ? createDfsMaze(seed, size) : stage === 2 ? createPledgeMaze(seed, size) : createMaze(seed, size);
+		const world = createWorld(maze);
 		const runner = createRunner(parse(source, stage), world);
 		while (!runner.complete) {
 			runner.step();
@@ -547,6 +671,7 @@
 		constants: { NORTH: NORTH, EAST: EAST, SOUTH: SOUTH, WEST: WEST, WALLS: WALLS },
 		createMaze: createMaze,
 		createPledgeMaze: createPledgeMaze,
+		createDfsMaze: createDfsMaze,
 		createWorld: createWorld,
 		createRunner: createRunner,
 		hasWall: hasWall,

@@ -90,6 +90,43 @@
 				"  END",
 				"END"
 			].join("\n");
+			const depthFirstSearch = [
+				"MARK",
+				"WHILE NOT AT_GOAL",
+				"  IF UNVISITED FRONT",
+				"    PUSH BACK",
+				"    MOVE",
+				"    MARK",
+				"  ELSE",
+				"    IF UNVISITED RIGHT",
+				"      TURN RIGHT",
+				"      PUSH BACK",
+				"      MOVE",
+				"      MARK",
+				"    ELSE",
+				"      IF UNVISITED LEFT",
+				"        TURN LEFT",
+				"        PUSH BACK",
+				"        MOVE",
+				"        MARK",
+				"      ELSE",
+				"        IF UNVISITED BACK",
+				"          TURN RIGHT",
+				"          TURN RIGHT",
+				"          PUSH BACK",
+				"          MOVE",
+				"          MARK",
+				"        ELSE",
+				"          IF NOT STACK EMPTY",
+				"            FACE POP",
+				"            MOVE",
+				"          END",
+				"        END",
+				"      END",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
 
 			const assert = function (condition, message) {
 				if (!condition) {
@@ -175,6 +212,36 @@
 			assert(Game.parse("IF HEADING NORTH\n  MOVE\nEND", 2)[0].condition.type === "HEADING",
 				"Stage 2 heading condition did not compile");
 			messages.push("PASS: Stage 2 variables are stage-restricted");
+
+			const dfsMaze = Game.createDfsMaze("dfs-repeatable", 15);
+			let dfsPassages = 0;
+			for (let y = 0; y < dfsMaze.size; y++) {
+				for (let x = 0; x < dfsMaze.size; x++) {
+					const cell = dfsMaze.cells[y * dfsMaze.size + x];
+					if (x + 1 < dfsMaze.size && !(cell & Game.constants.WALLS[1])) { dfsPassages++; }
+					if (y + 1 < dfsMaze.size && !(cell & Game.constants.WALLS[2])) { dfsPassages++; }
+				}
+			}
+			assert(dfsPassages > dfsMaze.size * dfsMaze.size - 1, "Stage 3 maze has no loops");
+			assert(dfsMaze.goal.x !== dfsMaze.start.x || dfsMaze.goal.y !== dfsMaze.start.y, "Stage 3 goal starts under the player");
+			assert(JSON.stringify(dfsMaze.cells) === JSON.stringify(Game.createDfsMaze("dfs-repeatable", 15).cells),
+				"Stage 3 generation is not deterministic");
+			messages.push("PASS: Stage 3 braided mazes are deterministic");
+
+			for (let index = 0; index < 40; index++) {
+				const size = [7, 11, 15, 21, 31][index % 5];
+				const result = Game.runProgram(depthFirstSearch, "dfs-" + index, size, 3);
+				assert(result.world.won, "DFS failed seed dfs-" + index);
+				assert(result.world.player.x === result.world.maze.goal.x
+					&& result.world.player.y === result.world.maze.goal.y, "DFS did not stop on the hidden goal");
+			}
+			messages.push("PASS: DFS finds 40 hidden goals");
+
+			let markStageError;
+			try { Game.parse("MARK", 2); } catch (error) { markStageError = error; }
+			assert(markStageError && markStageError.code === "COMMAND_NOT_AVAILABLE", "Stage 2 accepted Stage 3 commands");
+			assert(Game.parse("MARK\nPUSH BACK\nFACE POP", 3).length === 4, "Stage 3 memory commands did not compile");
+			messages.push("PASS: Stage 3 memory commands are stage-restricted");
 
 			let parseError;
 			try { Game.parse("FLY"); } catch (error) { parseError = error; }
