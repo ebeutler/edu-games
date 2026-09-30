@@ -466,9 +466,10 @@
 				if (!block || block.type !== "IF" || block.elseIndex !== undefined) {
 					throw { code: "UNEXPECTED_ELSE", line: line };
 				}
-				instructions.push({ op: "JUMP", target: null, line: line, text: text });
-				instructions[block.conditionIndex].target = instructions.length;
+				instructions.push({ op: "JUMP", target: null, line: line, text: "" });
 				block.elseIndex = instructions.length - 1;
+				instructions.push({ op: "TRACE", line: line, text: text });
+				instructions[block.conditionIndex].target = instructions.length - 1;
 				return;
 			}
 			if (command === "END") {
@@ -598,7 +599,11 @@
 							return this;
 						}
 						this.pointer++;
-						continue;
+						return this;
+					}
+					if (instruction.op === "TRACE") {
+						this.pointer++;
+						return this;
 					}
 					if (instruction.op === "MARK") {
 						this.world.marked.add(indexOf(this.world.maze.size, this.world.player.x, this.world.player.y));
@@ -635,6 +640,7 @@
 							this.complete = true;
 							return this;
 						}
+						return this;
 					} else if (instruction.op === "JUMP") {
 						this.pointer = instruction.target;
 					} else {

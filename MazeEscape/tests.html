@@ -144,6 +144,28 @@
 			assert(Game.parse(mixedCase)[0].text === "While not at_goal", "parser changed the entered source text");
 			messages.push("PASS: commands accept arbitrary capitalization");
 
+			const steppingSource = [
+				"SET count TO 0",
+				"WHILE count = 0",
+				"  IF count = 1",
+				"    SET count TO 2",
+				"  ELSE",
+				"    SET count TO 1",
+				"  END",
+				"END"
+			].join("\n");
+			const steppingRunner = Game.createRunner(
+				Game.parse(steppingSource, 2),
+				Game.createWorld(Game.createMaze("stepping", 5))
+			);
+			const steppedLines = [];
+			for (let index = 0; index < 6; index++) {
+				steppingRunner.step();
+				steppedLines.push(steppingRunner.lastInstruction.line);
+			}
+			assert(steppedLines.join(",") === "1,2,3,5,6,2", "stepping skipped a source-level control line");
+			messages.push("PASS: stepping pauses on SET, IF, ELSE, and WHILE");
+
 			for (let index = 0; index < 50; index++) {
 				const result = Game.runProgram(wallFollower, "escape-" + index, 15);
 				assert(result.world.won, "wall follower failed seed escape-" + index);
