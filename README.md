@@ -5,8 +5,8 @@ Small educational games
 
 Stage-based maze programming game. Stage 1 asks students to write an English keyword-pseudocode
 wall-following algorithm for deterministic, fog-covered perfect mazes. Stage 2 introduces the Pledge
-algorithm with nested wall courses that defeat heading-only wall following. It adds global headings,
-integer variables, comparisons, and a student-maintained cumulative turn balance. Stage 3 teaches
+algorithm with nested wall courses that defeat heading-only wall following. It adds integer variables,
+comparisons, and a student-maintained cumulative turn balance. Stage 3 teaches
 depth-first search in braided mazes with hidden interior goals, visited-cell marks, and an explicit
 backtracking stack. The interface and guided hints are available in English and Swiss Standard German.
 

@@ -68,28 +68,6 @@
 				"  END",
 				"END"
 			].join("\n");
-			const headingOnly = [
-				"WHILE NOT AT_GOAL",
-				"  IF HEADING NORTH",
-				"    IF NOT WALL FRONT",
-				"      MOVE",
-				"    ELSE",
-				"      TURN RIGHT",
-				"    END",
-				"  ELSE",
-				"    IF NOT WALL LEFT",
-				"      TURN LEFT",
-				"      MOVE",
-				"    ELSE",
-				"      IF NOT WALL FRONT",
-				"        MOVE",
-				"      ELSE",
-				"        TURN RIGHT",
-				"      END",
-				"    END",
-				"  END",
-				"END"
-			].join("\n");
 			const depthFirstSearch = [
 				"MARK",
 				"WHILE NOT AT_GOAL",
@@ -198,20 +176,14 @@
 			}
 			messages.push("PASS: nested courses reject the simple sidestep shortcut");
 
-			for (let index = 0; index < 20; index++) {
-				const size = [7, 11, 15, 21, 31][index % 5];
-				const result = Game.runProgram(headingOnly, "heading-only-" + index, size, 2);
-				assert(!result.world.won, "heading-only wall following escaped seed heading-only-" + index);
-			}
-			messages.push("PASS: Pledge courses require cumulative turn balance");
-
 			let stageError;
 			try { Game.parse("SET turns TO 0", 1); } catch (error) { stageError = error; }
 			assert(stageError && stageError.code === "COMMAND_NOT_AVAILABLE", "Stage 1 accepted Stage 2 commands");
 			assert(Game.parse("set turns to turns + 1", 2)[0].op === "SET", "Stage 2 SET did not compile case-insensitively");
-			assert(Game.parse("IF HEADING NORTH\n  MOVE\nEND", 2)[0].condition.type === "HEADING",
-				"Stage 2 heading condition did not compile");
-			messages.push("PASS: Stage 2 variables are stage-restricted");
+			let headingError;
+			try { Game.parse("IF HEADING NORTH\n  MOVE\nEND", 2); } catch (error) { headingError = error; }
+			assert(headingError && headingError.code === "UNKNOWN_CONDITION", "Stage 2 still accepted HEADING");
+			messages.push("PASS: Stage 2 uses turn balance without an absolute heading sensor");
 
 			const dfsMaze = Game.createDfsMaze("dfs-repeatable", 15);
 			let dfsPassages = 0;

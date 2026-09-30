@@ -369,11 +369,6 @@
 		if (wall) {
 			return { type: "WALL", relative: wall[1], negate: negate };
 		}
-		const heading = /^HEADING (NORTH|EAST|SOUTH|WEST)$/.exec(source);
-		if (heading) {
-			requireStage(stage, line);
-			return { type: "HEADING", direction: ["NORTH", "EAST", "SOUTH", "WEST"].indexOf(heading[1]), negate: negate };
-		}
 		const comparison = /^([A-Z][A-Z0-9_]*)\s*(=|!=|<=|>=|<|>)\s*(-?\d+|[A-Z][A-Z0-9_]*)$/.exec(source);
 		if (comparison) {
 			requireStage(stage, line);
@@ -527,8 +522,6 @@
 			result = world.won;
 		} else if (condition.type === "WALL") {
 			result = hasWall(world, condition.relative);
-		} else if (condition.type === "HEADING") {
-			result = world.player.direction === condition.direction;
 		} else if (condition.type === "MARKED") {
 			const markedIndex = neighborIndex(world, condition.relative);
 			result = markedIndex < 0 || world.marked.has(markedIndex);
