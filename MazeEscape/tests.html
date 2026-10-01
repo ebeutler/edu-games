@@ -31,6 +31,20 @@
 				"  END",
 				"END"
 			].join("\n");
+			const leftWallFollower = [
+				"WHILE NOT AT_GOAL",
+				"  IF NOT WALL LEFT",
+				"    TURN LEFT",
+				"    MOVE",
+				"  ELSE",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN RIGHT",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
 			const pledge = [
 				"SET turnBalance TO 0",
 				"WHILE NOT AT_GOAL",
@@ -111,6 +125,11 @@
 					throw new Error(message);
 				}
 			};
+			const runOnMaze = function (source, maze, stage) {
+				const runner = Game.createRunner(Game.parse(source, stage), Game.createWorld(maze));
+				while (!runner.complete) { runner.step(); }
+				return runner;
+			};
 
 			const first = Game.createMaze("repeatable", 11);
 			const second = Game.createMaze("repeatable", 11);
@@ -166,6 +185,23 @@
 			assert(steppedLines.join(",") === "1,2,3,5,6,2", "stepping skipped a source-level control line");
 			messages.push("PASS: stepping pauses on SET, IF, ELSE, and WHILE");
 
+			const booleanSource = [
+				"SET result TO 0",
+				"IF result = 0 OR result = 1 AND result = 2",
+				"  SET result TO 1",
+				"END",
+				"IF result = 1 AND NOT result = 2",
+				"  SET result TO 3",
+				"END"
+			].join("\n");
+			const booleanInstructions = Game.parse(booleanSource, 2);
+			assert(booleanInstructions[1].condition.type === "OR"
+				&& booleanInstructions[1].condition.conditions[1].type === "AND", "AND/OR precedence compiled incorrectly");
+			const booleanRunner = Game.createRunner(booleanInstructions, Game.createWorld(Game.createMaze("booleans", 5)));
+			while (!booleanRunner.complete) { booleanRunner.step(); }
+			assert(booleanRunner.variables.RESULT === 3, "AND/OR conditions evaluated incorrectly");
+			messages.push("PASS: conditions support NOT, AND, and OR precedence");
+
 			for (let index = 0; index < 50; index++) {
 				const result = Game.runProgram(wallFollower, "escape-" + index, 15);
 				assert(result.world.won, "wall follower failed seed escape-" + index);
@@ -177,30 +213,81 @@
 			messages.push("PASS: right-hand rule escapes 50 generated mazes");
 
 			const pledgeMaze = Game.createPledgeMaze("pledge-repeatable", 15);
-			assert(pledgeMaze.stage === 2 && pledgeMaze.goalEdge === Game.constants.NORTH, "Pledge maze has the wrong goal");
+			assert(pledgeMaze.stage === 2, "Pledge maze has the wrong stage");
 			assert(pledgeMaze.requiresTurnBalance, "Pledge maze does not require turn balance");
-			assert(JSON.stringify(pledgeMaze.cells) === JSON.stringify(Game.createPledgeMaze("pledge-repeatable", 15).cells),
+			assert(pledgeMaze.start.x > 0 && pledgeMaze.start.y > 0
+				&& pledgeMaze.start.x < pledgeMaze.size - 1 && pledgeMaze.start.y < pledgeMaze.size - 1,
+				"Pledge maze does not start in the interior");
+			let boundaryOpenings = 0;
+			for (let position = 0; position < pledgeMaze.size; position++) {
+				if (!(pledgeMaze.cells[position] & Game.constants.WALLS[0])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[position * pledgeMaze.size + pledgeMaze.size - 1] & Game.constants.WALLS[1])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[(pledgeMaze.size - 1) * pledgeMaze.size + position] & Game.constants.WALLS[2])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[position * pledgeMaze.size] & Game.constants.WALLS[3])) { boundaryOpenings++; }
+			}
+			assert(boundaryOpenings === 1, "Pledge maze does not have exactly one boundary exit");
+			let pledgePassages = 0;
+			for (let y = 0; y < pledgeMaze.size; y++) {
+				for (let x = 0; x < pledgeMaze.size; x++) {
+					const cell = pledgeMaze.cells[y * pledgeMaze.size + x];
+					if (x + 1 < pledgeMaze.size && !(cell & Game.constants.WALLS[1])) { pledgePassages++; }
+					if (y + 1 < pledgeMaze.size && !(cell & Game.constants.WALLS[2])) { pledgePassages++; }
+				}
+			}
+			assert(pledgePassages > pledgeMaze.size * pledgeMaze.size - 1, "Pledge maze has no passage cycles");
+			assert(JSON.stringify(pledgeMaze) === JSON.stringify(Game.createPledgeMaze("pledge-repeatable", 15)),
 				"Pledge generation is not deterministic");
-			messages.push("PASS: Pledge courses are deterministic");
+			messages.push("PASS: Pledge mazes are deterministic, interior, and braided");
 
+			const startDirections = new Set();
+			const exitDirections = new Set();
 			for (let index = 0; index < 50; index++) {
 				const size = [7, 11, 15, 21, 31][index % 5];
-				const result = Game.runProgram(pledge, "pledge-" + index, size, 2);
-				assert(result.world.won, "Pledge algorithm failed seed pledge-" + index);
-				assert(result.world.player.y < 0, "Pledge algorithm escaped through the wrong edge");
+				const maze = Game.createPledgeMaze("pledge-" + index, size);
+				startDirections.add(maze.start.direction);
+				exitDirections.add(maze.exit.direction);
+				assert(runOnMaze(pledge, maze, 2).world.won, "Pledge algorithm failed seed pledge-" + index);
+				assert(!runOnMaze(wallFollower, maze, 2).world.won, "right-hand rule escaped seed pledge-" + index);
+				assert(!runOnMaze(leftWallFollower, maze, 2).world.won, "left-hand rule escaped seed pledge-" + index);
+				assert(!runOnMaze(obstacleSidestep, maze, 2).world.won, "simple obstacle sidestep escaped seed pledge-" + index);
 			}
-			messages.push("PASS: Pledge escapes 50 nested courses");
+			assert(startDirections.size === 4, "Pledge starts do not cover every direction");
+			assert(exitDirections.size === 4, "Pledge exits do not cover every boundary");
+			messages.push("PASS: Pledge escapes 50 braided mazes from every initial direction");
+			messages.push("PASS: Pledge mazes trap both hand rules and the sidestep shortcut");
 
-			for (let index = 0; index < 50; index++) {
-				const size = [7, 11, 15, 21, 31][index % 5];
-				const result = Game.runProgram(obstacleSidestep, "shortcut-" + index, size, 2);
-				assert(!result.world.won, "simple obstacle sidestep escaped seed shortcut-" + index);
-			}
-			messages.push("PASS: nested courses reject the simple sidestep shortcut");
+			[7, 11, 15, 21, 31].forEach(function (size) {
+				const base = Game.createPledgeMaze("direction-matrix-" + size, size);
+				for (let exitDirection = 0; exitDirection < 4; exitDirection++) {
+					for (let startDirection = 0; startDirection < 4; startDirection++) {
+						const cells = base.cells.slice();
+						cells[base.exit.y * size + base.exit.x] |= Game.constants.WALLS[base.exit.direction];
+						const offset = Math.floor(size / 2);
+						const exit = exitDirection === 0 ? { x: offset, y: 0, direction: 0 }
+							: exitDirection === 1 ? { x: size - 1, y: offset, direction: 1 }
+								: exitDirection === 2 ? { x: offset, y: size - 1, direction: 2 }
+									: { x: 0, y: offset, direction: 3 };
+						cells[exit.y * size + exit.x] &= ~Game.constants.WALLS[exit.direction];
+						const maze = {
+							seed: base.seed,
+							size: size,
+							stage: 2,
+							cells: cells,
+							exit: exit,
+							start: { x: base.start.x, y: base.start.y, direction: startDirection }
+						};
+						assert(runOnMaze(pledge, maze, 2).world.won,
+							"Pledge failed size " + size + ", start " + startDirection + ", exit " + exitDirection);
+					}
+				}
+			});
+			messages.push("PASS: Pledge works for every start direction and exit side");
 
 			let stageError;
 			try { Game.parse("SET turns TO 0", 1); } catch (error) { stageError = error; }
 			assert(stageError && stageError.code === "COMMAND_NOT_AVAILABLE", "Stage 1 accepted Stage 2 commands");
+			assert(Game.parse("IF WALL LEFT OR WALL RIGHT\n  MOVE\nEND", 1)[0].condition.type === "OR",
+				"Stage 1 did not accept Boolean conditions");
 			assert(Game.parse("set turns to turns + 1", 2)[0].op === "SET", "Stage 2 SET did not compile case-insensitively");
 			let headingError;
 			try { Game.parse("IF HEADING NORTH\n  MOVE\nEND", 2); } catch (error) { headingError = error; }

@@ -4,7 +4,7 @@
 	const Game = window.MazeEscapeGame;
 	const DEFAULT_CODES = {
 		1: "WHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
-		2: "SET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep heading NORTH and count every turn\nEND",
+		2: "SET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
 		3: "MARK\n\nWHILE NOT AT_GOAL\n  # Visit an unmarked neighbor or backtrack\nEND"
 	};
 	const TEST_COUNT = 8;
@@ -14,7 +14,7 @@
 			en: {
 			directions: ["N", "E", "S", "W"],
 			stageLabel: "Stage 1: wall following", intro: "Write an algorithm that escapes every maze using only local wall sensors.",
-			stage2Label: "Stage 2: Pledge algorithm", stage2Intro: "Keep moving north through nested wall traps, and leave wall-following mode only with a balanced turn count.",
+			stage2Label: "Stage 2: Pledge algorithm", stage2Intro: "Escape a maze with loops by using your initial facing as the preferred direction and leaving wall-following mode only with a balanced turn count.",
 			stage3Label: "Stage 3: depth-first search", stage3Intro: "Explore a maze with loops, mark every visited cell, and backtrack until you find the hidden goal.",
 			stagePicker: "Stage", stage1Name: "1 · Wall following", stage2Name: "2 · Pledge algorithm", stage3Name: "3 · Depth-first search", language: "Language", currentRun: "Current run", mazeTitle: "Unknown territory", ready: "Ready", running: "Running",
 			paused: "Paused", escaped: "Escaped", goalFound: "Goal found", moves: "Moves", turns: "Turns", instructions: "Instructions", position: "Position",
@@ -25,7 +25,7 @@
 			step: "Step", reset: "Reset", speed: "Speed", trace: "Execution trace", reference: "Command reference",
 			referenceActions: "Actions", referenceConditions: "Conditions", referenceFlow: "Control flow", referenceVariables: "Variables", referenceExploration: "Exploration memory",
 			moveHelp: "Move one cell forward.", turnHelp: "Turn 90° in the chosen direction: LEFT or RIGHT.",
-			wallHelp: "True when there is a wall in the chosen direction: FRONT, LEFT, or RIGHT.", goalHelp: "True after reaching the goal.", notHelp: "Invert a condition.", ifHelp: "Run one of two branches based on a condition.",
+			wallHelp: "True when there is a wall in the chosen direction: FRONT, LEFT, or RIGHT.", goalHelp: "True after reaching the goal.", notHelp: "Invert a condition.", logicalHelp: "Combine conditions. NOT is evaluated first, then AND, then OR.", ifHelp: "Run one of two branches based on a condition.",
 			whileHelp: "Repeat while a condition is true.", hints: "Guided hints", hintStart: "Try your own idea first. Reveal a hint when you are stuck.",
 			setHelp: "Set an integer from a number, variable, or variable plus or minus a number.", compareHelp: "Compare a variable with a number or variable using =, !=, <, >, <=, or >=.",
 			markHelp: "Mark the current cell as visited.", unvisitedHelp: "True when the neighboring cell is open and unmarked. Use FRONT, LEFT, RIGHT, or BACK.", markedHelp: "Check a neighboring cell's mark using FRONT, LEFT, RIGHT, or BACK.",
@@ -34,8 +34,8 @@
 			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", githubLink: "View on GitHub", mazeAria: "Fog-covered maze", centerView: "Center view", metricsAria: "Run statistics",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
 			reliableStar: "Reliability: all test mazes", efficientStar: "Efficiency: each test used at most {limit} moves", scaleStar: "Scale: three larger mazes",
-			stage2TestsPassed: "Your algorithm escaped all {count} nested courses.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} nested courses.",
-			stage2ReliableStar: "Pledge: all nested courses", stage2EfficientStar: "Control: each course used at most {limit} moves", stage2ScaleStar: "Scale: three larger courses",
+			stage2TestsPassed: "Your algorithm escaped all {count} braided mazes.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} braided mazes.",
+			stage2ReliableStar: "Pledge: all braided mazes", stage2EfficientStar: "Control: each maze used at most {limit} moves", stage2ScaleStar: "Scale: three larger braided mazes",
 			stage3TestsPassed: "Your algorithm found all {count} hidden goals.", stage3TestsFailed: "Your algorithm found {passed} of {count} hidden goals.",
 			stage3ReliableStar: "DFS: all hidden goals", stage3EfficientStar: "Traversal: each maze used at most {limit} moves", stage3ScaleStar: "Scale: three larger braided mazes",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
@@ -47,9 +47,9 @@
 				"One right-hand structure is: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Close every block with END."
 			],
 			stage2HintsList: [
-				"The target is the open northern edge. Moving north whenever possible is not enough: nested walls make simpler wall-following rules circle forever.",
-				"Pledge combines a preferred direction with temporary wall following. Move north while free; follow an obstacle only after it blocks that direction.",
-				"Keep an integer turn balance. Add 1 for every right turn and subtract 1 for every left turn. Orientation alone is not enough.",
+				"You start inside a maze with loops and one exit somewhere on the outer wall. A simple hand rule can circle an isolated wall forever.",
+				"Pledge uses your initial facing as its preferred direction. Move that way while free; follow an obstacle only after it blocks you.",
+				"Keep an integer turn balance. Add 1 for every right turn and subtract 1 for every left turn. Facing the preferred direction is not enough: the total must be exactly 0.",
 				"When turnBalance is 0, move forward or turn right at a wall. While it is not 0, keep your left hand on the obstacle and update the balance after every turn.",
 				"Use SET turnBalance TO 0. In the wall-following part: take an open LEFT by turning left, subtracting 1, and moving; otherwise MOVE forward, or TURN RIGHT and add 1 when FRONT is blocked."
 			],
@@ -71,7 +71,7 @@
 		de: {
 			directions: ["N", "O", "S", "W"],
 			stageLabel: "Stufe 1: Wandfolger", intro: "Schreibe einen Algorithmus, der jedes Labyrinth nur mit lokalen Wandsensoren verlässt.",
-			stage2Label: "Stufe 2: Pledge-Algorithmus", stage2Intro: "Gehe durch verschachtelte Wandfallen weiter nach Norden und beende das Wandfolgen nur mit ausgeglichener Drehsumme.",
+			stage2Label: "Stufe 2: Pledge-Algorithmus", stage2Intro: "Verlasse ein Labyrinth mit Schleifen, indem du deine anfängliche Blickrichtung als Vorzugsrichtung verwendest und das Wandfolgen nur mit ausgeglichener Drehsumme beendest.",
 			stage3Label: "Stufe 3: Tiefensuche", stage3Intro: "Erkunde ein Labyrinth mit Schleifen, markiere jedes besuchte Feld und gehe zurück, bis du das versteckte Ziel findest.",
 			stagePicker: "Stufe", stage1Name: "1 · Wandfolger", stage2Name: "2 · Pledge-Algorithmus", stage3Name: "3 · Tiefensuche", language: "Sprache", currentRun: "Aktueller Lauf", mazeTitle: "Unbekanntes Gebiet", ready: "Bereit", running: "Läuft",
 			paused: "Pausiert", escaped: "Entkommen", goalFound: "Ziel gefunden", moves: "Schritte", turns: "Drehungen", instructions: "Anweisungen", position: "Position",
@@ -82,7 +82,7 @@
 			pause: "Pause", step: "Schritt", reset: "Zurücksetzen", speed: "Tempo", trace: "Ausführungsspur", reference: "Befehlsübersicht",
 			referenceActions: "Aktionen", referenceConditions: "Bedingungen", referenceFlow: "Kontrollfluss", referenceVariables: "Variablen", referenceExploration: "Erkundungsspeicher",
 			moveHelp: "Ein Feld vorwärts gehen.", turnHelp: "Um 90° in die gewählte Richtung drehen: LEFT oder RIGHT.",
-			wallHelp: "Wahr, wenn in der gewählten Richtung eine Wand liegt: FRONT, LEFT oder RIGHT.", goalHelp: "Wahr, nachdem das Ziel erreicht wurde.", notHelp: "Kehrt eine Bedingung um.", ifHelp: "Führt abhängig von einer Bedingung einen von zwei Zweigen aus.",
+			wallHelp: "Wahr, wenn in der gewählten Richtung eine Wand liegt: FRONT, LEFT oder RIGHT.", goalHelp: "Wahr, nachdem das Ziel erreicht wurde.", notHelp: "Kehrt eine Bedingung um.", logicalHelp: "Verknüpft Bedingungen. Zuerst wird NOT ausgewertet, dann AND und danach OR.", ifHelp: "Führt abhängig von einer Bedingung einen von zwei Zweigen aus.",
 			whileHelp: "Wiederholen, solange eine Bedingung wahr ist.", hints: "Schrittweise Hinweise", hintStart: "Probiere zuerst deine eigene Idee. Zeige einen Hinweis, wenn du nicht weiterkommst.",
 			setHelp: "Setzt eine Ganzzahl aus einer Zahl, Variable oder Variable plus oder minus einer Zahl.", compareHelp: "Vergleicht eine Variable mit einer Zahl oder Variable mittels =, !=, <, >, <= oder >=.",
 			markHelp: "Markiert das aktuelle Feld als besucht.", unvisitedHelp: "Wahr, wenn das Nachbarfeld erreichbar und unmarkiert ist. Verwende FRONT, LEFT, RIGHT oder BACK.", markedHelp: "Prüft die Markierung eines Nachbarfelds mit FRONT, LEFT, RIGHT oder BACK.",
@@ -91,8 +91,8 @@
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", githubLink: "Auf GitHub ansehen", mazeAria: "Labyrinth im Nebel", centerView: "Ansicht zentrieren", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
 			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei grössere Labyrinthe",
-			stage2TestsPassed: "Dein Algorithmus hat alle {count} verschachtelten Kurse verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} verschachtelten Kursen verlassen.",
-			stage2ReliableStar: "Pledge: alle verschachtelten Kurse", stage2EfficientStar: "Kontrolle: jeder Kurs brauchte höchstens {limit} Schritte", stage2ScaleStar: "Skalierung: drei grössere Kurse",
+			stage2TestsPassed: "Dein Algorithmus hat alle {count} Labyrinthe mit Schleifen verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} Labyrinthen mit Schleifen verlassen.",
+			stage2ReliableStar: "Pledge: alle Labyrinthe mit Schleifen", stage2EfficientStar: "Kontrolle: jedes Labyrinth brauchte höchstens {limit} Schritte", stage2ScaleStar: "Skalierung: drei grössere Labyrinthe mit Schleifen",
 			stage3TestsPassed: "Dein Algorithmus hat alle {count} versteckten Ziele gefunden.", stage3TestsFailed: "Dein Algorithmus hat {passed} von {count} versteckten Zielen gefunden.",
 			stage3ReliableStar: "Tiefensuche: alle versteckten Ziele", stage3EfficientStar: "Erkundung: jedes Labyrinth brauchte höchstens {limit} Schritte", stage3ScaleStar: "Skalierung: drei grössere Labyrinthe mit Schleifen",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
@@ -104,9 +104,9 @@
 				"Eine Struktur für die rechte Hand ist: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Schliesse jeden Block mit END."
 			],
 			stage2HintsList: [
-				"Das Ziel ist der offene Nordrand. Nur wenn möglich nach Norden zu gehen reicht nicht: Verschachtelte Wände lassen einfachere Wandregeln endlos kreisen.",
-				"Pledge kombiniert eine Vorzugsrichtung mit vorübergehendem Wandfolgen. Gehe nach Norden, solange der Weg frei ist, und folge einer Wand erst, wenn sie diese Richtung blockiert.",
-				"Führe eine ganzzahlige Drehsumme. Addiere 1 für jede Rechtsdrehung und subtrahiere 1 für jede Linksdrehung. Die Ausrichtung allein reicht nicht.",
+				"Du startest in einem Labyrinth mit Schleifen und einem Ausgang irgendwo am Aussenrand. Eine einfache Handregel kann eine isolierte Wand endlos umrunden.",
+				"Pledge verwendet deine anfängliche Blickrichtung als Vorzugsrichtung. Gehe in diese Richtung, solange der Weg frei ist, und folge einer Wand erst, wenn sie dich blockiert.",
+				"Führe eine ganzzahlige Drehsumme. Addiere 1 für jede Rechtsdrehung und subtrahiere 1 für jede Linksdrehung. Die Vorzugsrichtung allein reicht nicht: Die Summe muss genau 0 sein.",
 				"Wenn turnBalance 0 ist, gehe vorwärts oder drehe an einer Wand nach rechts. Solange der Wert nicht 0 ist, halte das Hindernis links und aktualisiere den Wert nach jeder Drehung.",
 				"Verwende SET turnBalance TO 0. Beim Wandfolgen: Ist LEFT frei, drehe links, subtrahiere 1 und gehe; gehe sonst vorwärts oder drehe rechts und addiere 1, wenn FRONT blockiert ist."
 			],
@@ -624,8 +624,6 @@
 			visibilityContext.beginPath();
 			visibilityContext.arc(goalX, goalY, Math.max(4, cellSize * 0.2), 0, Math.PI * 2);
 			visibilityContext.fill();
-		} else if (state.maze.goalEdge === Game.constants.NORTH) {
-			visibilityContext.fillRect(offsetX, offsetY - cellSize * 0.07, state.maze.size * cellSize, cellSize * 0.14);
 		} else {
 			const exit = state.maze.exit;
 			const exitX = offsetX + (exit.x + 0.5 + (exit.direction === 1 ? 0.43 : exit.direction === 3 ? -0.43 : 0)) * cellSize;
