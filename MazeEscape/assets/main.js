@@ -2,6 +2,7 @@
 	"use strict";
 
 	const Game = window.MazeEscapeGame;
+	const Rewards = window.MazeEscapeRewards;
 	const DEFAULT_CODES = {
 		1: "WHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
 		2: "SET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
@@ -33,32 +34,39 @@
 			revealHint: "Reveal a hint", previousHint: "Previous hint", nextHint: "Next hint", challenge: "Challenge", testTitle: "Testing other mazes", openFailure: "Open failed maze",
 			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", githubLink: "View on GitHub", mazeAria: "Fog-covered maze", centerView: "Center view", metricsAria: "Run statistics",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
-			reliableStar: "Reliability: all test mazes", efficientStar: "Efficiency: each test used at most {limit} moves", scaleStar: "Scale: three larger mazes",
+			reliableStar: "Reliability: solve all 8 benchmark mazes ({dimensions})", efficientStar: "Efficiency: at most {limit} moves + turns across the benchmark suite", scaleStar: "Large maze: solve a visible 21×21+ maze and pass validation",
 			stage2TestsPassed: "Your algorithm escaped all {count} braided mazes.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} braided mazes.",
-			stage2ReliableStar: "Pledge: all braided mazes", stage2EfficientStar: "Control: each maze used at most {limit} moves", stage2ScaleStar: "Scale: three larger braided mazes",
 			stage3TestsPassed: "Your algorithm found all {count} hidden goals.", stage3TestsFailed: "Your algorithm found {passed} of {count} hidden goals.",
-			stage3ReliableStar: "DFS: all hidden goals", stage3EfficientStar: "Traversal: each maze used at most {limit} moves", stage3ScaleStar: "Scale: three larger braided mazes",
+			progressTitle: "Your progress", starBalance: "Earned: {earned}/9 ★ · Borrowed: {borrowed} ★ · Available: {available} ★",
+			progressHelp: "Each achievement earns one permanent star. Experiments and returns never erase earned stars.",
+			stageProgress: "Stage {stage}", nextChallenge: "Next challenge: {goal}", stageMastered: "All three stars earned in this stage!",
+			largeChallenge: "Create large maze", shopTitle: "Borrow & decorate", shopHelp: "Stars are refundable deposits. Swapping or returning an item releases its stars. Decorations never change the algorithm or reveal hidden goals.",
+			starsGained: "You earned {count} new ★! Try a new decoration.", benchmarkScore: "Benchmark: {score} moves + turns · Personal best: {best}", newBest: "New personal best: {previous} → {score}",
+			equipped: "Equipped", borrowItem: "Borrow · {cost} ★ deposit", swapItem: "Swap · {cost} ★ deposit", returnItem: "Return / use original", needStars: "Earn {count} more ★ to borrow this item",
+			slot_explorer: "Explorer", slot_walls: "Walls", slot_floor: "Floor", slot_goal: "Goal decoration", slot_outside: "Outside scenery",
+			original_explorer: "Original explorer", original_walls: "Original walls", original_floor: "Original floor", original_goal: "No decoration", original_outside: "Original scenery",
+			item_slug: "Slug", item_bunny: "Bunny", item_racecar: "Racecar", item_moss: "Mossy walls", item_flowers: "Flowers", item_truck: "Ice cream truck", item_beach: "Beach",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
 				"Imagine keeping one hand against the same wall while walking. Which side will you choose?",
-				"Before moving, check your chosen side first, then the way ahead, then the remaining side.",
-				"Repeat until AT_GOAL. If the wall on your chosen side is absent, turn toward it and move. Otherwise move forward when possible; if not, turn away.",
-				"One right-hand structure is: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Close every block with END."
+				"Your decisions should preserve contact with the same wall. What happens when that wall bends away from you?",
+				"Pause at a dead end. Does your rule eventually face a free passage? Check whether each sensor is tested before or after a turn.",
+				"Test a junction, a corner, and a dead end separately. For efficiency, compare the two hands on the same benchmark and look for unnecessary rotations."
 			],
 			stage2HintsList: [
 				"You start inside a maze with loops and one exit somewhere on the outer wall. A simple hand rule can circle an isolated wall forever.",
 				"Pledge uses your initial facing as its preferred direction. Move that way while free; follow an obstacle only after it blocks you.",
 				"Keep an integer turn balance. Add 1 for every right turn and subtract 1 for every left turn. Facing the preferred direction is not enough: the total must be exactly 0.",
-				"When turnBalance is 0, move forward or turn right at a wall. While it is not 0, keep your left hand on the obstacle and update the balance after every turn.",
-				"Use SET turnBalance TO 0. In the wall-following part: take an open LEFT by turning left, subtracting 1, and moving; otherwise MOVE forward, or TURN RIGHT and add 1 when FRONT is blocked."
+				"After a complete rotation you face the same direction. Should the cumulative turn total also be zero? Step through your turns and check that none go uncounted.",
+				"Pause where your explorer leaves an obstacle. Is the preferred path open and the total exactly zero? Compare left- and right-hand obstacle following on the fixed benchmark."
 			],
 			stage3HintsList: [
 				"Wall following cannot reliably search a maze with loops and an interior goal. You need to remember where you have already been.",
 				"MARK each new cell. UNVISITED FRONT is true only when the neighboring cell is reachable and not marked.",
-				"Depth-first search chooses one unvisited neighbor and saves a way back before moving into it. PUSH BACK saves that absolute return direction.",
-				"When no neighboring direction is unvisited, use FACE POP and MOVE to backtrack. The stack returns you along the route in reverse order.",
-				"Check UNVISITED FRONT, RIGHT, LEFT, and BACK in nested IF blocks. Turn toward the chosen cell, PUSH BACK, MOVE, and MARK. If none is available and the stack is not empty, FACE POP and MOVE."
+				"Depth-first search explores one branch at a time. What must the stack remember before you enter a new branch? Think about when a relative return direction is saved.",
+				"At a cell with no unvisited neighbors, the stack should guide you back. Does backtracking need a new stack entry, or consume an old one?",
+				"Step through a loop and a dead end. Check when you mark cells and which directions you inspect. Different neighbor priorities can reduce moves and turns without skipping branches."
 			],
 			errors: {
 				UNKNOWN_CONDITION: "Unknown condition '{detail}'", UNEXPECTED_ELSE: "ELSE does not belong to an open IF",
@@ -90,32 +98,39 @@
 			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Weitere Labyrinthe werden getestet", openFailure: "Fehlgeschlagenes Labyrinth öffnen",
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", githubLink: "Auf GitHub ansehen", mazeAria: "Labyrinth im Nebel", centerView: "Ansicht zentrieren", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
-			reliableStar: "Zuverlässigkeit: alle Testlabyrinthe", efficientStar: "Effizienz: jeder Test brauchte höchstens {limit} Schritte", scaleStar: "Skalierung: drei grössere Labyrinthe",
+			reliableStar: "Zuverlässigkeit: alle 8 Benchmark-Labyrinthe lösen ({dimensions})", efficientStar: "Effizienz: höchstens {limit} Schritte + Drehungen in der Benchmark-Serie", scaleStar: "Grosses Labyrinth: ein sichtbares 21×21+-Labyrinth lösen und die Validierung bestehen",
 			stage2TestsPassed: "Dein Algorithmus hat alle {count} Labyrinthe mit Schleifen verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} Labyrinthen mit Schleifen verlassen.",
-			stage2ReliableStar: "Pledge: alle Labyrinthe mit Schleifen", stage2EfficientStar: "Kontrolle: jedes Labyrinth brauchte höchstens {limit} Schritte", stage2ScaleStar: "Skalierung: drei grössere Labyrinthe mit Schleifen",
 			stage3TestsPassed: "Dein Algorithmus hat alle {count} versteckten Ziele gefunden.", stage3TestsFailed: "Dein Algorithmus hat {passed} von {count} versteckten Zielen gefunden.",
-			stage3ReliableStar: "Tiefensuche: alle versteckten Ziele", stage3EfficientStar: "Erkundung: jedes Labyrinth brauchte höchstens {limit} Schritte", stage3ScaleStar: "Skalierung: drei grössere Labyrinthe mit Schleifen",
+			progressTitle: "Dein Fortschritt", starBalance: "Verdient: {earned}/9 ★ · Geliehen: {borrowed} ★ · Verfügbar: {available} ★",
+			progressHelp: "Jede Herausforderung bringt einen dauerhaften Stern. Experimente und Rückgaben löschen keine verdienten Sterne.",
+			stageProgress: "Stufe {stage}", nextChallenge: "Nächste Herausforderung: {goal}", stageMastered: "Alle drei Sterne dieser Stufe verdient!",
+			largeChallenge: "Grosses Labyrinth erstellen", shopTitle: "Ausleihen & dekorieren", shopHelp: "Sterne dienen als rückzahlbares Pfand. Beim Wechseln oder Zurückgeben erhältst du sie zurück. Dekorationen verändern den Algorithmus nicht und verraten keine versteckten Ziele.",
+			starsGained: "Du hast {count} neue ★ verdient! Probiere eine neue Dekoration.", benchmarkScore: "Benchmark: {score} Schritte + Drehungen · Persönlicher Bestwert: {best}", newBest: "Neuer Bestwert: {previous} → {score}",
+			equipped: "Ausgerüstet", borrowItem: "Ausleihen · {cost} ★ Pfand", swapItem: "Wechseln · {cost} ★ Pfand", returnItem: "Zurückgeben / Original nutzen", needStars: "Verdiene noch {count} ★, um diesen Gegenstand auszuleihen",
+			slot_explorer: "Forscher", slot_walls: "Wände", slot_floor: "Boden", slot_goal: "Zieldekoration", slot_outside: "Umgebung",
+			original_explorer: "Originalforscher", original_walls: "Originalwände", original_floor: "Originalboden", original_goal: "Keine Dekoration", original_outside: "Originalumgebung",
+			item_slug: "Nacktschnecke", item_bunny: "Häschen", item_racecar: "Rennwagen", item_moss: "Mooswände", item_flowers: "Blumen", item_truck: "Glacewagen", item_beach: "Strand",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
 				"Stell dir vor, du hältst beim Gehen immer dieselbe Hand an einer Wand. Welche Seite wählst du?",
-				"Prüfe vor jedem Schritt zuerst deine gewählte Seite, dann den Weg geradeaus und danach die verbleibende Seite.",
-				"Wiederhole bis AT_GOAL. Fehlt die Wand auf deiner gewählten Seite, drehe dich dorthin und gehe. Gehe sonst geradeaus, wenn möglich; andernfalls drehe dich weg.",
-				"Eine Struktur für die rechte Hand ist: WHILE NOT AT_GOAL → IF NOT WALL RIGHT → TURN RIGHT, MOVE → ELSE → IF NOT WALL FRONT → MOVE → ELSE → TURN LEFT. Schliesse jeden Block mit END."
+				"Deine Entscheidungen sollten den Kontakt mit derselben Wand erhalten. Was passiert, wenn diese Wand von dir weg abbiegt?",
+				"Pausiere in einer Sackgasse. Richtet sich deine Regel irgendwann auf einen freien Weg aus? Prüfe, ob du Sensoren vor oder nach einer Drehung abfragst.",
+				"Teste eine Kreuzung, eine Ecke und eine Sackgasse einzeln. Vergleiche für die Effizienz beide Hände im selben Benchmark und suche unnötige Drehungen."
 			],
 			stage2HintsList: [
 				"Du startest in einem Labyrinth mit Schleifen und einem Ausgang irgendwo am Aussenrand. Eine einfache Handregel kann eine isolierte Wand endlos umrunden.",
 				"Pledge verwendet deine anfängliche Blickrichtung als Vorzugsrichtung. Gehe in diese Richtung, solange der Weg frei ist, und folge einer Wand erst, wenn sie dich blockiert.",
 				"Führe eine ganzzahlige Drehsumme. Addiere 1 für jede Rechtsdrehung und subtrahiere 1 für jede Linksdrehung. Die Vorzugsrichtung allein reicht nicht: Die Summe muss genau 0 sein.",
-				"Wenn turnBalance 0 ist, gehe vorwärts oder drehe an einer Wand nach rechts. Solange der Wert nicht 0 ist, halte das Hindernis links und aktualisiere den Wert nach jeder Drehung.",
-				"Verwende SET turnBalance TO 0. Beim Wandfolgen: Ist LEFT frei, drehe links, subtrahiere 1 und gehe; gehe sonst vorwärts oder drehe rechts und addiere 1, wenn FRONT blockiert ist."
+				"Nach einer vollständigen Drehung blickst du in dieselbe Richtung. Sollte die Drehsumme dann auch null sein? Gehe deine Drehungen einzeln durch und prüfe, ob du alle zählst.",
+				"Pausiere dort, wo dein Forscher eine Wand verlässt. Ist der Weg in die Vorzugsrichtung frei und die Summe genau null? Vergleiche linkes und rechtes Wandfolgen im festen Benchmark."
 			],
 			stage3HintsList: [
 				"Wandfolgen kann ein Labyrinth mit Schleifen und einem inneren Ziel nicht zuverlässig durchsuchen. Du musst dir merken, wo du bereits warst.",
 				"Markiere jedes neue Feld mit MARK. UNVISITED FRONT ist nur wahr, wenn das Nachbarfeld erreichbar und unmarkiert ist.",
-				"Die Tiefensuche wählt ein unbesuchtes Nachbarfeld und speichert vor dem Schritt den Rückweg. PUSH BACK speichert diese absolute Rückkehrrichtung.",
-				"Wenn kein Nachbarfeld unbesucht ist, gehst du mit FACE POP und MOVE zurück. Der Stapel führt dich in umgekehrter Reihenfolge entlang des Wegs zurück.",
-				"Prüfe UNVISITED FRONT, RIGHT, LEFT und BACK in verschachtelten IF-Blöcken. Drehe zum gewählten Feld, verwende PUSH BACK, MOVE und MARK. Ist keines frei und der Stapel nicht leer, verwende FACE POP und MOVE."
+				"Die Tiefensuche erkundet einen Zweig nach dem anderen. Was muss der Stapel speichern, bevor du einen neuen Zweig betrittst? Überlege, wann du die relative Rückkehrrichtung speicherst.",
+				"An einem Feld ohne unbesuchte Nachbarn sollte der Stapel den Rückweg zeigen. Braucht der Rückweg einen neuen Eintrag oder verbraucht er einen alten?",
+				"Gehe eine Schleife und eine Sackgasse schrittweise durch. Prüfe, wann du markierst und welche Richtungen du untersuchst. Andere Nachbarprioritäten können Schritte und Drehungen sparen, ohne Zweige auszulassen."
 			],
 			errors: {
 				UNKNOWN_CONDITION: "Unbekannte Bedingung '{detail}'", UNEXPECTED_ELSE: "ELSE gehört zu keinem offenen IF",
@@ -132,7 +147,7 @@
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
 		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
-		stage1Solved: false, teacherMode: false
+		stage1Solved: false, teacherMode: false, progress: null, assessment: null
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -209,9 +224,8 @@
 		} else {
 			setStatus("paused");
 		}
-		if (elements.results && !elements.results.hidden && state.world && state.world.won) {
-			runChecks();
-		}
+		if (state.assessment && !elements.results.hidden) { renderResults(); }
+		updateProgress();
 		updateMazeTitle();
 		safeStorage(function () { localStorage.setItem("mazeEscapeLanguage", state.language); });
 		draw();
@@ -250,7 +264,9 @@
 		};
 		state.runner = null;
 		state.instructions = null;
+		state.assessment = null;
 		state.failedSeed = null;
+		elements.rewardNotice.textContent = "";
 		state.seedRevealed = false;
 		state.viewOffsetX = 0;
 		state.viewOffsetY = 0;
@@ -283,6 +299,10 @@
 		};
 		state.runner = null;
 		state.instructions = null;
+		state.assessment = null;
+		state.failedSeed = null;
+		elements.openFailure.hidden = true;
+		elements.rewardNotice.textContent = "";
 		state.viewOffsetX = 0;
 		state.viewOffsetY = 0;
 		state.drag = null;
@@ -317,61 +337,137 @@
 	const runChecks = function () {
 		const results = [];
 		let firstFailure = null;
-		let efficient = true;
+		const benchmarkSize = Rewards.stages[state.stage].size;
 		for (let index = 0; index < TEST_COUNT; index++) {
-			const seed = state.maze.seed + "-test-" + (index + 1);
-			const runner = Game.runProgram(elements.code.value, seed, state.maze.size, state.stage);
+			const seed = Rewards.benchmarkSeed(state.stage, index);
+			const runner = Game.runProgram(elements.code.value, seed, benchmarkSize, state.stage);
 			results.push(runner);
 			if (!runner.world.won && !firstFailure) {
-				firstFailure = { seed: seed, error: runner.error };
-			}
-			if (runner.world.moves > state.maze.size * state.maze.size * (state.stage === 1 ? 2 : 4)) {
-				efficient = false;
+				firstFailure = { seed: seed, size: benchmarkSize, error: runner.error };
 			}
 		}
-
-		let scaled = !firstFailure;
-		const largeSize = Math.min(31, state.maze.size + 6);
-		if (scaled) {
+		const largeResults = [];
+		if (!firstFailure && state.world.won && state.maze.size >= 21) {
 			for (let index = 0; index < 3; index++) {
-				const runner = Game.runProgram(elements.code.value, state.maze.seed + "-large-" + (index + 1), largeSize, state.stage);
+				const seed = Rewards.largeSeed(state.stage, state.maze.size, index);
+				const runner = Game.runProgram(elements.code.value, seed, state.maze.size, state.stage);
+				largeResults.push(runner);
 				if (!runner.world.won) {
-					scaled = false;
 					if (!firstFailure) {
-						firstFailure = { seed: state.maze.seed + "-large-" + (index + 1), size: largeSize, error: runner.error };
+						firstFailure = { seed: seed, size: state.maze.size, error: runner.error };
 					}
-					break;
 				}
 			}
 		}
-
 		const passed = results.filter(function (runner) { return runner.world.won; }).length;
-		const reliable = passed === TEST_COUNT;
-		const stars = [reliable, reliable && efficient, reliable && scaled];
+		const evaluation = Rewards.evaluate(state.stage, results, state.world, largeResults);
+		const award = Rewards.award(state.progress, state.stage, evaluation.achievements, evaluation.score);
+		state.assessment = { passed: passed, score: evaluation.score, award: award };
+		state.failedSeed = firstFailure;
+		saveProgress();
 		elements.results.hidden = false;
+		renderResults();
+		updateProgress();
+	};
+
+	const saveProgress = function () {
+		safeStorage(function () { localStorage.setItem("mazeEscapeRewardsV1", JSON.stringify(state.progress)); });
+	};
+	const achievementLabels = function () {
+		const config = Rewards.stages[state.stage];
+		return [text("reliableStar", { dimensions: config.size + "×" + config.size }), text("efficientStar", { limit: config.budget }), text("scaleStar")];
+	};
+	const renderResults = function () {
+		const assessment = state.assessment;
+		elements.rewardNotice.textContent = assessment.award.gained ? text("starsGained", { count: assessment.award.gained }) : "";
+		const stars = state.progress.achievements[state.stage];
 		elements.stars.textContent = stars.map(function (earned) { return earned ? "★" : "☆"; }).join("");
 		const stagePrefix = state.stage === 3 ? "stage3" : state.stage === 2 ? "stage2" : "";
-		elements.testSummary.textContent = reliable
+		elements.testSummary.textContent = assessment.passed === TEST_COUNT
 			? text(stagePrefix ? stagePrefix + "TestsPassed" : "testsPassed", { count: TEST_COUNT })
-			: text(stagePrefix ? stagePrefix + "TestsFailed" : "testsFailed", { passed: passed, count: TEST_COUNT });
+			: text(stagePrefix ? stagePrefix + "TestsFailed" : "testsFailed", { passed: assessment.passed, count: TEST_COUNT });
 		elements.testDetails.replaceChildren();
-		[
-			text(stagePrefix ? stagePrefix + "ReliableStar" : "reliableStar"),
-			text(stagePrefix ? stagePrefix + "EfficientStar" : "efficientStar", { limit: state.maze.size * state.maze.size * (state.stage === 1 ? 2 : 4) }),
-			text(stagePrefix ? stagePrefix + "ScaleStar" : "scaleStar")
-		].forEach(function (label, index) {
+		achievementLabels().forEach(function (label, index) {
 			const item = document.createElement("li");
 			item.textContent = (stars[index] ? "✓ " : "○ ") + label;
 			elements.testDetails.appendChild(item);
 		});
-		state.failedSeed = firstFailure;
-		if (firstFailure) {
+		if (assessment.score !== null) {
 			const item = document.createElement("li");
-			item.textContent = text("failedSeed", { seed: firstFailure.seed }) + " · "
-				+ text("testError", { error: formatError(firstFailure.error) });
+			item.textContent = text("benchmarkScore", { score: assessment.score, best: state.progress.best[state.stage] });
+			if (assessment.award.improved && assessment.award.previous !== undefined) {
+				item.textContent += " · " + text("newBest", { previous: assessment.award.previous, score: assessment.score });
+			}
 			elements.testDetails.appendChild(item);
-			elements.openFailure.hidden = false;
 		}
+		elements.openFailure.hidden = !state.failedSeed;
+		if (state.failedSeed) {
+			const item = document.createElement("li");
+			item.textContent = text("failedSeed", { seed: state.failedSeed.seed }) + " · "
+				+ text("testError", { error: formatError(state.failedSeed.error) });
+			elements.testDetails.appendChild(item);
+		}
+	};
+
+	const updateProgress = function () {
+		const balance = Rewards.balance(state.progress);
+		elements.starBalance.textContent = text("starBalance", balance);
+		elements.stageProgress.replaceChildren();
+		[1, 2, 3].forEach(function (stage) {
+			const item = document.createElement("p");
+			item.classList.toggle("current-stage", stage === state.stage);
+			item.textContent = text("stageProgress", { stage: stage }) + " "
+				+ state.progress.achievements[stage].map(function (earned) { return earned ? "★" : "☆"; }).join("");
+			elements.stageProgress.appendChild(item);
+		});
+		const stars = state.progress.achievements[state.stage];
+		const next = stars.indexOf(false);
+		elements.nextChallenge.textContent = next < 0 ? text("stageMastered") : text("nextChallenge", { goal: achievementLabels()[next] });
+		elements.largeChallenge.hidden = stars[2];
+		elements.shopItems.replaceChildren();
+		Object.keys(Rewards.catalog).forEach(function (slot) {
+			const group = document.createElement("fieldset");
+			const legend = document.createElement("legend");
+			legend.textContent = text("slot_" + slot);
+			group.appendChild(legend);
+			Rewards.catalog[slot].forEach(function (entry) {
+				const button = document.createElement("button");
+				button.type = "button";
+				button.className = "cosmetic-button";
+				button.dataset.slot = slot;
+				button.dataset.item = entry.id;
+				const selected = (state.progress.equipped[slot] || "original") === entry.id;
+				button.setAttribute("aria-pressed", String(selected));
+				const icon = document.createElement("canvas");
+				icon.className = "cosmetic-preview";
+				icon.setAttribute("aria-hidden", "true");
+				icon.width = 80; icon.height = 60;
+				drawPreview(icon, slot, entry.id);
+				button.appendChild(icon);
+				const label = document.createElement("span");
+				label.textContent = text(entry.id === "original" ? "original_" + slot : "item_" + entry.id);
+				button.appendChild(label);
+				const action = document.createElement("small");
+				action.textContent = selected ? text("equipped") : entry.cost === 0 ? text("returnItem")
+					: text(state.progress.equipped[slot] && state.progress.equipped[slot] !== "original" ? "swapItem" : "borrowItem", { cost: entry.cost });
+				button.appendChild(action);
+				group.appendChild(button);
+			});
+			elements.shopItems.appendChild(group);
+		});
+		updateBorrowControls();
+	};
+	const updateBorrowControls = function () {
+		elements.largeChallenge.disabled = state.running;
+		const balance = Rewards.balance(state.progress);
+		elements.shopItems.querySelectorAll("button").forEach(function (button) {
+			const slot = button.dataset.slot;
+			const current = Rewards.catalog[slot].find(function (entry) { return entry.id === state.progress.equipped[slot]; });
+			const entry = Rewards.catalog[slot].find(function (item) { return item.id === button.dataset.item; });
+			const affordable = entry.cost <= balance.available + (current ? current.cost : 0);
+			button.disabled = state.running || !affordable;
+			button.title = affordable ? "" : text("needStars", { count: entry.cost - balance.available - (current ? current.cost : 0) });
+		});
 	};
 
 	const finish = function () {
@@ -522,6 +618,7 @@
 		elements.centerView.disabled = state.running;
 		elements.resetCode.disabled = elements.code.readOnly;
 		elements.maze.dataset.draggable = String(!state.running);
+		updateBorrowControls();
 	};
 
 	const updateActiveLine = function () {
@@ -555,6 +652,90 @@
 		updateActiveLine();
 	};
 
+	const drawPreview = function (canvas, slot, id) {
+		const context = canvas.getContext("2d");
+		if (slot === "explorer") {
+			context.translate(40, 36); drawExplorer(context, 48, id);
+		} else if (slot === "goal" && id === "truck") {
+			drawTruck(context, 40, 35, 80);
+		} else if (slot === "goal") {
+			context.fillStyle = "#f2b84b"; context.beginPath(); context.arc(40, 30, 8, 0, Math.PI * 2); context.fill();
+		} else if (slot === "outside") {
+			context.fillStyle = id === "beach" ? "#326e83" : "#080b0a"; context.fillRect(8, 8, 64, 44);
+			if (id === "beach") { context.fillStyle = "#d9bd7b"; context.fillRect(8, 26, 64, 26); drawUmbrella(context, 40, 42, 30); }
+		} else {
+			context.fillStyle = "#26322b"; context.fillRect(10, 10, 60, 40);
+			if (slot === "floor" && id === "flowers") { drawFlower(context, 40, 30, 8, true); }
+			if (slot === "walls") {
+				context.strokeStyle = id === "moss" ? "#b4d68c" : "#b9d3bc"; context.lineWidth = 5;
+				context.beginPath(); context.moveTo(10, 10); context.lineTo(70, 10); context.lineTo(70, 50); context.stroke();
+			}
+		}
+	};
+	const drawFlower = function (target, x, y, radius, bright) {
+		target.fillStyle = bright ? "#e6c684" : "#786442";
+		for (let petal = 0; petal < 5; petal++) {
+			const angle = petal * Math.PI * 2 / 5;
+			target.beginPath(); target.arc(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, radius * 0.7, 0, Math.PI * 2); target.fill();
+		}
+	};
+	const drawUmbrella = function (target, x, y, size) {
+		target.strokeStyle = "#f4f0df"; target.lineWidth = size * 0.05;
+		target.beginPath(); target.moveTo(x, y); target.lineTo(x, y - size * 0.7); target.stroke();
+		target.fillStyle = "#e7a1ae"; target.beginPath(); target.arc(x, y - size * 0.5, size * 0.4, Math.PI, Math.PI * 2); target.closePath(); target.fill();
+	};
+	const drawExplorer = function (context, cellSize, previewSkin) {
+		const skin = previewSkin || state.progress.equipped.explorer || "original";
+		context.save();
+		context.scale(cellSize, cellSize);
+		if (skin === "slug") {
+			context.fillStyle = "#e6c684";
+			context.beginPath(); context.ellipse(0, 0.05, 0.18, 0.3, 0, 0, Math.PI * 2); context.fill();
+			context.strokeStyle = "#e6c684"; context.lineWidth = 0.05;
+			context.beginPath(); context.moveTo(-0.09, -0.17); context.lineTo(-0.16, -0.32);
+			context.moveTo(0.09, -0.17); context.lineTo(0.16, -0.32); context.stroke();
+			context.fillStyle = "#19201a";
+			[-0.16, 0.16].forEach(function (x) { context.beginPath(); context.arc(x, -0.32, 0.025, 0, Math.PI * 2); context.fill(); });
+		} else if (skin === "bunny") {
+			context.fillStyle = "#fff3e5";
+			context.beginPath(); context.ellipse(0, 0.08, 0.22, 0.23, 0, 0, Math.PI * 2); context.fill();
+			[-0.1, 0.1].forEach(function (x) {
+				context.fillStyle = "#fff3e5"; context.beginPath(); context.ellipse(x, -0.22, 0.065, 0.18, 0, 0, Math.PI * 2); context.fill();
+				context.fillStyle = "#e7a1ae"; context.beginPath(); context.ellipse(x, -0.23, 0.03, 0.12, 0, 0, Math.PI * 2); context.fill();
+			});
+			context.fillStyle = "#24322b";
+			[-0.09, 0.09].forEach(function (x) { context.beginPath(); context.arc(x, -0.02, 0.025, 0, Math.PI * 2); context.fill(); });
+		} else if (skin === "racecar") {
+			context.fillStyle = "#101412";
+			[-0.22, 0.12].forEach(function (x) { context.fillRect(x, -0.19, 0.1, 0.13); context.fillRect(x, 0.14, 0.1, 0.13); });
+			context.fillStyle = "#f07c69"; context.fillRect(-0.17, -0.3, 0.34, 0.6);
+			context.fillStyle = "#72c7d4"; context.fillRect(-0.12, -0.13, 0.24, 0.14);
+			context.fillStyle = "#f4f0df"; context.fillRect(-0.025, -0.29, 0.05, 0.57);
+			context.fillStyle = "#f2b84b"; context.fillRect(-0.15, -0.31, 0.07, 0.04); context.fillRect(0.08, -0.31, 0.07, 0.04);
+		}
+		// Every skin keeps an explicit facing marker, independent of its artwork.
+		context.fillStyle = !previewSkin && state.world && state.world.won ? "#f2b84b" : "#9fd356";
+		context.strokeStyle = "#101412"; context.lineWidth = 0.035;
+		const marker = skin === "original" ? 0 : -0.48;
+		const width = skin === "original" ? 0.22 : 0.09;
+		context.beginPath(); context.moveTo(0, marker - (skin === "original" ? 0.3 : 0.07));
+		context.lineTo(width, marker + (skin === "original" ? 0.22 : 0.07));
+		context.lineTo(-width, marker + (skin === "original" ? 0.22 : 0.07));
+		context.closePath(); context.fill(); context.stroke();
+		context.restore();
+	};
+	const drawTruck = function (target, x, y, cellSize) {
+		target.save(); target.translate(x, y); target.scale(cellSize, cellSize);
+		target.fillStyle = "#f2c8db"; target.fillRect(-0.32, -0.12, 0.42, 0.26);
+		target.fillStyle = "#fff3e5"; target.fillRect(0.1, -0.07, 0.22, 0.21);
+		target.fillStyle = "#72c7d4"; target.fillRect(0.15, -0.04, 0.12, 0.09);
+		target.fillStyle = "#101412";
+		[-0.2, 0.2].forEach(function (wheel) { target.beginPath(); target.arc(wheel, 0.15, 0.055, 0, Math.PI * 2); target.fill(); });
+		target.fillStyle = "#e6c684"; target.beginPath(); target.moveTo(-0.15, -0.23); target.lineTo(-0.05, -0.23); target.lineTo(-0.1, -0.12); target.closePath(); target.fill();
+		target.fillStyle = "#fff3e5"; target.beginPath(); target.arc(-0.1, -0.26, 0.07, 0, Math.PI * 2); target.fill();
+		target.restore();
+	};
+
 	const draw = function (time) {
 		if (!state.world || !elements.maze) { return; }
 		const canvas = elements.maze;
@@ -586,7 +767,10 @@
 					const obstacle = state.maze.blocked && state.maze.blocked.has(index);
 					target.fillStyle = obstacle ? (bright ? "#3b463f" : "#1c221f") : bright ? "#26322b" : "#151b18";
 					target.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
-					target.strokeStyle = bright ? "#b9d3bc" : "#526158";
+					if (state.progress.equipped.floor === "flowers" && index % 4 === 0) {
+						drawFlower(target, offsetX + (x + 0.23) * cellSize, offsetY + (y + 0.73) * cellSize, cellSize * 0.05, bright);
+					}
+					target.strokeStyle = state.progress.equipped.walls === "moss" ? (bright ? "#b4d68c" : "#5a7051") : (bright ? "#b9d3bc" : "#526158");
 					target.lineWidth = Math.max(1, cellSize * 0.07);
 					target.beginPath();
 					const cell = state.maze.cells[index];
@@ -615,6 +799,14 @@
 		visibilityContext.clearRect(0, 0, pixels, pixels);
 		visibilityContext.setTransform(scale, 0, 0, scale, 0, 0);
 		visibilityContext.globalCompositeOperation = "source-over";
+		if (state.progress.equipped.outside === "beach") {
+			const span = state.maze.size * cellSize;
+			visibilityContext.fillStyle = "#326e83";
+			visibilityContext.fillRect(offsetX - cellSize * 2, offsetY - cellSize * 2, span + cellSize * 4, span + cellSize * 4);
+			visibilityContext.fillStyle = "#d9bd7b";
+			visibilityContext.fillRect(offsetX - cellSize, offsetY - cellSize, span + cellSize * 2, span + cellSize * 2);
+			drawUmbrella(visibilityContext, offsetX + span / 2, offsetY - cellSize * 0.1, cellSize * 0.7);
+		}
 		drawCells(visibilityContext, function () { return true; }, true);
 
 		visibilityContext.fillStyle = "#f2b84b";
@@ -631,6 +823,13 @@
 			visibilityContext.beginPath();
 			visibilityContext.arc(exitX, exitY, Math.max(2, cellSize * 0.13), 0, Math.PI * 2);
 			visibilityContext.fill();
+		}
+		if (state.progress.equipped.goal === "truck") {
+			const goal = state.maze.goal || state.maze.exit;
+			const direction = state.maze.exit && state.maze.exit.direction;
+			const dx = state.maze.goal ? 0.25 : direction === 1 ? 0.85 : direction === 3 ? -0.85 : 0;
+			const dy = state.maze.goal ? 0.28 : direction === 2 ? 0.85 : direction === 0 ? -0.85 : 0;
+			drawTruck(visibilityContext, offsetX + (goal.x + 0.5 + dx) * cellSize, offsetY + (goal.y + 0.5 + dy) * cellSize, cellSize * 0.65);
 		}
 
 		const centerX = displaySize / 2 + viewX;
@@ -656,12 +855,8 @@
 		context.save();
 		context.translate(centerX, centerY);
 		context.rotate(player.direction * Math.PI / 2);
-		context.fillStyle = state.world.won ? "#f2b84b" : "#9fd356";
-		context.beginPath();
-		context.moveTo(0, -cellSize * 0.3);
-		context.lineTo(cellSize * 0.22, cellSize * 0.22);
-		context.lineTo(-cellSize * 0.22, cellSize * 0.22);
-		context.closePath(); context.fill(); context.restore();
+		drawExplorer(context, cellSize);
+		context.restore();
 	};
 
 	const copyText = async function (value) {
@@ -775,11 +970,24 @@
 		[
 			"activeLineHighlight", "centerView", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "intro", "language", "lineNumbers", "maze", "mazeTitle", "metrics", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageField", "stageLabel", "stars",
-			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variableOverlay", "memory", "memoryMetric"
+			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variableOverlay", "memory", "memoryMetric",
+			"starBalance", "stageProgress", "nextChallenge", "largeChallenge", "rewardNotice", "shopItems"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
 
 	const bindEvents = function () {
+		elements.largeChallenge.addEventListener("click", function () { createScenario(randomSeed(), 21); });
+		elements.shopItems.addEventListener("click", function (event) {
+			const button = event.target.closest("button");
+			if (!button || state.running) { return; }
+			if ((state.progress.equipped[button.dataset.slot] || "original") === button.dataset.item) { return; }
+			if (Rewards.equip(state.progress, button.dataset.slot, button.dataset.item)) {
+				saveProgress();
+				updateProgress();
+				draw();
+				elements.shopItems.querySelector('[data-slot="' + button.dataset.slot + '"][data-item="' + button.dataset.item + '"]').focus();
+			}
+		});
 		elements.stage.addEventListener("change", function () {
 			const url = new URL(window.location.href);
 			url.searchParams.set("stage", elements.stage.value);
@@ -839,6 +1047,7 @@
 
 	const initialize = function () {
 		cacheElements();
+		state.progress = Rewards.restore(safeStorage(function () { return JSON.parse(localStorage.getItem("mazeEscapeRewardsV1")); }, null));
 		state.stage1Solved = safeStorage(function () {
 			return localStorage.getItem("mazeEscapeStage1Solved") === "true";
 		}, false);

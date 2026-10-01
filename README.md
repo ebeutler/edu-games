@@ -15,6 +15,18 @@ Open `MazeEscape/MazeEscape.html` in a modern browser. Maze seeds are reproducib
 parameters and student code is stored only in the browser. `MazeEscape/tests.html` runs the maze
 generator, interpreter, and reference-algorithm checks.
 
+Each stage awards three permanent stars: reliability on eight fixed benchmark mazes, efficiency
+(total moves plus quarter-turns on that same suite), and solving a visible maze of at least 21×21
+with three further validation runs at that size. Background tests alone cannot earn the large-maze
+star. The v1 benchmarks use sizes 11, 13, and 15, and budgets of 1300, 1850, and 2600 actions;
+these are calibrated against hand following, Pledge, and left-first DFS respectively.
+
+The borrowing panel reserves stars as refundable deposits for explorers, walls, floors, goal
+decorations, and outside scenery. Swapping credits the previous deposit automatically; returning an
+item refunds it in full. Earned achievements, personal bests, and equipment are saved locally under
+`mazeEscapeRewardsV1`. Cosmetics do not affect execution or fog. Hints explain concepts, invariants,
+and debugging experiments rather than complete programs.
+
 # CodeAlphabet
 Intended to learn and automate the order of the alphabet.
 

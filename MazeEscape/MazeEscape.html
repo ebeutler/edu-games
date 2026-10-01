@@ -7,6 +7,7 @@
 	<title>Maze Escape</title>
 	<link href="assets/main.css" rel="stylesheet">
 	<script src="assets/game.js" defer></script>
+	<script src="assets/rewards.js" defer></script>
 	<script src="assets/main.js" defer></script>
 </head>
 <body>
@@ -34,6 +35,19 @@
 			</label>
 		</div>
 	</header>
+	<section class="progress-panel" aria-labelledby="progressTitle">
+		<div class="progress-heading"><h2 id="progressTitle" data-i18n="progressTitle">Your progress</h2><p id="starBalance" aria-live="polite"></p></div>
+		<div id="stageProgress" class="stage-progress"></div>
+		<p class="progress-help" data-i18n="progressHelp">Each achievement earns one permanent star. Experiments and returns never erase earned stars.</p>
+		<p id="nextChallenge"></p>
+		<button id="largeChallenge" class="button" type="button" data-i18n="largeChallenge">Create large maze</button>
+		<p id="rewardNotice" class="reward-notice" role="status" aria-live="polite"></p>
+		<details id="shop">
+			<summary data-i18n="shopTitle">Borrow &amp; decorate</summary>
+			<p data-i18n="shopHelp">Stars are refundable deposits. Swapping or returning an item releases its stars.</p>
+			<div id="shopItems" class="shop-items"></div>
+		</details>
+	</section>
 
 	<main class="app-shell">
 		<section class="maze-panel" aria-labelledby="mazeTitle">

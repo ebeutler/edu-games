@@ -4,6 +4,7 @@
 	<meta charset="utf-8">
 	<title>Maze Escape checks</title>
 	<script src="assets/game.js"></script>
+	<script src="assets/rewards.js"></script>
 </head>
 <body>
 	<h1>Maze Escape checks</h1>
@@ -336,6 +337,55 @@
 			const stalled = Game.runProgram("WHILE NOT AT_GOAL\nEND", "stalled", 5);
 			assert(stalled.error && stalled.error.code === "LIMIT_REACHED", "empty loop did not hit execution limit");
 			messages.push("PASS: non-progressing loops are bounded");
+
+			const Rewards = window.MazeEscapeRewards;
+			const references = [wallFollower, pledge, depthFirstSearch.replace(/RIGHT/g, "TEMP").replace(/LEFT/g, "RIGHT").replace(/TEMP/g, "LEFT")];
+			references.forEach(function (source, index) {
+				const stage = index + 1;
+				const results = Array.from({ length: 8 }, function (_, seedIndex) {
+					return Game.runProgram(source, Rewards.benchmarkSeed(stage, seedIndex), Rewards.stages[stage].size, stage);
+				});
+				const small = Game.runProgram(source, "reward-visible-small", Rewards.stages[stage].size, stage).world;
+				const large = Game.runProgram(source, "reward-visible-large", 21, stage).world;
+				const validation = Array.from({ length: 3 }, function (_, seedIndex) {
+					return Game.runProgram(source, Rewards.largeSeed(stage, 21, seedIndex), 21, stage);
+				});
+				const normal = Rewards.evaluate(stage, results, small, validation);
+				assert(normal.achievements.join(",") === "true,true,false", "small visible run earned a large-maze star, or reference budget is unreachable");
+				assert(Rewards.evaluate(stage, results, large, validation).achievements[2], "visible large maze with validation did not qualify");
+				assert(!Rewards.evaluate(stage, results, large, []).achievements[2], "large maze qualified without validation");
+				assert(!Rewards.evaluate(stage, results, large, results.slice(0, 3)).achievements[2], "small validation mazes qualified a large run");
+				assert(!Rewards.evaluate(stage, results, { won: false, maze: { size: 21 } }, validation).achievements[2], "unsolved visible large maze qualified");
+				const slower = results.map(function (runner) {
+					return { world: { won: true, moves: runner.world.moves, turns: runner.world.turns + 1000 } };
+				});
+				assert(!Rewards.evaluate(stage, slower, small, []).achievements[1], "efficiency ignored unnecessary turns");
+			});
+			messages.push("PASS: fixed reward benchmarks have achievable moves + turns budgets");
+			messages.push("PASS: large-maze stars require a visible 21×21+ success and validation");
+
+			const progress = Rewards.fresh();
+			assert(Rewards.award(progress, 1, [true, false, false], 500).gained === 1, "first star was not awarded");
+			assert(Rewards.equip(progress, "explorer", "slug"), "slug could not be borrowed for one star");
+			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 2, "additional stars counted incorrectly");
+			assert(Rewards.balance(progress).available === 2, "slug deposit was not reserved");
+			assert(Rewards.equip(progress, "explorer", "bunny"), "slug deposit was not reused for the bunny");
+			assert(Rewards.balance(progress).borrowed === 3 && Rewards.balance(progress).available === 0, "bunny swap double-charged");
+			assert(!Rewards.equip(progress, "floor", "flowers") && !progress.equipped.floor, "borrowing overspent the shared balance");
+			assert(Rewards.equip(progress, "explorer", "racecar"), "equal-cost swap failed");
+			assert(Rewards.equip(progress, "explorer", "original") && Rewards.balance(progress).available === 3, "return did not fully refund deposit");
+			assert(Rewards.equip(progress, "walls", "moss") && Rewards.equip(progress, "floor", "flowers"), "independent slots failed");
+			assert(!Rewards.equip(progress, "outside", "beach"), "outside slot overspent balance");
+			const before = JSON.stringify(progress.equipped);
+			assert(!Rewards.equip(progress, "explorer", "bunny") && JSON.stringify(progress.equipped) === before, "failed swap altered equipment");
+			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 0, "repeated check minted duplicate stars");
+			Rewards.award(progress, 1, [false, false, false], null);
+			assert(Rewards.balance(progress).earned === 3 && progress.best[1] === 450, "unsuccessful experiment lost earned progress");
+			assert(JSON.stringify(Rewards.restore(JSON.parse(JSON.stringify(progress)))) === JSON.stringify(progress), "progress did not survive serialization");
+			assert(Rewards.balance(Rewards.restore({ achievements: progress.achievements, equipped: { explorer: "bunny", walls: "moss", outside: "beach" } })).available >= 0,
+				"invalid saved deposits created a negative balance");
+			messages.push("PASS: refundable deposits support upgrades, returns, shared slots, and persistence");
+			messages.push("PASS: earned stars and personal bests persist without duplicate rewards");
 
 			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
 		})();

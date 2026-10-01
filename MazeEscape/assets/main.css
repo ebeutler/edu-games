@@ -32,7 +32,7 @@ body {
 button, input, select, textarea { font: inherit; }
 :focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 
-.page-header, .app-shell, footer {
+.page-header, .app-shell, .progress-panel, footer {
 	width: min(1500px, calc(100% - 40px));
 	margin-inline: auto;
 }
@@ -67,6 +67,30 @@ h1 {
 
 .intro { max-width: 760px; margin-bottom: 0; color: var(--muted); font-size: 1.08rem; }
 .header-controls { display: flex; align-items: end; gap: 10px; }
+.progress-panel { margin-bottom: 20px; padding: 18px 22px; border: 1px solid var(--line); background: var(--panel); }
+.progress-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 20px; }
+.progress-heading h2 { margin-bottom: 8px; font-size: 1rem; }
+.progress-heading p { margin-bottom: 8px; color: var(--amber); font-size: 0.85rem; }
+.stage-progress { display: flex; gap: 8px; flex-wrap: wrap; }
+.stage-progress p { margin: 0; padding: 6px 10px; border: 1px solid var(--line); color: var(--muted); font-size: 0.83rem; }
+.stage-progress .current-stage { border-color: var(--moss-dark); color: var(--amber); }
+.progress-help { margin: 10px 0 0; font-size: 0.78rem; color: var(--muted); }
+#nextChallenge { margin: 12px 0 8px; font-size: 0.83rem; color: var(--muted); }
+.reward-notice { margin: 10px 0; color: var(--moss); font-weight: 700; }
+.reward-notice:empty { display: none; }
+#shop { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
+#shop summary { cursor: pointer; color: var(--blue); font-weight: 700; }
+#shop > p { margin: 12px 0; color: var(--muted); font-size: 0.83rem; }
+.shop-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.shop-items fieldset { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 8px; }
+.shop-items legend { color: var(--amber); font-size: 0.8rem; padding: 0 6px; }
+.cosmetic-button { display: grid; justify-items: center; gap: 5px; flex: 1 1 95px; min-width: 0; padding: 10px; border: 1px solid var(--line); background: var(--panel-deep); color: var(--ink); cursor: pointer; font-size: 0.78rem; }
+.cosmetic-button small { color: var(--muted); font-size: 0.7rem; }
+.cosmetic-preview { width: 64px; height: 48px; }
+.cosmetic-button[aria-pressed="true"] { border-color: var(--moss); }
+.cosmetic-button:disabled { cursor: default; }
+.cosmetic-button:disabled:not([aria-pressed="true"]) { opacity: 0.45; }
+.cosmetic-button:hover:not(:disabled) { border-color: var(--blue); }
 .language-field { display: grid; gap: 6px; color: var(--muted); font-size: 0.78rem; font-weight: 700; }
 
 select, input[type="text"], input[type="number"] {
@@ -314,7 +338,7 @@ footer a { color: var(--blue); text-underline-offset: 3px; }
 }
 
 @media (max-width: 680px) {
-	.page-header, .app-shell, footer { width: min(100% - 20px, 1500px); }
+	.page-header, .app-shell, .progress-panel, footer { width: min(100% - 20px, 1500px); }
 	.page-header { align-items: stretch; flex-direction: column; padding-top: 28px; }
 	.header-controls { width: 100%; }
 	.header-controls .language-field { flex: 1; }
