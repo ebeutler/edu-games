@@ -483,6 +483,7 @@
 			resetWorld();
 		}
 		if (!state.runner && !compile()) { return; }
+		elements.code.readOnly = true;
 		centerView();
 		state.running = true;
 		state.lastStep = 0;
@@ -503,6 +504,7 @@
 
 	const pause = function () {
 		state.running = false;
+		elements.code.readOnly = false;
 		setStatus("paused");
 		updateControls();
 		if (!state.frame) {
@@ -795,6 +797,7 @@
 			stop();
 			centerView();
 			advance(window.performance.now(), 500);
+			elements.code.readOnly = false;
 			state.frame = window.requestAnimationFrame(tick);
 			updateControls();
 		});
@@ -814,6 +817,7 @@
 		elements.speed.addEventListener("input", function () { elements.speedValue.textContent = elements.speed.value + "/s"; });
 		elements.code.addEventListener("keydown", indentNewLine);
 		elements.code.addEventListener("input", function () {
+			if (state.runner) { resetWorld(); }
 			updateLineNumbers();
 			safeStorage(function () { localStorage.setItem(codeStorageKey(), elements.code.value); });
 		});
