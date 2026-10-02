@@ -51,6 +51,10 @@
 
 	<main class="app-shell">
 		<section class="maze-panel" aria-labelledby="mazeTitle">
+			<section class="mission-card" aria-labelledby="missionTitle">
+				<h3 id="missionTitle" data-i18n="missionTitle">One program for unfamiliar mazes</h3>
+				<p data-i18n="missionHelp">Write rules that use the wall sensors. A fixed sequence may escape this maze, but the same program will also be tested on eight different mazes.</p>
+			</section>
 			<div class="section-heading maze-heading">
 				<div class="maze-heading-top">
 					<p class="eyebrow" data-i18n="currentRun">Current run</p>
@@ -88,6 +92,18 @@
 				<label><span data-i18n="size">Size</span><input id="size" type="number" min="5" max="31" value="11"></label>
 				<button id="newMaze" class="button" type="button" data-i18n="newMaze">New maze</button>
 			</div>
+			<section class="hint-card" aria-labelledby="hintTitle">
+				<h3 id="hintTitle" tabindex="-1" data-i18n="hints">Guided hints</h3>
+				<p id="hintText" data-i18n="hintStart" aria-live="polite">Try your own idea first. Reveal a hint when you are stuck.</p>
+				<div class="hint-actions">
+					<div id="hintNavigation" class="hint-navigation" hidden>
+						<button id="previousHint" class="hint-nav-button" type="button" data-i18n-aria="previousHint" aria-label="Previous hint" disabled>◀</button>
+						<output id="hintPosition">0/0</output>
+						<button id="nextHint" class="hint-nav-button" type="button" data-i18n-aria="nextHint" aria-label="Next hint" disabled>▶</button>
+					</div>
+					<button id="revealHint" class="button" type="button" data-i18n="revealHint">Reveal a hint</button>
+				</div>
+			</section>
 		</section>
 
 		<section class="code-panel" aria-labelledby="codeTitle">
@@ -99,10 +115,15 @@
 				<button id="copyCode" class="copy-button" type="button" data-i18n="copyCode">Copy code</button>
 			</div>
 
-			<section class="mission-card" aria-labelledby="missionTitle">
-				<h3 id="missionTitle" data-i18n="missionTitle">One program for unfamiliar mazes</h3>
-				<p data-i18n="missionHelp">Write rules that use the wall sensors. A fixed sequence may escape this maze, but the same program will also be tested on eight different mazes.</p>
-			</section>
+			<div class="run-controls">
+				<button id="run" class="button button-primary" type="button" data-i18n="run">Run</button>
+				<button id="pause" class="button" type="button" disabled data-i18n="pause">Pause</button>
+				<button id="step" class="button" type="button" data-i18n="step">Step</button>
+				<button id="reset" class="text-button" type="button" data-i18n="reset">Reset</button>
+				<label class="speed-field"><span data-i18n="speed">Speed</span><input id="speed" type="range" min="1" max="60" value="12"><output id="speedValue">12/s</output></label>
+			</div>
+			<p id="editorError" class="editor-error" role="alert" hidden></p>
+			<button id="hintShortcut" class="text-button hint-shortcut" type="button" data-i18n="hintShortcut">Stuck? Reveal a hint</button>
 			<label class="visually-hidden" for="code" data-i18n="codeLabel">Pseudocode editor</label>
 			<div class="code-editor-frame">
 				<div class="line-number-gutter" aria-hidden="true"><pre id="lineNumbers">1</pre></div>
@@ -141,15 +162,6 @@ END</code></pre>
 END    <span data-i18n="closesWhile"># closes WHILE</span></code></pre>
 			</details>
 
-			<div class="run-controls">
-				<button id="run" class="button button-primary" type="button" data-i18n="run">Run</button>
-				<button id="pause" class="button" type="button" disabled data-i18n="pause">Pause</button>
-				<button id="step" class="button" type="button" data-i18n="step">Step</button>
-				<button id="reset" class="text-button" type="button" data-i18n="reset">Reset</button>
-				<label class="speed-field"><span data-i18n="speed">Speed</span><input id="speed" type="range" min="1" max="60" value="12"><output id="speedValue">12/s</output></label>
-			</div>
-
-			<p id="editorError" class="editor-error" role="alert" hidden></p>
 			<section id="results" class="results" aria-labelledby="resultsTitle" hidden>
 				<div class="section-heading">
 					<h3 id="resultsTitle" tabindex="-1" data-i18n="whatNext">What next?</h3>
@@ -173,56 +185,41 @@ END    <span data-i18n="closesWhile"># closes WHILE</span></code></pre>
 				<code id="trace">—</code>
 			</div>
 
-			<div class="learning-grid">
-				<section class="reference-card" aria-labelledby="referenceTitle">
-					<h3 id="referenceTitle" data-i18n="reference">Command reference</h3>
-					<p class="reference-note" data-i18n="placeholderHelp">Italic words are placeholders. Replace them with an actual condition, direction, name, or value.</p>
-					<h4 data-i18n="referenceActions">Actions</h4>
-					<dl>
-						<div><dt><code>MOVE</code></dt><dd data-i18n="moveHelp">Move one cell forward.</dd></div>
-						<div><dt><code>TURN <var>direction</var></code></dt><dd data-i18n="turnHelp">Turn 90° toward LEFT or RIGHT.</dd></div>
-					</dl>
-					<h4 data-i18n="referenceConditions">Conditions</h4>
-					<dl>
-						<div><dt><code>WALL <var>direction</var></code></dt><dd data-i18n="wallHelp">True for a wall at FRONT, LEFT, or RIGHT.</dd></div>
-						<div><dt><code>AT_GOAL</code></dt><dd data-i18n="goalHelp">True after reaching the goal.</dd></div>
-						<div><dt><code>NOT <var>condition</var></code></dt><dd data-i18n="notHelp">Invert a condition.</dd></div>
-						<div><dt><code><var>condition</var> AND / OR <var>condition</var></code></dt><dd data-i18n="logicalHelp">Combine conditions. NOT is evaluated first, then AND, then OR.</dd></div>
-					</dl>
-					<h4 data-i18n="referenceFlow">Control flow</h4>
-					<dl>
-						<div><dt><code>IF <var>condition</var> / ELSE / END</code></dt><dd data-i18n="ifHelp">Run one of two branches based on a condition.</dd></div>
-						<div><dt><code>WHILE <var>condition</var> / END</code></dt><dd data-i18n="whileHelp">Repeat while a condition is true.</dd></div>
-					</dl>
-					<h4 data-stage-min="2" hidden data-i18n="referenceVariables">Variables</h4>
-					<dl data-stage-min="2" hidden>
-						<div><dt><code>SET <var>name</var> TO <var>value</var></code></dt><dd data-i18n="setHelp">Set an integer from a number, variable, or variable plus or minus a number.</dd></div>
-						<div><dt><code><var>name</var> <var>operator</var> <var>value</var></code></dt><dd data-i18n="compareHelp">Compare a variable with a number or variable using =, !=, &lt;, &gt;, &lt;=, or &gt;=.</dd></div>
-					</dl>
-					<h4 data-stage-min="3" hidden data-i18n="referenceExploration">Exploration memory</h4>
-					<dl data-stage-min="3" hidden>
-						<div><dt><code>MARK</code></dt><dd data-i18n="markHelp">Mark the current cell as visited.</dd></div>
-						<div><dt><code>UNVISITED <var>direction</var></code></dt><dd data-i18n="unvisitedHelp">True when the neighboring cell is open and unmarked. Use FRONT, LEFT, RIGHT, or BACK.</dd></div>
-						<div><dt><code>MARKED <var>direction</var></code></dt><dd data-i18n="markedHelp">Check a neighboring cell's mark using FRONT, LEFT, RIGHT, or BACK.</dd></div>
-						<div><dt><code>PUSH <var>direction</var></code></dt><dd data-i18n="pushHelp">Remember an absolute direction using FRONT, LEFT, RIGHT, or BACK.</dd></div>
-						<div><dt><code>FACE POP</code></dt><dd data-i18n="popHelp">Face and remove the latest saved direction.</dd></div>
-						<div><dt><code>STACK EMPTY</code></dt><dd data-i18n="stackHelp">True when no return direction is saved.</dd></div>
-					</dl>
-				</section>
-
-				<section class="hint-card" aria-labelledby="hintTitle">
-					<h3 id="hintTitle" data-i18n="hints">Guided hints</h3>
-					<p id="hintText" data-i18n="hintStart">Try your own idea first. Reveal a hint when you are stuck.</p>
-					<div class="hint-actions">
-						<div id="hintNavigation" class="hint-navigation" hidden>
-							<button id="previousHint" class="hint-nav-button" type="button" data-i18n-aria="previousHint" aria-label="Previous hint" disabled>◀</button>
-							<output id="hintPosition">0/0</output>
-							<button id="nextHint" class="hint-nav-button" type="button" data-i18n-aria="nextHint" aria-label="Next hint" disabled>▶</button>
-						</div>
-						<button id="revealHint" class="button" type="button" data-i18n="revealHint">Reveal a hint</button>
-					</div>
-				</section>
-			</div>
+			<section class="reference-card" aria-labelledby="referenceTitle">
+				<h3 id="referenceTitle" data-i18n="reference">Command reference</h3>
+				<p class="reference-note" data-i18n="placeholderHelp">Italic words are placeholders. Replace them with an actual condition, direction, name, or value.</p>
+				<h4 data-i18n="referenceActions">Actions</h4>
+				<dl>
+					<div><dt><code>MOVE</code></dt><dd data-i18n="moveHelp">Move one cell forward.</dd></div>
+					<div><dt><code>TURN <var>direction</var></code></dt><dd data-i18n="turnHelp">Turn 90° toward LEFT or RIGHT.</dd></div>
+				</dl>
+				<h4 data-i18n="referenceConditions">Conditions</h4>
+				<dl>
+					<div><dt><code>WALL <var>direction</var></code></dt><dd data-i18n="wallHelp">True for a wall at FRONT, LEFT, or RIGHT.</dd></div>
+					<div><dt><code>AT_GOAL</code></dt><dd data-i18n="goalHelp">True after reaching the goal.</dd></div>
+					<div><dt><code>NOT <var>condition</var></code></dt><dd data-i18n="notHelp">Invert a condition.</dd></div>
+					<div><dt><code><var>condition</var> AND / OR <var>condition</var></code></dt><dd data-i18n="logicalHelp">Combine conditions. NOT is evaluated first, then AND, then OR.</dd></div>
+				</dl>
+				<h4 data-i18n="referenceFlow">Control flow</h4>
+				<dl>
+					<div><dt><code>IF <var>condition</var> / ELSE / END</code></dt><dd data-i18n="ifHelp">Run one of two branches based on a condition.</dd></div>
+					<div><dt><code>WHILE <var>condition</var> / END</code></dt><dd data-i18n="whileHelp">Repeat while a condition is true.</dd></div>
+				</dl>
+				<h4 data-stage-min="2" hidden data-i18n="referenceVariables">Variables</h4>
+				<dl data-stage-min="2" hidden>
+					<div><dt><code>SET <var>name</var> TO <var>value</var></code></dt><dd data-i18n="setHelp">Set an integer from a number, variable, or variable plus or minus a number.</dd></div>
+					<div><dt><code><var>name</var> <var>operator</var> <var>value</var></code></dt><dd data-i18n="compareHelp">Compare a variable with a number or variable using =, !=, &lt;, &gt;, &lt;=, or &gt;=.</dd></div>
+				</dl>
+				<h4 data-stage-min="3" hidden data-i18n="referenceExploration">Exploration memory</h4>
+				<dl data-stage-min="3" hidden>
+					<div><dt><code>MARK</code></dt><dd data-i18n="markHelp">Mark the current cell as visited.</dd></div>
+					<div><dt><code>UNVISITED <var>direction</var></code></dt><dd data-i18n="unvisitedHelp">True when the neighboring cell is open and unmarked. Use FRONT, LEFT, RIGHT, or BACK.</dd></div>
+					<div><dt><code>MARKED <var>direction</var></code></dt><dd data-i18n="markedHelp">Check a neighboring cell's mark using FRONT, LEFT, RIGHT, or BACK.</dd></div>
+					<div><dt><code>PUSH <var>direction</var></code></dt><dd data-i18n="pushHelp">Remember an absolute direction using FRONT, LEFT, RIGHT, or BACK.</dd></div>
+					<div><dt><code>FACE POP</code></dt><dd data-i18n="popHelp">Face and remove the latest saved direction.</dd></div>
+					<div><dt><code>STACK EMPTY</code></dt><dd data-i18n="stackHelp">True when no return direction is saved.</dd></div>
+				</dl>
+			</section>
 		</section>
 	</main>
 

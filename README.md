@@ -30,10 +30,15 @@ item refunds it in full. Earned achievements, personal bests, and equipment are 
 `mazeEscapeRewardsV1`. Cosmetics do not affect execution or fog. Hints explain concepts, invariants,
 and debugging experiments rather than complete programs.
 
-The editor's mission emphasises using the same algorithm in unfamiliar mazes. Later stages unlock
-after Stage 1 reliability is earned (or with `teacher=1`), rather than after a single escape; the old
-`mazeEscapeStage1Solved` flag alone no longer grants access. Completion guidance appears next to
-the run controls and prioritises debugging failed tests, efficiency, and a visible large maze before
+The mission above the map emphasises using the same algorithm in unfamiliar mazes. Run, Pause,
+Step, Reset, and Speed sit above the code window. The concise "Stuck? Reveal a hint" shortcut by
+the editor reveals the next hint in the compact card below the map controls and brings it into view.
+After all hints are revealed, it offers "Review hints" without changing the selected hint. The command
+reference uses the full width of the right column.
+
+Later stages unlock after Stage 1 reliability is earned (or with `teacher=1`), rather than after a
+single escape; the old `mazeEscapeStage1Solved` flag alone no longer grants access. Completion
+guidance appears below the editor and prioritises debugging failed tests, efficiency, and a visible large maze before
 advancing. Advancement is also available after reliability, and the final stage points back to missing
 stars or personal-best practice.
 

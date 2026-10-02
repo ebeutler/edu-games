@@ -296,7 +296,9 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .editor-note { margin: 8px 0 16px; color: var(--muted); font-size: 0.76rem; }
 .editor-error { margin: 12px 0; padding: 10px 12px; border-left: 3px solid var(--danger); color: var(--danger); background: var(--panel-deep); font-size: 0.83rem; line-height: 1.5; }
 
-.run-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.run-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.hint-shortcut { display: block; margin: 0 0 8px auto; padding: 4px 0; font-size: 0.78rem; }
+#hintTitle { scroll-margin-top: 14px; }
 .speed-field { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: 0.75rem; font-weight: 700; }
 .speed-field input { width: 90px; }
 .speed-field output { min-width: 35px; color: var(--amber); font-family: ui-monospace, monospace; }
@@ -314,7 +316,6 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 }
 .trace-box code { overflow: hidden; color: var(--amber); text-overflow: ellipsis; white-space: nowrap; }
 
-.learning-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 14px; }
 .reference-card, .hint-card, .results { border: 1px solid var(--line); background: #1b211e; }
 .reference-card, .hint-card { padding: 18px; }
 .hint-card { display: flex; flex-direction: column; }
@@ -327,8 +328,8 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .reference-card var { color: var(--blue); }
 .reference-note { color: var(--muted); font-size: 0.75rem; line-height: 1.5; }
 .reference-card dd { color: var(--muted); font-size: 0.75rem; line-height: 1.45; }
-.hint-card { border-color: var(--moss-dark); }
-.hint-card p { min-height: 110px; color: #d7ddce; font-size: 0.87rem; line-height: 1.55; }
+.hint-card { margin-top: 18px; border-color: var(--moss-dark); }
+.hint-card p { color: #d7ddce; font-size: 0.87rem; line-height: 1.55; }
 .hint-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: auto; }
 .hint-navigation { display: flex; align-items: center; border: 1px solid var(--line); }
 .hint-navigation output { min-width: 42px; color: var(--amber); font-family: ui-monospace, monospace; font-size: 0.75rem; text-align: center; }
@@ -370,7 +371,6 @@ footer a { color: var(--blue); text-underline-offset: 3px; }
 	.metrics.stage-three #memoryMetric { grid-column: 1 / -1; border-right: 0; border-bottom: 0; }
 	.maze-settings { grid-template-columns: 1fr 72px; }
 	.maze-settings .button { grid-column: 1 / -1; }
-	.learning-grid { grid-template-columns: 1fr; }
 	.reference-card dl div { grid-template-columns: 1fr; gap: 3px; }
 	.run-controls .speed-field { width: 100%; margin: 8px 0 0; }
 }

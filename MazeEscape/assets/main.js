@@ -40,7 +40,7 @@
 			referenceActions: "Actions", referenceConditions: "Conditions", referenceFlow: "Control flow", referenceVariables: "Variables", referenceExploration: "Exploration memory",
 			moveHelp: "Move one cell forward.", turnHelp: "Turn 90° in the chosen direction: LEFT or RIGHT.",
 			wallHelp: "True when there is a wall in the chosen direction: FRONT, LEFT, or RIGHT.", goalHelp: "True after reaching the goal.", notHelp: "Invert a condition.", logicalHelp: "Combine conditions. NOT is evaluated first, then AND, then OR.", ifHelp: "Run one of two branches based on a condition.",
-			whileHelp: "Repeat while a condition is true.", hints: "Guided hints", hintStart: "Try your own idea first. Reveal a hint when you are stuck.",
+			whileHelp: "Repeat while a condition is true.", hints: "Guided hints", hintStart: "Try your own idea first. Reveal a hint when you are stuck.", hintShortcut: "Stuck? Reveal a hint", reviewHints: "Review hints",
 			setHelp: "Set an integer from a number, variable, or variable plus or minus a number.", compareHelp: "Compare a variable with a number or variable using =, !=, <, >, <=, or >=.",
 			markHelp: "Mark the current cell as visited.", unvisitedHelp: "True when the neighboring cell is open and unmarked. Use FRONT, LEFT, RIGHT, or BACK.", markedHelp: "Check a neighboring cell's mark using FRONT, LEFT, RIGHT, or BACK.",
 			pushHelp: "Remember an absolute direction using FRONT, LEFT, RIGHT, or BACK.", popHelp: "Face and remove the latest saved direction.", stackHelp: "True when no return direction is saved.",
@@ -117,7 +117,7 @@
 			referenceActions: "Aktionen", referenceConditions: "Bedingungen", referenceFlow: "Kontrollfluss", referenceVariables: "Variablen", referenceExploration: "Erkundungsspeicher",
 			moveHelp: "Ein Feld vorwärts gehen.", turnHelp: "Um 90° in die gewählte Richtung drehen: LEFT oder RIGHT.",
 			wallHelp: "Wahr, wenn in der gewählten Richtung eine Wand liegt: FRONT, LEFT oder RIGHT.", goalHelp: "Wahr, nachdem das Ziel erreicht wurde.", notHelp: "Kehrt eine Bedingung um.", logicalHelp: "Verknüpft Bedingungen. Zuerst wird NOT ausgewertet, dann AND und danach OR.", ifHelp: "Führt abhängig von einer Bedingung einen von zwei Zweigen aus.",
-			whileHelp: "Wiederholen, solange eine Bedingung wahr ist.", hints: "Schrittweise Hinweise", hintStart: "Probiere zuerst deine eigene Idee. Zeige einen Hinweis, wenn du nicht weiterkommst.",
+			whileHelp: "Wiederholen, solange eine Bedingung wahr ist.", hints: "Schrittweise Hinweise", hintStart: "Probiere zuerst deine eigene Idee. Zeige einen Hinweis, wenn du nicht weiterkommst.", hintShortcut: "Nicht weiter? Hinweis zeigen", reviewHints: "Hinweise ansehen",
 			setHelp: "Setzt eine Ganzzahl aus einer Zahl, Variable oder Variable plus oder minus einer Zahl.", compareHelp: "Vergleicht eine Variable mit einer Zahl oder Variable mittels =, !=, <, >, <= oder >=.",
 			markHelp: "Markiert das aktuelle Feld als besucht.", unvisitedHelp: "Wahr, wenn das Nachbarfeld erreichbar und unmarkiert ist. Verwende FRONT, LEFT, RIGHT oder BACK.", markedHelp: "Prüft die Markierung eines Nachbarfelds mit FRONT, LEFT, RIGHT oder BACK.",
 			pushHelp: "Speichert eine absolute Richtung mit FRONT, LEFT, RIGHT oder BACK.", popHelp: "Richtet den Forscher nach der zuletzt gespeicherten Richtung aus und entfernt sie.", stackHelp: "Wahr, wenn keine Rückkehrrichtung gespeichert ist.",
@@ -985,6 +985,7 @@
 		elements.previousHint.disabled = state.hintIndex <= 0;
 		elements.nextHint.disabled = state.hintIndex < 0 || state.hintIndex >= state.revealedHintIndex;
 		elements.revealHint.disabled = state.revealedHintIndex >= hintCount - 1;
+		elements.hintShortcut.textContent = text(state.revealedHintIndex >= hintCount - 1 ? "reviewHints" : "hintShortcut");
 		elements.hintPosition.value = state.hintIndex < 0
 			? "0/0"
 			: (state.hintIndex + 1) + "/" + (state.revealedHintIndex + 1);
@@ -994,6 +995,12 @@
 		state.hintIndex = index;
 		elements.hintText.textContent = hintsForStage()[index];
 		updateHintControls();
+	};
+	const revealNextHint = function () {
+		if (state.revealedHintIndex < hintsForStage().length - 1) {
+			state.revealedHintIndex++;
+			showHint(state.revealedHintIndex);
+		}
 	};
 
 	const indentNewLine = function (event) {
@@ -1063,11 +1070,15 @@
 			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageField", "stageLabel", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variableOverlay", "memory", "memoryMetric",
 			"starBalance", "stageProgress", "nextChallenge", "largeChallenge", "rewardNotice", "shopItems",
-			"mazeDimensions", "mazeNotice", "completionAdvice", "nextAction", "advanceStage", "decorateAction", "editorError"
+			"mazeDimensions", "mazeNotice", "completionAdvice", "nextAction", "advanceStage", "decorateAction", "editorError", "hintShortcut"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
 
 	const bindEvents = function () {
+		elements.hintShortcut.addEventListener("click", function () {
+			revealNextHint();
+			reveal(byId("hintTitle"), true);
+		});
 		elements.largeChallenge.addEventListener("click", createLargeMaze);
 		elements.nextAction.addEventListener("click", function () {
 			const action = elements.nextAction.dataset.action;
@@ -1138,10 +1149,7 @@
 		});
 		elements.copyCode.addEventListener("click", function () { showCopyResult(elements.copyCode, elements.code.value); });
 		elements.shareMaze.addEventListener("click", function () { showCopyResult(elements.shareMaze, window.location.href, "mazeLinkCopied"); });
-		elements.revealHint.addEventListener("click", function () {
-			state.revealedHintIndex = Math.min(state.revealedHintIndex + 1, hintsForStage().length - 1);
-			showHint(state.revealedHintIndex);
-		});
+		elements.revealHint.addEventListener("click", revealNextHint);
 		elements.previousHint.addEventListener("click", function () { showHint(state.hintIndex - 1); });
 		elements.nextHint.addEventListener("click", function () { showHint(state.hintIndex + 1); });
 		elements.openFailure.addEventListener("click", openFailedMaze);
