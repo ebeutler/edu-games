@@ -119,6 +119,9 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .maze-heading-top { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
 .maze-title-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 14px; }
 .maze-title-row .text-button { margin-bottom: 18px; white-space: nowrap; }
+#mazeTitle, #resultsTitle { scroll-margin-top: 14px; }
+.maze-dimensions { margin-bottom: 18px; padding: 4px 7px; border: 1px solid var(--line); color: var(--blue); font-size: 0.75rem; white-space: nowrap; }
+.maze-notice { margin: 0 0 14px; padding: 10px 12px; border-left: 3px solid var(--moss); color: var(--ink); font-size: 0.83rem; line-height: 1.5; }
 
 .status {
 	margin: 0;
@@ -207,6 +210,16 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .copy-button { padding: 7px 10px; color: var(--moss); font-family: ui-monospace, monospace; font-size: 0.74rem; }
 
 .code-heading { align-items: center; }
+.mission-card { margin-bottom: 14px; padding: 12px 14px; border-left: 3px solid var(--moss); background: #1b211e; }
+.mission-card h3 { margin-bottom: 6px; font-size: 0.9rem; color: var(--moss); }
+.mission-card p { margin-bottom: 0; font-size: 0.83rem; line-height: 1.5; }
+.syntax-guide { margin: 0 0 16px; padding: 12px; border: 1px solid var(--line); background: var(--panel-deep); }
+.syntax-guide summary, .results summary { cursor: pointer; color: var(--blue); font-size: 0.83rem; font-weight: 700; }
+.syntax-guide p, .syntax-guide li { color: var(--muted); font-size: 0.83rem; line-height: 1.5; }
+.syntax-guide p { margin-bottom: 10px; }
+.syntax-guide ul { padding-left: 20px; }
+.syntax-guide h4 { margin: 14px 0 8px; font-size: 0.85rem; }
+.syntax-guide pre { margin: 10px 0 0; padding: 12px; color: var(--moss); background: #1b211e; overflow-x: auto; font-size: 0.8rem; line-height: 1.5; }
 .code-editor-frame {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
@@ -281,6 +294,7 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 }
 .code-editor[readonly] { color: #b8c5ad; }
 .editor-note { margin: 8px 0 16px; color: var(--muted); font-size: 0.76rem; }
+.editor-error { margin: 12px 0; padding: 10px 12px; border-left: 3px solid var(--danger); color: var(--danger); background: var(--panel-deep); font-size: 0.83rem; line-height: 1.5; }
 
 .run-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .speed-field { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: 0.75rem; font-weight: 700; }
@@ -310,6 +324,8 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .reference-card dl div { display: grid; grid-template-columns: minmax(130px, auto) 1fr; gap: 10px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.06); }
 .reference-card dt, .reference-card dd { margin: 0; }
 .reference-card code { color: var(--moss); font-size: 0.73rem; overflow-wrap: anywhere; }
+.reference-card var { color: var(--blue); }
+.reference-note { color: var(--muted); font-size: 0.75rem; line-height: 1.5; }
 .reference-card dd { color: var(--muted); font-size: 0.75rem; line-height: 1.45; }
 .hint-card { border-color: var(--moss-dark); }
 .hint-card p { min-height: 110px; color: #d7ddce; font-size: 0.87rem; line-height: 1.55; }
@@ -321,7 +337,8 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .hint-nav-button:disabled { color: var(--line); cursor: not-allowed; }
 
 .results { margin-top: 14px; padding: 18px; }
-.maze-panel .results { margin: 0 0 18px; }
+.completion-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+.results details > p { margin-top: 12px; }
 .results p, .results li { color: var(--muted); font-size: 0.85rem; line-height: 1.5; }
 .results ul { padding-left: 20px; }
 .stars { margin: 0; color: var(--amber) !important; font-size: 1.5rem !important; letter-spacing: 0.1em; }

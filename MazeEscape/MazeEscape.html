@@ -57,9 +57,11 @@
 					<p id="status" class="status" data-state="ready" aria-live="polite">Ready</p>
 				</div>
 				<div class="maze-title-row">
-					<h2 id="mazeTitle" data-i18n="mazeTitle">Unknown territory</h2>
+					<h2 id="mazeTitle" tabindex="-1" data-i18n="mazeTitle">Unknown territory</h2>
+					<span id="mazeDimensions" class="maze-dimensions"></span>
 					<button id="shareMaze" class="text-button" type="button" hidden data-i18n="copyMazeLink">Copy maze link</button>
 				</div>
+				<p id="mazeNotice" class="maze-notice" role="status" aria-live="polite" hidden></p>
 			</div>
 
 			<div class="canvas-frame">
@@ -81,16 +83,6 @@
 				<div id="memoryMetric" hidden><dt data-i18n="memory">Memory</dt><dd id="memory">—</dd></div>
 			</dl>
 
-			<section id="results" class="results" aria-labelledby="resultsTitle" hidden>
-				<div class="section-heading">
-					<div><p class="eyebrow" data-i18n="challenge">Challenge</p><h3 id="resultsTitle" data-i18n="testTitle">Testing other mazes</h3></div>
-					<p id="stars" class="stars" aria-live="polite">☆☆☆</p>
-				</div>
-				<p id="testSummary"></p>
-				<ul id="testDetails"></ul>
-				<button id="openFailure" class="button" type="button" hidden data-i18n="openFailure">Open failed maze</button>
-			</section>
-
 			<div class="maze-settings">
 				<label><span data-i18n="seed">Seed</span><input id="seed" type="text" maxlength="80" spellcheck="false"></label>
 				<label><span data-i18n="size">Size</span><input id="size" type="number" min="5" max="31" value="11"></label>
@@ -107,18 +99,47 @@
 				<button id="copyCode" class="copy-button" type="button" data-i18n="copyCode">Copy code</button>
 			</div>
 
+			<section class="mission-card" aria-labelledby="missionTitle">
+				<h3 id="missionTitle" data-i18n="missionTitle">One program for unfamiliar mazes</h3>
+				<p data-i18n="missionHelp">Write rules that use the wall sensors. A fixed sequence may escape this maze, but the same program will also be tested on eight different mazes.</p>
+			</section>
 			<label class="visually-hidden" for="code" data-i18n="codeLabel">Pseudocode editor</label>
 			<div class="code-editor-frame">
 				<div class="line-number-gutter" aria-hidden="true"><pre id="lineNumbers">1</pre></div>
 				<div class="code-input-area">
 					<div id="activeLineHighlight" class="active-line-highlight" aria-hidden="true" hidden></div>
-					<textarea id="code" class="code-editor" rows="17" wrap="off" spellcheck="false" autocapitalize="off">WHILE NOT AT_GOAL
-  # Your escape the maze rules here
+					<textarea id="code" class="code-editor" rows="17" wrap="off" spellcheck="false" autocapitalize="off"># The same rules must work in unfamiliar mazes
+WHILE NOT AT_GOAL
+  # Add your wall-following rules here
 END</textarea>
 					<button id="resetCode" class="reset-code-button" type="button" data-i18n="resetCode">Reset to start code</button>
 				</div>
 			</div>
 			<p class="editor-note" data-i18n="englishCode">Commands are always written in English.</p>
+			<p class="editor-note" data-i18n="blockNote">Every IF and WHILE needs its own END. Indentation helps readability; it does not close a block.</p>
+			<details id="syntaxGuide" class="syntax-guide">
+				<summary data-i18n="syntaxTitle">How blocks work · see actual code examples</summary>
+				<ul>
+					<li data-i18n="pythonSyntax">Unlike Python, use END to close a block. Write commands on separate lines, without colons.</li>
+					<li data-i18n="elseSyntax">ELSE belongs to its IF and does not need an additional END.</li>
+					<li data-i18n="nestedSyntax">END closes the innermost open block first.</li>
+				</ul>
+				<p data-i18n="conditionExampleHelp">Write IF WALL FRONT, not IF &lt;WALL FRONT&gt;. Replace the whole placeholder with an actual condition.</p>
+				<p data-i18n="examplePurpose">These examples demonstrate syntax, not a complete maze-solving algorithm.</p>
+				<pre><code id="decisionExample">IF WALL FRONT
+  TURN LEFT
+ELSE
+  MOVE
+END</code></pre>
+				<h4 data-i18n="nestedExampleTitle">Nested blocks</h4>
+				<pre><code id="nestedExample">WHILE WALL FRONT
+  IF WALL LEFT
+    TURN RIGHT
+  ELSE
+    TURN LEFT
+  END  <span data-i18n="closesIf"># closes IF</span>
+END    <span data-i18n="closesWhile"># closes WHILE</span></code></pre>
+			</details>
 
 			<div class="run-controls">
 				<button id="run" class="button button-primary" type="button" data-i18n="run">Run</button>
@@ -128,6 +149,25 @@ END</textarea>
 				<label class="speed-field"><span data-i18n="speed">Speed</span><input id="speed" type="range" min="1" max="60" value="12"><output id="speedValue">12/s</output></label>
 			</div>
 
+			<p id="editorError" class="editor-error" role="alert" hidden></p>
+			<section id="results" class="results" aria-labelledby="resultsTitle" hidden>
+				<div class="section-heading">
+					<h3 id="resultsTitle" tabindex="-1" data-i18n="whatNext">What next?</h3>
+					<p id="stars" class="stars" aria-live="polite">☆☆☆</p>
+				</div>
+				<p id="completionAdvice" role="status" aria-live="polite"></p>
+				<div class="completion-actions">
+					<button id="nextAction" class="button button-primary" type="button"></button>
+					<button id="advanceStage" class="button" type="button" hidden></button>
+					<button id="decorateAction" class="text-button" type="button" data-i18n="shopTitle">Borrow &amp; decorate</button>
+				</div>
+				<details>
+					<summary data-i18n="testTitle">Benchmark results</summary>
+					<p id="testSummary"></p>
+					<ul id="testDetails"></ul>
+					<button id="openFailure" class="button" type="button" hidden data-i18n="openFailure">Open failed maze</button>
+				</details>
+			</section>
 			<div class="trace-box">
 				<span data-i18n="trace">Execution trace</span>
 				<code id="trace">—</code>
@@ -136,34 +176,35 @@ END</textarea>
 			<div class="learning-grid">
 				<section class="reference-card" aria-labelledby="referenceTitle">
 					<h3 id="referenceTitle" data-i18n="reference">Command reference</h3>
+					<p class="reference-note" data-i18n="placeholderHelp">Italic words are placeholders. Replace them with an actual condition, direction, name, or value.</p>
 					<h4 data-i18n="referenceActions">Actions</h4>
 					<dl>
 						<div><dt><code>MOVE</code></dt><dd data-i18n="moveHelp">Move one cell forward.</dd></div>
-						<div><dt><code>TURN &lt;direction&gt;</code></dt><dd data-i18n="turnHelp">Turn 90° toward LEFT or RIGHT.</dd></div>
+						<div><dt><code>TURN <var>direction</var></code></dt><dd data-i18n="turnHelp">Turn 90° toward LEFT or RIGHT.</dd></div>
 					</dl>
 					<h4 data-i18n="referenceConditions">Conditions</h4>
 					<dl>
-						<div><dt><code>WALL &lt;direction&gt;</code></dt><dd data-i18n="wallHelp">True for a wall at FRONT, LEFT, or RIGHT.</dd></div>
+						<div><dt><code>WALL <var>direction</var></code></dt><dd data-i18n="wallHelp">True for a wall at FRONT, LEFT, or RIGHT.</dd></div>
 						<div><dt><code>AT_GOAL</code></dt><dd data-i18n="goalHelp">True after reaching the goal.</dd></div>
-						<div><dt><code>NOT &lt;condition&gt;</code></dt><dd data-i18n="notHelp">Invert a condition.</dd></div>
-						<div><dt><code>&lt;condition&gt; AND / OR &lt;condition&gt;</code></dt><dd data-i18n="logicalHelp">Combine conditions. NOT is evaluated first, then AND, then OR.</dd></div>
+						<div><dt><code>NOT <var>condition</var></code></dt><dd data-i18n="notHelp">Invert a condition.</dd></div>
+						<div><dt><code><var>condition</var> AND / OR <var>condition</var></code></dt><dd data-i18n="logicalHelp">Combine conditions. NOT is evaluated first, then AND, then OR.</dd></div>
 					</dl>
 					<h4 data-i18n="referenceFlow">Control flow</h4>
 					<dl>
-						<div><dt><code>IF &lt;condition&gt; / ELSE / END</code></dt><dd data-i18n="ifHelp">Run one of two branches based on a condition.</dd></div>
-						<div><dt><code>WHILE &lt;condition&gt; / END</code></dt><dd data-i18n="whileHelp">Repeat while a condition is true.</dd></div>
+						<div><dt><code>IF <var>condition</var> / ELSE / END</code></dt><dd data-i18n="ifHelp">Run one of two branches based on a condition.</dd></div>
+						<div><dt><code>WHILE <var>condition</var> / END</code></dt><dd data-i18n="whileHelp">Repeat while a condition is true.</dd></div>
 					</dl>
 					<h4 data-stage-min="2" hidden data-i18n="referenceVariables">Variables</h4>
 					<dl data-stage-min="2" hidden>
-						<div><dt><code>SET &lt;name&gt; TO &lt;value&gt;</code></dt><dd data-i18n="setHelp">Set an integer from a number, variable, or variable plus or minus a number.</dd></div>
-						<div><dt><code>&lt;name&gt; &lt;operator&gt; &lt;value&gt;</code></dt><dd data-i18n="compareHelp">Compare a variable with a number or variable using =, !=, &lt;, &gt;, &lt;=, or &gt;=.</dd></div>
+						<div><dt><code>SET <var>name</var> TO <var>value</var></code></dt><dd data-i18n="setHelp">Set an integer from a number, variable, or variable plus or minus a number.</dd></div>
+						<div><dt><code><var>name</var> <var>operator</var> <var>value</var></code></dt><dd data-i18n="compareHelp">Compare a variable with a number or variable using =, !=, &lt;, &gt;, &lt;=, or &gt;=.</dd></div>
 					</dl>
 					<h4 data-stage-min="3" hidden data-i18n="referenceExploration">Exploration memory</h4>
 					<dl data-stage-min="3" hidden>
 						<div><dt><code>MARK</code></dt><dd data-i18n="markHelp">Mark the current cell as visited.</dd></div>
-						<div><dt><code>UNVISITED &lt;direction&gt;</code></dt><dd data-i18n="unvisitedHelp">True when the neighboring cell is open and unmarked. Use FRONT, LEFT, RIGHT, or BACK.</dd></div>
-						<div><dt><code>MARKED &lt;direction&gt;</code></dt><dd data-i18n="markedHelp">Check a neighboring cell's mark using FRONT, LEFT, RIGHT, or BACK.</dd></div>
-						<div><dt><code>PUSH &lt;direction&gt;</code></dt><dd data-i18n="pushHelp">Remember an absolute direction using FRONT, LEFT, RIGHT, or BACK.</dd></div>
+						<div><dt><code>UNVISITED <var>direction</var></code></dt><dd data-i18n="unvisitedHelp">True when the neighboring cell is open and unmarked. Use FRONT, LEFT, RIGHT, or BACK.</dd></div>
+						<div><dt><code>MARKED <var>direction</var></code></dt><dd data-i18n="markedHelp">Check a neighboring cell's mark using FRONT, LEFT, RIGHT, or BACK.</dd></div>
+						<div><dt><code>PUSH <var>direction</var></code></dt><dd data-i18n="pushHelp">Remember an absolute direction using FRONT, LEFT, RIGHT, or BACK.</dd></div>
 						<div><dt><code>FACE POP</code></dt><dd data-i18n="popHelp">Face and remove the latest saved direction.</dd></div>
 						<div><dt><code>STACK EMPTY</code></dt><dd data-i18n="stackHelp">True when no return direction is saved.</dd></div>
 					</dl>

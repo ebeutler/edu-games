@@ -85,6 +85,16 @@
 	};
 	window.MazeEscapeRewards = {
 		stages: stages, catalog: catalog, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
+		canAccessStage: function (progress, stage, teacherMode) {
+			return [1, 2, 3].includes(stage) && (stage === 1 || teacherMode || progress.achievements[1][0]);
+		},
+		completionAction: function (progress, stage, passed, hasFailure) {
+			if (passed !== 8 || hasFailure) { return "debug"; }
+			if (!progress.achievements[stage][1]) { return "improve"; }
+			if (!progress.achievements[stage][2]) { return "large"; }
+			if (stage < 3) { return "advance"; }
+			return Object.values(progress.achievements).some(function (stars) { return stars.includes(false); }) ? "revisit" : "practice";
+		},
 		benchmarkSeed: function (stage, index) {
 			return Number(stage) === 1 ? "rewards-v2-stage-1-" + stage1Seeds[index] : "rewards-v1-stage-" + stage + "-" + index;
 		},

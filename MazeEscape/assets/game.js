@@ -546,7 +546,8 @@
 			throw { code: "UNKNOWN_COMMAND", line: line, detail: text };
 		});
 		if (blocks.length) {
-			throw { code: "MISSING_END", line: blocks[blocks.length - 1].line };
+			const block = blocks[blocks.length - 1];
+			throw { code: "MISSING_END", line: block.line, detail: block.type };
 		}
 		if (!instructions.length) {
 			throw { code: "EMPTY_PROGRAM", line: 1 };

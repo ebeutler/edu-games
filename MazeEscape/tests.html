@@ -329,6 +329,17 @@
 			try { Game.parse("FLY"); } catch (error) { parseError = error; }
 			assert(parseError && parseError.code === "UNKNOWN_COMMAND" && parseError.line === 1, "unknown command error is incorrect");
 			messages.push("PASS: parser reports source errors");
+			let missingEnd;
+			try { Game.parse("WHILE NOT AT_GOAL\n  IF WALL FRONT\n    TURN LEFT"); } catch (error) { missingEnd = error; }
+			assert(missingEnd && missingEnd.code === "MISSING_END" && missingEnd.line === 2 && missingEnd.detail === "IF",
+				"missing END did not identify the innermost opener");
+			try { Game.parse("WHILE NOT AT_GOAL\n  IF WALL FRONT\n    TURN LEFT\n  END"); } catch (error) { missingEnd = error; }
+			assert(missingEnd.line === 1 && missingEnd.detail === "WHILE", "outer WHILE opener was not identified");
+			let bracketError;
+			try { Game.parse("IF <WALL FRONT>\n  MOVE\nEND"); } catch (error) { bracketError = error; }
+			assert(bracketError && bracketError.code === "UNKNOWN_CONDITION" && bracketError.detail === "<WALL FRONT>",
+				"literal placeholder brackets were accepted or lost in the error");
+			messages.push("PASS: syntax errors identify block openers and preserve bracket mistakes for guidance");
 
 			const collision = Game.runProgram("MOVE", "collision", 5);
 			assert(collision.error && ["HIT_WALL", "STOPPED_BEFORE_GOAL"].includes(collision.error.code), "unsafe program did not stop");
@@ -407,6 +418,27 @@
 				"invalid saved deposits created a negative balance");
 			messages.push("PASS: refundable deposits support upgrades, returns, shared slots, and persistence");
 			messages.push("PASS: earned stars and personal bests persist without duplicate rewards");
+
+			const learningProgress = Rewards.fresh();
+			assert(Rewards.canAccessStage(learningProgress, 1, false)
+				&& !Rewards.canAccessStage(learningProgress, 2, false) && !Rewards.canAccessStage(learningProgress, 3, false),
+				"fresh progress unlocked a later stage");
+			assert(Rewards.canAccessStage(learningProgress, 2, true), "teacher override no longer permits access");
+			learningProgress.achievements[1][0] = true;
+			assert(Rewards.canAccessStage(learningProgress, 2, false) && Rewards.canAccessStage(learningProgress, 3, false),
+				"saved reliability did not unlock later stages");
+			assert(Rewards.completionAction(learningProgress, 1, 0, true) === "debug", "one-maze success skipped generalisation guidance");
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "improve", "missing efficiency did not recommend improvement");
+			learningProgress.achievements[1][1] = true;
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "large", "missing large-maze star did not recommend the challenge");
+			assert(Rewards.completionAction(learningProgress, 1, 8, true) === "debug", "large validation failure did not recommend debugging");
+			learningProgress.achievements[1][2] = true;
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "advance", "mastered stage did not recommend advancement");
+			learningProgress.achievements[3] = [true, true, true];
+			assert(Rewards.completionAction(learningProgress, 3, 8, false) === "revisit", "final stage ignored missing earlier stars");
+			learningProgress.achievements[2] = [true, true, true];
+			assert(Rewards.completionAction(learningProgress, 3, 8, false) === "practice", "all nine stars did not recommend personal-best practice");
+			messages.push("PASS: reliability unlocks stages and completion recommends each learning objective");
 
 			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
 		})();

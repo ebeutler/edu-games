@@ -4,9 +4,9 @@
 	const Game = window.MazeEscapeGame;
 	const Rewards = window.MazeEscapeRewards;
 	const DEFAULT_CODES = {
-		1: "WHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
-		2: "SET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
-		3: "MARK\n\nWHILE NOT AT_GOAL\n  # Visit an unmarked neighbor or backtrack\nEND"
+		1: "# The same rules must work in unfamiliar mazes\nWHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
+		2: "# The same rules must work in unfamiliar mazes\nSET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
+		3: "# The same rules must work in unfamiliar mazes\nMARK\n\nWHILE NOT AT_GOAL\n  # Visit an unmarked neighbor or backtrack\nEND"
 	};
 	const TEST_COUNT = 8;
 	const visibilityCanvas = document.createElement("canvas");
@@ -23,6 +23,19 @@
 			seed: "Seed", size: "Size", newMaze: "New maze", copyMazeLink: "Copy maze link", mazeLinkCopied: "Maze link copied",
 			yourAlgorithm: "Your algorithm", codeTitle: "Program the explorer", copyCode: "Copy code", resetCode: "Reset to start code", copied: "Copied", copyFailed: "Copy failed",
 			codeLabel: "Pseudocode editor", englishCode: "Commands are always written in English.", run: "Run", pause: "Pause",
+			missionTitle: "One program for unfamiliar mazes", missionHelp: "Write rules using the wall sensors and the memory available in this stage. A fixed sequence may solve this maze, but the same program will also be tested on eight different mazes.",
+			blockNote: "Every IF and WHILE needs its own END. Indentation helps readability; it does not close a block.", syntaxTitle: "How blocks work · see actual code examples",
+			pythonSyntax: "Unlike Python, use END to close a block. Write commands on separate lines, without colons.", elseSyntax: "ELSE belongs to its IF and does not need an additional END.", nestedSyntax: "END closes the innermost open block first.",
+			conditionExampleHelp: "Write IF WALL FRONT, not IF <WALL FRONT>. Replace the whole placeholder with an actual condition.", examplePurpose: "These examples demonstrate syntax, not a complete maze-solving algorithm.", nestedExampleTitle: "Nested blocks", closesIf: "# closes IF", closesWhile: "# closes WHILE",
+			placeholderHelp: "Italic words are placeholders. Replace them with an actual condition, direction, name, or value.", bracketHelp: "Remove the angle brackets. For example: IF WALL FRONT. See the code examples beside the editor.",
+			mazeDimensions: "{dimensions} cells", mazeCreated: "New {dimensions} maze ready. Your code has been kept. Press Run or Step to try it.", largeViewHelp: "The maze is larger, but the explorer still sees only the nearby area.",
+			whatNext: "What next?", completionPassed: "Your program solved all 8 unfamiliar benchmark mazes!",
+			completionDebug: "You solved this maze, but your program passed only {passed}/8 other mazes. Open a failing maze and use Pause and Step to build sensor-based rules that work without changing the code for each maze.",
+			completionValidationFailed: "Your program passed the standard benchmark but failed a large validation maze. Open that maze and debug the same algorithm.",
+			completionImprove: "Your next star is efficiency. This run used {score} moves + turns; the budget is {limit}. Look for unnecessary turns or explore different choices, then run again.",
+			completionLarge: "Your next star is the large-maze challenge. Create and solve a visible maze of at least 21×21; the same code must also pass validation.",
+			completionAdvance: "All three stars in this stage are yours. Try the next lesson or borrow a decoration.", completionRevisit: "All three stars in this stage are yours. Collect the remaining stars in an earlier stage.", completionPractice: "You earned all nine stars! Refine your algorithm to beat the fixed benchmark, try another maze, or decorate your explorer's world.",
+			improveAlgorithm: "Improve the algorithm", continueStage: "Continue to Stage {stage}", revisitStage: "Collect stars in Stage {stage}", practiceMaze: "Try another maze",
 			step: "Step", reset: "Reset", speed: "Speed", trace: "Execution trace", reference: "Command reference",
 			referenceActions: "Actions", referenceConditions: "Conditions", referenceFlow: "Control flow", referenceVariables: "Variables", referenceExploration: "Exploration memory",
 			moveHelp: "Move one cell forward.", turnHelp: "Turn 90° in the chosen direction: LEFT or RIGHT.",
@@ -31,7 +44,7 @@
 			setHelp: "Set an integer from a number, variable, or variable plus or minus a number.", compareHelp: "Compare a variable with a number or variable using =, !=, <, >, <=, or >=.",
 			markHelp: "Mark the current cell as visited.", unvisitedHelp: "True when the neighboring cell is open and unmarked. Use FRONT, LEFT, RIGHT, or BACK.", markedHelp: "Check a neighboring cell's mark using FRONT, LEFT, RIGHT, or BACK.",
 			pushHelp: "Remember an absolute direction using FRONT, LEFT, RIGHT, or BACK.", popHelp: "Face and remove the latest saved direction.", stackHelp: "True when no return direction is saved.",
-			revealHint: "Reveal a hint", previousHint: "Previous hint", nextHint: "Next hint", challenge: "Challenge", testTitle: "Testing other mazes", openFailure: "Open failed maze",
+			revealHint: "Reveal a hint", previousHint: "Previous hint", nextHint: "Next hint", challenge: "Challenge", testTitle: "Benchmark results", openFailure: "Open a failing test maze",
 			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", githubLink: "View on GitHub", mazeAria: "Fog-covered maze", centerView: "Center view", metricsAria: "Run statistics",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
 			reliableStar: "Reliability: solve all 8 benchmark mazes ({dimensions})", efficientStar: "Efficiency: at most {limit} moves + turns across the benchmark suite", scaleStar: "Large maze: solve a visible 21×21+ maze and pass validation",
@@ -70,7 +83,7 @@
 			],
 			errors: {
 				UNKNOWN_CONDITION: "Unknown condition '{detail}'", UNEXPECTED_ELSE: "ELSE does not belong to an open IF",
-				UNEXPECTED_END: "END does not belong to an open block", MISSING_END: "This block needs an END", UNKNOWN_COMMAND: "Unknown command '{detail}'",
+				UNEXPECTED_END: "END does not belong to an open block", MISSING_END: "The {detail} block opened on this line needs its own END", UNKNOWN_COMMAND: "Unknown command '{detail}'",
 				EMPTY_PROGRAM: "Write at least one command", LIMIT_REACHED: "Execution limit reached; check for a loop that makes no progress", COMMAND_NOT_AVAILABLE: "This command is not available in this stage",
 				UNKNOWN_EXPRESSION: "Unknown expression '{detail}'", UNDEFINED_VARIABLE: "Variable '{detail}' has not been set",
 				HIT_WALL: "The explorer walked into a wall", EMPTY_STACK: "The explorer tried to pop an empty stack", STOPPED_BEFORE_GOAL: "The program ended before the explorer reached the goal"
@@ -87,6 +100,19 @@
 			seed: "Seed", size: "Grösse", newMaze: "Neues Labyrinth", copyMazeLink: "Labyrinth-Link kopieren", mazeLinkCopied: "Labyrinth-Link kopiert",
 			yourAlgorithm: "Dein Algorithmus", codeTitle: "Programmiere den Forscher", copyCode: "Code kopieren", resetCode: "Auf Startcode zurücksetzen", copied: "Kopiert", copyFailed: "Kopieren fehlgeschlagen",
 			codeLabel: "Pseudocode-Editor", englishCode: "Befehle werden immer auf Englisch geschrieben.", run: "Start",
+			missionTitle: "Ein Programm für unbekannte Labyrinthe", missionHelp: "Schreibe Regeln mit den Wandsensoren und dem Speicher dieser Stufe. Eine feste Folge kann dieses Labyrinth lösen, aber dasselbe Programm wird auch in acht anderen Labyrinthen getestet.",
+			blockNote: "Jedes IF und WHILE braucht ein eigenes END. Einrückungen helfen beim Lesen; sie beenden keinen Block.", syntaxTitle: "So funktionieren Blöcke · echte Codebeispiele ansehen",
+			pythonSyntax: "Anders als in Python schliesst END einen Block. Schreibe Befehle auf eigene Zeilen und ohne Doppelpunkt.", elseSyntax: "ELSE gehört zu seinem IF und braucht kein zusätzliches END.", nestedSyntax: "END schliesst zuerst den innersten offenen Block.",
+			conditionExampleHelp: "Schreibe IF WALL FRONT, nicht IF <WALL FRONT>. Ersetze den ganzen Platzhalter durch eine echte Bedingung.", examplePurpose: "Diese Beispiele zeigen die Syntax, keinen vollständigen Algorithmus zum Lösen eines Labyrinths.", nestedExampleTitle: "Verschachtelte Blöcke", closesIf: "# schliesst IF", closesWhile: "# schliesst WHILE",
+			placeholderHelp: "Kursive Wörter sind Platzhalter. Ersetze sie durch eine echte Bedingung, Richtung, einen Namen oder Wert.", bracketHelp: "Entferne die spitzen Klammern. Beispiel: IF WALL FRONT. Beachte die Codebeispiele beim Editor.",
+			mazeDimensions: "{dimensions} Felder", mazeCreated: "Neues {dimensions}-Labyrinth bereit. Dein Code wurde beibehalten. Probiere ihn mit Start oder Schritt aus.", largeViewHelp: "Das Labyrinth ist grösser, aber der Forscher sieht weiterhin nur die nahe Umgebung.",
+			whatNext: "Wie weiter?", completionPassed: "Dein Programm hat alle 8 unbekannten Benchmark-Labyrinthe gelöst!",
+			completionDebug: "Du hast dieses Labyrinth gelöst, aber dein Programm hat nur {passed}/8 weitere Labyrinthe bestanden. Öffne ein fehlgeschlagenes Labyrinth und entwickle mit Pause und Schritt Sensorregeln, die ohne Codeänderung für jedes neue Labyrinth funktionieren.",
+			completionValidationFailed: "Dein Programm hat den Standard-Benchmark bestanden, aber ein grosses Validierungslabyrinth nicht gelöst. Öffne dieses Labyrinth und prüfe denselben Algorithmus.",
+			completionImprove: "Dein nächster Stern ist die Effizienz. Dieser Lauf brauchte {score} Schritte + Drehungen; das Budget ist {limit}. Suche unnötige Drehungen oder probiere andere Entscheidungen und starte erneut.",
+			completionLarge: "Dein nächster Stern ist das grosse Labyrinth. Erstelle und löse ein sichtbares Labyrinth mit mindestens 21×21 Feldern; derselbe Code muss auch die Validierung bestehen.",
+			completionAdvance: "Alle drei Sterne dieser Stufe gehören dir. Probiere die nächste Stufe oder leihe eine Dekoration aus.", completionRevisit: "Alle drei Sterne dieser Stufe gehören dir. Sammle die fehlenden Sterne einer früheren Stufe.", completionPractice: "Du hast alle neun Sterne verdient! Verbessere deinen Algorithmus für einen neuen Benchmark-Bestwert, probiere ein weiteres Labyrinth oder dekoriere die Welt deines Forschers.",
+			improveAlgorithm: "Algorithmus verbessern", continueStage: "Weiter zu Stufe {stage}", revisitStage: "Sterne in Stufe {stage} sammeln", practiceMaze: "Weiteres Labyrinth probieren",
 			pause: "Pause", step: "Schritt", reset: "Zurücksetzen", speed: "Tempo", trace: "Ausführungsspur", reference: "Befehlsübersicht",
 			referenceActions: "Aktionen", referenceConditions: "Bedingungen", referenceFlow: "Kontrollfluss", referenceVariables: "Variablen", referenceExploration: "Erkundungsspeicher",
 			moveHelp: "Ein Feld vorwärts gehen.", turnHelp: "Um 90° in die gewählte Richtung drehen: LEFT oder RIGHT.",
@@ -95,7 +121,7 @@
 			setHelp: "Setzt eine Ganzzahl aus einer Zahl, Variable oder Variable plus oder minus einer Zahl.", compareHelp: "Vergleicht eine Variable mit einer Zahl oder Variable mittels =, !=, <, >, <= oder >=.",
 			markHelp: "Markiert das aktuelle Feld als besucht.", unvisitedHelp: "Wahr, wenn das Nachbarfeld erreichbar und unmarkiert ist. Verwende FRONT, LEFT, RIGHT oder BACK.", markedHelp: "Prüft die Markierung eines Nachbarfelds mit FRONT, LEFT, RIGHT oder BACK.",
 			pushHelp: "Speichert eine absolute Richtung mit FRONT, LEFT, RIGHT oder BACK.", popHelp: "Richtet den Forscher nach der zuletzt gespeicherten Richtung aus und entfernt sie.", stackHelp: "Wahr, wenn keine Rückkehrrichtung gespeichert ist.",
-			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Weitere Labyrinthe werden getestet", openFailure: "Fehlgeschlagenes Labyrinth öffnen",
+			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Benchmark-Ergebnisse", openFailure: "Fehlgeschlagenes Testlabyrinth öffnen",
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", githubLink: "Auf GitHub ansehen", mazeAria: "Labyrinth im Nebel", centerView: "Ansicht zentrieren", metricsAria: "Laufstatistik",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
 			reliableStar: "Zuverlässigkeit: alle 8 Benchmark-Labyrinthe lösen ({dimensions})", efficientStar: "Effizienz: höchstens {limit} Schritte + Drehungen in der Benchmark-Serie", scaleStar: "Grosses Labyrinth: ein sichtbares 21×21+-Labyrinth lösen und die Validierung bestehen",
@@ -134,7 +160,7 @@
 			],
 			errors: {
 				UNKNOWN_CONDITION: "Unbekannte Bedingung '{detail}'", UNEXPECTED_ELSE: "ELSE gehört zu keinem offenen IF",
-				UNEXPECTED_END: "END gehört zu keinem offenen Block", MISSING_END: "Dieser Block benötigt ein END", UNKNOWN_COMMAND: "Unbekannter Befehl '{detail}'",
+				UNEXPECTED_END: "END gehört zu keinem offenen Block", MISSING_END: "Der hier geöffnete {detail}-Block braucht ein eigenes END", UNKNOWN_COMMAND: "Unbekannter Befehl '{detail}'",
 				EMPTY_PROGRAM: "Schreibe mindestens einen Befehl", LIMIT_REACHED: "Ausführungslimit erreicht; prüfe auf eine Schleife ohne Fortschritt", COMMAND_NOT_AVAILABLE: "Dieser Befehl ist in dieser Stufe nicht verfügbar",
 				UNKNOWN_EXPRESSION: "Unbekannter Ausdruck '{detail}'", UNDEFINED_VARIABLE: "Variable '{detail}' wurde nicht gesetzt",
 				HIT_WALL: "Der Forscher ist gegen eine Wand gelaufen", EMPTY_STACK: "Der Forscher wollte einen leeren Stapel auslesen", STOPPED_BEFORE_GOAL: "Das Programm endete vor dem Ziel"
@@ -147,7 +173,7 @@
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
 		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
-		stage1Solved: false, teacherMode: false, progress: null, assessment: null
+		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -180,12 +206,29 @@
 		elements.mazeTitle.textContent = state.seedRevealed && state.maze
 			? text("seed") + ": " + state.maze.seed
 			: text("mazeTitle");
+		if (state.maze) {
+			const dimensions = state.maze.size + "×" + state.maze.size;
+			elements.mazeDimensions.textContent = text("mazeDimensions", { dimensions: dimensions });
+			elements.mazeNotice.hidden = !state.creationNotice;
+			elements.mazeNotice.textContent = state.creationNotice ? text("mazeCreated", { dimensions: dimensions })
+				+ (state.maze.size >= 21 ? " " + text("largeViewHelp") : "") : "";
+		}
 	};
 
 	const formatError = function (error) {
 		const template = translations[state.language].errors[error.code] || error.code;
-		const message = template.replace("{detail}", error.detail || "");
+		let message = template.replace("{detail}", error.detail || "");
+		if (error.code === "UNKNOWN_CONDITION" && /^<.*>$/.test(error.detail || "")) { message += ". " + text("bracketHelp"); }
 		return text("lineError", { line: error.line || "?", message: message });
+	};
+	const setEditorError = function (error) {
+		state.error = error;
+		elements.editorError.hidden = !error;
+		elements.editorError.textContent = error ? formatError(error) : "";
+		if (error) {
+			elements.status.textContent = formatError(error);
+			elements.status.dataset.state = "error";
+		}
 	};
 
 	const applyLanguage = function () {
@@ -213,7 +256,9 @@
 			elements.hintText.textContent = hintsForStage()[state.hintIndex];
 		}
 		updateHintControls();
-		if (!state.runner) {
+		if (state.error) {
+			setEditorError(state.error);
+		} else if (!state.runner) {
 			setStatus("ready");
 		} else if (state.runner.error) {
 			elements.status.textContent = formatError(state.runner.error);
@@ -250,8 +295,9 @@
 		window.history.replaceState(null, "", url);
 	};
 
-	const createScenario = function (seed, size) {
+	const createScenario = function (seed, size, announce) {
 		stop();
+		state.creationNotice = !!announce;
 		state.maze = state.stage === 3 ? Game.createDfsMaze(seed, size) : state.stage === 2 ? Game.createPledgeMaze(seed, size) : Game.createMaze(seed, size);
 		state.world = Game.createWorld(state.maze);
 		state.camera = {
@@ -266,6 +312,7 @@
 		state.instructions = null;
 		state.assessment = null;
 		state.failedSeed = null;
+		setEditorError(null);
 		elements.rewardNotice.textContent = "";
 		state.seedRevealed = false;
 		state.viewOffsetX = 0;
@@ -288,6 +335,7 @@
 
 	const resetWorld = function () {
 		stop();
+		state.creationNotice = false;
 		state.world = Game.createWorld(state.maze);
 		state.camera = {
 			fromX: state.world.player.x,
@@ -301,6 +349,7 @@
 		state.instructions = null;
 		state.assessment = null;
 		state.failedSeed = null;
+		setEditorError(null);
 		elements.openFailure.hidden = true;
 		elements.rewardNotice.textContent = "";
 		state.viewOffsetX = 0;
@@ -311,14 +360,18 @@
 		elements.shareMaze.hidden = true;
 		elements.trace.textContent = "—";
 		setStatus("ready");
+		updateMazeTitle();
 		updateControls();
 		updateMetrics();
 		draw();
 	};
 
 	const compile = function () {
+		setEditorError(null);
 		try {
 			state.instructions = Game.parse(elements.code.value, state.stage);
+			state.creationNotice = false;
+			updateMazeTitle();
 			state.world = Game.createWorld(state.maze);
 			state.runner = Game.createRunner(state.instructions, state.world);
 			elements.code.readOnly = true;
@@ -328,8 +381,10 @@
 			return true;
 		} catch (error) {
 			state.runner = null;
-			elements.status.textContent = formatError(error);
-			elements.status.dataset.state = "error";
+			if (error.code === "MISSING_END" || error.code === "UNKNOWN_CONDITION" && /^<.*>$/.test(error.detail || "")) {
+				byId("syntaxGuide").open = true;
+			}
+			setEditorError(error);
 			return false;
 		}
 	};
@@ -362,6 +417,8 @@
 		const passed = results.filter(function (runner) { return runner.world.won; }).length;
 		const evaluation = Rewards.evaluate(state.stage, results, state.world, largeResults);
 		const award = Rewards.award(state.progress, state.stage, evaluation.achievements, evaluation.score);
+		state.stage1Solved = state.progress.achievements[1][0];
+		elements.stageField.hidden = !state.stage1Solved && !state.teacherMode;
 		state.assessment = { passed: passed, score: evaluation.score, award: award };
 		state.failedSeed = firstFailure;
 		saveProgress();
@@ -407,6 +464,45 @@
 				+ text("testError", { error: formatError(state.failedSeed.error) });
 			elements.testDetails.appendChild(item);
 		}
+		renderCompletion();
+	};
+
+	const renderCompletion = function () {
+		const action = Rewards.completionAction(state.progress, state.stage, state.assessment.passed, !!state.failedSeed);
+		const target = action === "revisit" ? [1, 2, 3].find(function (stage) { return state.progress.achievements[stage].includes(false); }) : state.stage + 1;
+		const messages = { improve: "completionImprove", large: "completionLarge", advance: "completionAdvance", revisit: "completionRevisit", practice: "completionPractice" };
+		elements.completionAdvice.textContent = action === "debug"
+			? text(state.assessment.passed === TEST_COUNT ? "completionValidationFailed" : "completionDebug", { passed: state.assessment.passed })
+			: text("completionPassed") + " " + text(messages[action], { score: state.assessment.score, limit: Rewards.stages[state.stage].budget });
+		const labels = { debug: "openFailure", improve: "improveAlgorithm", large: "largeChallenge", advance: "continueStage", revisit: "revisitStage", practice: "practiceMaze" };
+		elements.nextAction.textContent = text(labels[action], { stage: target });
+		elements.nextAction.dataset.action = action;
+		elements.nextAction.dataset.stage = target;
+		elements.advanceStage.hidden = action === "advance" || state.stage >= 3 || state.assessment.passed !== TEST_COUNT
+			|| !Rewards.canAccessStage(state.progress, state.stage + 1, state.teacherMode);
+		elements.advanceStage.textContent = text("continueStage", { stage: state.stage + 1 });
+	};
+	const reveal = function (element, focus) {
+		element.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+		if (focus) { element.focus({ preventScroll: true }); }
+	};
+	const createLargeMaze = function () {
+		createScenario(randomSeed(), 21, true);
+		reveal(elements.mazeTitle, true);
+	};
+	const openFailedMaze = function () {
+		if (!state.failedSeed) { return; }
+		const failure = state.failedSeed;
+		createScenario(failure.seed, failure.size || state.maze.size, true);
+		reveal(elements.mazeTitle, true);
+	};
+	const goToStage = function (stage) {
+		if (!Rewards.canAccessStage(state.progress, stage, state.teacherMode)) { return; }
+		const url = new URL(window.location.href);
+		url.searchParams.set("stage", stage);
+		url.searchParams.delete("seed");
+		url.searchParams.delete("size");
+		window.location.href = url.href;
 	};
 
 	const updateProgress = function () {
@@ -475,19 +571,14 @@
 		elements.code.readOnly = false;
 		elements.activeLineHighlight.hidden = true;
 		if (state.runner.error) {
-			elements.status.textContent = formatError(state.runner.error);
-			elements.status.dataset.state = "error";
+			setEditorError(state.runner.error);
 		} else if (state.world.won) {
-			if (state.stage === 1 && !state.stage1Solved) {
-				state.stage1Solved = true;
-				elements.stageField.hidden = false;
-				safeStorage(function () { localStorage.setItem("mazeEscapeStage1Solved", "true"); });
-			}
 			state.seedRevealed = true;
 			updateMazeTitle();
 			setStatus(state.stage === 3 ? "goalFound" : "escaped", "success");
 			elements.shareMaze.hidden = false;
 			runChecks();
+			reveal(byId("resultsTitle"), true);
 		}
 		updateControls();
 	};
@@ -971,12 +1062,26 @@
 			"activeLineHighlight", "centerView", "code", "copyCode", "hintNavigation", "hintPosition", "hintText", "instructions", "intro", "language", "lineNumbers", "maze", "mazeTitle", "metrics", "moves", "newMaze", "nextHint", "openFailure",
 			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageField", "stageLabel", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variableOverlay", "memory", "memoryMetric",
-			"starBalance", "stageProgress", "nextChallenge", "largeChallenge", "rewardNotice", "shopItems"
+			"starBalance", "stageProgress", "nextChallenge", "largeChallenge", "rewardNotice", "shopItems",
+			"mazeDimensions", "mazeNotice", "completionAdvice", "nextAction", "advanceStage", "decorateAction", "editorError"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
 
 	const bindEvents = function () {
-		elements.largeChallenge.addEventListener("click", function () { createScenario(randomSeed(), 21); });
+		elements.largeChallenge.addEventListener("click", createLargeMaze);
+		elements.nextAction.addEventListener("click", function () {
+			const action = elements.nextAction.dataset.action;
+			if (action === "debug") { openFailedMaze(); }
+			else if (action === "improve") { elements.code.focus(); }
+			else if (action === "large") { createLargeMaze(); }
+			else if (action === "advance" || action === "revisit") { goToStage(Number(elements.nextAction.dataset.stage)); }
+			else if (action === "practice") { createScenario(randomSeed(), state.maze.size, true); reveal(elements.mazeTitle, true); }
+		});
+		elements.advanceStage.addEventListener("click", function () { goToStage(state.stage + 1); });
+		elements.decorateAction.addEventListener("click", function () {
+			byId("shop").open = true;
+			reveal(byId("shop").querySelector("summary"), true);
+		});
 		elements.shopItems.addEventListener("click", function (event) {
 			const button = event.target.closest("button");
 			if (!button || state.running) { return; }
@@ -989,14 +1094,13 @@
 			}
 		});
 		elements.stage.addEventListener("change", function () {
-			const url = new URL(window.location.href);
-			url.searchParams.set("stage", elements.stage.value);
-			url.searchParams.delete("seed");
-			url.searchParams.delete("size");
-			window.location.href = url.href;
+			goToStage(Number(elements.stage.value));
 		});
 		elements.language.addEventListener("change", function () { state.language = elements.language.value; applyLanguage(); });
-		elements.newMaze.addEventListener("click", function () { createScenario(elements.seed.value.trim() || randomSeed(), elements.size.value); });
+		elements.newMaze.addEventListener("click", function () {
+			createScenario(elements.seed.value.trim() || randomSeed(), elements.size.value, true);
+			reveal(elements.mazeTitle, true);
+		});
 		elements.run.addEventListener("click", run);
 		elements.pause.addEventListener("click", pause);
 		elements.step.addEventListener("click", function () {
@@ -1024,6 +1128,7 @@
 		elements.code.addEventListener("keydown", indentNewLine);
 		elements.code.addEventListener("input", function () {
 			if (state.runner) { resetWorld(); }
+			else if (state.error) { setEditorError(null); setStatus("ready"); }
 			updateLineNumbers();
 			safeStorage(function () { localStorage.setItem(codeStorageKey(), elements.code.value); });
 		});
@@ -1039,21 +1144,17 @@
 		});
 		elements.previousHint.addEventListener("click", function () { showHint(state.hintIndex - 1); });
 		elements.nextHint.addEventListener("click", function () { showHint(state.hintIndex + 1); });
-		elements.openFailure.addEventListener("click", function () {
-			if (state.failedSeed) { createScenario(state.failedSeed.seed, state.failedSeed.size || state.maze.size); }
-		});
+		elements.openFailure.addEventListener("click", openFailedMaze);
 		window.addEventListener("resize", draw);
 	};
 
 	const initialize = function () {
 		cacheElements();
 		state.progress = Rewards.restore(safeStorage(function () { return JSON.parse(localStorage.getItem("mazeEscapeRewardsV1")); }, null));
-		state.stage1Solved = safeStorage(function () {
-			return localStorage.getItem("mazeEscapeStage1Solved") === "true";
-		}, false);
+		state.stage1Solved = state.progress.achievements[1][0];
 		state.teacherMode = new URLSearchParams(window.location.search).get("teacher") === "1";
 		const parameters = mazeParameters();
-		if (parameters.stage > 1 && !state.stage1Solved && !state.teacherMode) {
+		if (!Rewards.canAccessStage(state.progress, parameters.stage, state.teacherMode)) {
 			parameters.stage = 1;
 			parameters.seed = randomSeed();
 			parameters.size = 11;

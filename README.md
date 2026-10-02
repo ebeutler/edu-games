@@ -30,6 +30,19 @@ item refunds it in full. Earned achievements, personal bests, and equipment are 
 `mazeEscapeRewardsV1`. Cosmetics do not affect execution or fog. Hints explain concepts, invariants,
 and debugging experiments rather than complete programs.
 
+The editor's mission emphasises using the same algorithm in unfamiliar mazes. Later stages unlock
+after Stage 1 reliability is earned (or with `teacher=1`), rather than after a single escape; the old
+`mazeEscapeStage1Solved` flag alone no longer grants access. Completion guidance appears next to
+the run controls and prioritises debugging failed tests, efficiency, and a visible large maze before
+advancing. Advancement is also available after reliability, and the final stage points back to missing
+stars or personal-best practice.
+
+The collapsible syntax guide uses actual code fragments, with annotated nested `END` lines and
+explicit guidance for students familiar with Python. Italic placeholders in the reference have no
+literal angle brackets. Errors are shown beside the editor and identify the missing block opener or
+explain mistaken placeholder brackets. Creating a large maze preserves code, announces its size,
+and brings the map into view; the map also displays its dimensions throughout the run.
+
 # CodeAlphabet
 Intended to learn and automate the order of the alphabet.
 
