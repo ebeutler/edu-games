@@ -2,11 +2,13 @@
 	"use strict";
 
 	const stages = {
-		// Fixed v1 suites: hand rule 1204, Pledge 1762, left-first DFS 2464 moves + turns.
-		1: { size: 11, budget: 1300 },
-		2: { size: 13, budget: 1850 },
-		3: { size: 15, budget: 2600 }
+		// Stage 1 v2: both hand rules use 962 moves + 828 turns across the suite.
+		1: { size: 11, budget: 1900, revision: 2 },
+		// Unchanged v1 suites: Pledge 1762, left-first DFS 2464 moves + turns.
+		2: { size: 13, budget: 1850, revision: 1 },
+		3: { size: 15, budget: 2600, revision: 1 }
 	};
+	const stage1Seeds = [84, 258, 60, 265, 135, 295, 226, 314];
 	const catalog = {
 		explorer: [
 			{ id: "original", cost: 0 },
@@ -20,7 +22,9 @@
 		outside: [{ id: "original", cost: 0 }, { id: "beach", cost: 3 }]
 	};
 	const fresh = function () {
-		return { achievements: { 1: [false, false, false], 2: [false, false, false], 3: [false, false, false] }, best: {}, equipped: {} };
+		const benchmarkVersions = {};
+		Object.keys(stages).forEach(function (stage) { benchmarkVersions[stage] = stages[stage].revision; });
+		return { achievements: { 1: [false, false, false], 2: [false, false, false], 3: [false, false, false] }, best: {}, equipped: {}, benchmarkVersions: benchmarkVersions };
 	};
 	const item = function (slot, id) {
 		return (catalog[slot] || []).find(function (entry) { return entry.id === id; });
@@ -49,7 +53,8 @@
 			const stars = saved.achievements && saved.achievements[stage];
 			progress.achievements[stage] = [0, 1, 2].map(function (index) { return !!stars && stars[index] === true; });
 			const best = saved.best && saved.best[stage];
-			if (Number.isSafeInteger(best) && best >= 0) { progress.best[stage] = best; }
+			const revision = saved.benchmarkVersions && saved.benchmarkVersions[stage] || 1;
+			if (revision === stages[stage].revision && Number.isSafeInteger(best) && best >= 0) { progress.best[stage] = best; }
 		});
 		Object.keys(catalog).forEach(function (slot) {
 			if (saved.equipped && saved.equipped[slot]) { equip(progress, slot, saved.equipped[slot]); }
@@ -80,7 +85,9 @@
 	};
 	window.MazeEscapeRewards = {
 		stages: stages, catalog: catalog, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
-		benchmarkSeed: function (stage, index) { return "rewards-v1-stage-" + stage + "-" + index; },
+		benchmarkSeed: function (stage, index) {
+			return Number(stage) === 1 ? "rewards-v2-stage-1-" + stage1Seeds[index] : "rewards-v1-stage-" + stage + "-" + index;
+		},
 		largeSeed: function (stage, size, index) { return "rewards-v1-large-" + stage + "-" + size + "-" + index; }
 	};
 })(window);

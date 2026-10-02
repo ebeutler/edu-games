@@ -18,8 +18,11 @@ generator, interpreter, and reference-algorithm checks.
 Each stage awards three permanent stars: reliability on eight fixed benchmark mazes, efficiency
 (total moves plus quarter-turns on that same suite), and solving a visible maze of at least 21×21
 with three further validation runs at that size. Background tests alone cannot earn the large-maze
-star. The v1 benchmarks use sizes 11, 13, and 15, and budgets of 1300, 1850, and 2600 actions;
-these are calibrated against hand following, Pledge, and left-first DFS respectively.
+star. The benchmarks use sizes 11, 13, and 15, and budgets of 1900, 1850, and 2600 actions.
+Stage 1's v2 seed set gives both left- and right-hand followers exactly 962 moves and 828 turns
+across all eight mazes. Stages 2 and 3 retain their v1 suites, calibrated against Pledge and left-first
+DFS respectively. A benchmark revision resets only that stage's incomparable personal best;
+earned stars and cosmetic deposits remain intact.
 
 The borrowing panel reserves stars as refundable deposits for explorers, walls, floors, goal
 decorations, and outside scenery. Swapping credits the previous deposit automatically; returning an

@@ -363,6 +363,18 @@
 			});
 			messages.push("PASS: fixed reward benchmarks have achievable moves + turns budgets");
 			messages.push("PASS: large-maze stars require a visible 21×21+ success and validation");
+			const handScores = [wallFollower, leftWallFollower].map(function (source) {
+				const results = Array.from({ length: 8 }, function (_, index) {
+					return Game.runProgram(source, Rewards.benchmarkSeed(1, index), Rewards.stages[1].size, 1);
+				});
+				assert(Rewards.evaluate(1, results, null, []).achievements[1], "a hand rule cannot earn the efficiency star");
+				return results.reduce(function (total, runner) {
+					return { moves: total.moves + runner.world.moves, turns: total.turns + runner.world.turns };
+				}, { moves: 0, turns: 0 });
+			});
+			assert(handScores[0].moves === handScores[1].moves && handScores[0].turns === handScores[1].turns,
+				"Stage 1 benchmark favors one hand rule");
+			messages.push("PASS: both wall followers have equal benchmark moves and turns and earn the efficiency star");
 
 			const progress = Rewards.fresh();
 			assert(Rewards.award(progress, 1, [true, false, false], 500).gained === 1, "first star was not awarded");
@@ -382,6 +394,15 @@
 			Rewards.award(progress, 1, [false, false, false], null);
 			assert(Rewards.balance(progress).earned === 3 && progress.best[1] === 450, "unsuccessful experiment lost earned progress");
 			assert(JSON.stringify(Rewards.restore(JSON.parse(JSON.stringify(progress)))) === JSON.stringify(progress), "progress did not survive serialization");
+			const legacy = JSON.parse(JSON.stringify(progress));
+			delete legacy.benchmarkVersions;
+			legacy.best[2] = 987;
+			const migrated = Rewards.restore(legacy);
+			assert(migrated.best[1] === undefined && migrated.best[2] === 987, "benchmark migration kept an incomparable score or reset an unchanged score");
+			assert(JSON.stringify(migrated.achievements) === JSON.stringify(progress.achievements)
+				&& JSON.stringify(migrated.equipped) === JSON.stringify(progress.equipped), "benchmark migration lost stars or deposits");
+			assert(Rewards.award(migrated, 1, [true, true, true], 1790).gained === 0, "benchmark migration re-awarded existing stars");
+			messages.push("PASS: benchmark revisions reset only incomparable personal bests and preserve rewards");
 			assert(Rewards.balance(Rewards.restore({ achievements: progress.achievements, equipped: { explorer: "bunny", walls: "moss", outside: "beach" } })).available >= 0,
 				"invalid saved deposits created a negative balance");
 			messages.push("PASS: refundable deposits support upgrades, returns, shared slots, and persistence");
