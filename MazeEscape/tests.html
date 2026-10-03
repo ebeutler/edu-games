@@ -4,6 +4,7 @@
 	<meta charset="utf-8">
 	<title>Maze Escape checks</title>
 	<script src="assets/game.js"></script>
+	<script src="assets/rewards.js"></script>
 </head>
 <body>
 	<h1>Maze Escape checks</h1>
@@ -27,6 +28,20 @@
 				"      MOVE",
 				"    ELSE",
 				"      TURN LEFT",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
+			const leftWallFollower = [
+				"WHILE NOT AT_GOAL",
+				"  IF NOT WALL LEFT",
+				"    TURN LEFT",
+				"    MOVE",
+				"  ELSE",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN RIGHT",
 				"    END",
 				"  END",
 				"END"
@@ -111,6 +126,11 @@
 					throw new Error(message);
 				}
 			};
+			const runOnMaze = function (source, maze, stage) {
+				const runner = Game.createRunner(Game.parse(source, stage), Game.createWorld(maze));
+				while (!runner.complete) { runner.step(); }
+				return runner;
+			};
 
 			const first = Game.createMaze("repeatable", 11);
 			const second = Game.createMaze("repeatable", 11);
@@ -166,6 +186,23 @@
 			assert(steppedLines.join(",") === "1,2,3,5,6,2", "stepping skipped a source-level control line");
 			messages.push("PASS: stepping pauses on SET, IF, ELSE, and WHILE");
 
+			const booleanSource = [
+				"SET result TO 0",
+				"IF result = 0 OR result = 1 AND result = 2",
+				"  SET result TO 1",
+				"END",
+				"IF result = 1 AND NOT result = 2",
+				"  SET result TO 3",
+				"END"
+			].join("\n");
+			const booleanInstructions = Game.parse(booleanSource, 2);
+			assert(booleanInstructions[1].condition.type === "OR"
+				&& booleanInstructions[1].condition.conditions[1].type === "AND", "AND/OR precedence compiled incorrectly");
+			const booleanRunner = Game.createRunner(booleanInstructions, Game.createWorld(Game.createMaze("booleans", 5)));
+			while (!booleanRunner.complete) { booleanRunner.step(); }
+			assert(booleanRunner.variables.RESULT === 3, "AND/OR conditions evaluated incorrectly");
+			messages.push("PASS: conditions support NOT, AND, and OR precedence");
+
 			for (let index = 0; index < 50; index++) {
 				const result = Game.runProgram(wallFollower, "escape-" + index, 15);
 				assert(result.world.won, "wall follower failed seed escape-" + index);
@@ -177,30 +214,81 @@
 			messages.push("PASS: right-hand rule escapes 50 generated mazes");
 
 			const pledgeMaze = Game.createPledgeMaze("pledge-repeatable", 15);
-			assert(pledgeMaze.stage === 2 && pledgeMaze.goalEdge === Game.constants.NORTH, "Pledge maze has the wrong goal");
+			assert(pledgeMaze.stage === 2, "Pledge maze has the wrong stage");
 			assert(pledgeMaze.requiresTurnBalance, "Pledge maze does not require turn balance");
-			assert(JSON.stringify(pledgeMaze.cells) === JSON.stringify(Game.createPledgeMaze("pledge-repeatable", 15).cells),
+			assert(pledgeMaze.start.x > 0 && pledgeMaze.start.y > 0
+				&& pledgeMaze.start.x < pledgeMaze.size - 1 && pledgeMaze.start.y < pledgeMaze.size - 1,
+				"Pledge maze does not start in the interior");
+			let boundaryOpenings = 0;
+			for (let position = 0; position < pledgeMaze.size; position++) {
+				if (!(pledgeMaze.cells[position] & Game.constants.WALLS[0])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[position * pledgeMaze.size + pledgeMaze.size - 1] & Game.constants.WALLS[1])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[(pledgeMaze.size - 1) * pledgeMaze.size + position] & Game.constants.WALLS[2])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[position * pledgeMaze.size] & Game.constants.WALLS[3])) { boundaryOpenings++; }
+			}
+			assert(boundaryOpenings === 1, "Pledge maze does not have exactly one boundary exit");
+			let pledgePassages = 0;
+			for (let y = 0; y < pledgeMaze.size; y++) {
+				for (let x = 0; x < pledgeMaze.size; x++) {
+					const cell = pledgeMaze.cells[y * pledgeMaze.size + x];
+					if (x + 1 < pledgeMaze.size && !(cell & Game.constants.WALLS[1])) { pledgePassages++; }
+					if (y + 1 < pledgeMaze.size && !(cell & Game.constants.WALLS[2])) { pledgePassages++; }
+				}
+			}
+			assert(pledgePassages > pledgeMaze.size * pledgeMaze.size - 1, "Pledge maze has no passage cycles");
+			assert(JSON.stringify(pledgeMaze) === JSON.stringify(Game.createPledgeMaze("pledge-repeatable", 15)),
 				"Pledge generation is not deterministic");
-			messages.push("PASS: Pledge courses are deterministic");
+			messages.push("PASS: Pledge mazes are deterministic, interior, and braided");
 
+			const startDirections = new Set();
+			const exitDirections = new Set();
 			for (let index = 0; index < 50; index++) {
 				const size = [7, 11, 15, 21, 31][index % 5];
-				const result = Game.runProgram(pledge, "pledge-" + index, size, 2);
-				assert(result.world.won, "Pledge algorithm failed seed pledge-" + index);
-				assert(result.world.player.y < 0, "Pledge algorithm escaped through the wrong edge");
+				const maze = Game.createPledgeMaze("pledge-" + index, size);
+				startDirections.add(maze.start.direction);
+				exitDirections.add(maze.exit.direction);
+				assert(runOnMaze(pledge, maze, 2).world.won, "Pledge algorithm failed seed pledge-" + index);
+				assert(!runOnMaze(wallFollower, maze, 2).world.won, "right-hand rule escaped seed pledge-" + index);
+				assert(!runOnMaze(leftWallFollower, maze, 2).world.won, "left-hand rule escaped seed pledge-" + index);
+				assert(!runOnMaze(obstacleSidestep, maze, 2).world.won, "simple obstacle sidestep escaped seed pledge-" + index);
 			}
-			messages.push("PASS: Pledge escapes 50 nested courses");
+			assert(startDirections.size === 4, "Pledge starts do not cover every direction");
+			assert(exitDirections.size === 4, "Pledge exits do not cover every boundary");
+			messages.push("PASS: Pledge escapes 50 braided mazes from every initial direction");
+			messages.push("PASS: Pledge mazes trap both hand rules and the sidestep shortcut");
 
-			for (let index = 0; index < 50; index++) {
-				const size = [7, 11, 15, 21, 31][index % 5];
-				const result = Game.runProgram(obstacleSidestep, "shortcut-" + index, size, 2);
-				assert(!result.world.won, "simple obstacle sidestep escaped seed shortcut-" + index);
-			}
-			messages.push("PASS: nested courses reject the simple sidestep shortcut");
+			[7, 11, 15, 21, 31].forEach(function (size) {
+				const base = Game.createPledgeMaze("direction-matrix-" + size, size);
+				for (let exitDirection = 0; exitDirection < 4; exitDirection++) {
+					for (let startDirection = 0; startDirection < 4; startDirection++) {
+						const cells = base.cells.slice();
+						cells[base.exit.y * size + base.exit.x] |= Game.constants.WALLS[base.exit.direction];
+						const offset = Math.floor(size / 2);
+						const exit = exitDirection === 0 ? { x: offset, y: 0, direction: 0 }
+							: exitDirection === 1 ? { x: size - 1, y: offset, direction: 1 }
+								: exitDirection === 2 ? { x: offset, y: size - 1, direction: 2 }
+									: { x: 0, y: offset, direction: 3 };
+						cells[exit.y * size + exit.x] &= ~Game.constants.WALLS[exit.direction];
+						const maze = {
+							seed: base.seed,
+							size: size,
+							stage: 2,
+							cells: cells,
+							exit: exit,
+							start: { x: base.start.x, y: base.start.y, direction: startDirection }
+						};
+						assert(runOnMaze(pledge, maze, 2).world.won,
+							"Pledge failed size " + size + ", start " + startDirection + ", exit " + exitDirection);
+					}
+				}
+			});
+			messages.push("PASS: Pledge works for every start direction and exit side");
 
 			let stageError;
 			try { Game.parse("SET turns TO 0", 1); } catch (error) { stageError = error; }
 			assert(stageError && stageError.code === "COMMAND_NOT_AVAILABLE", "Stage 1 accepted Stage 2 commands");
+			assert(Game.parse("IF WALL LEFT OR WALL RIGHT\n  MOVE\nEND", 1)[0].condition.type === "OR",
+				"Stage 1 did not accept Boolean conditions");
 			assert(Game.parse("set turns to turns + 1", 2)[0].op === "SET", "Stage 2 SET did not compile case-insensitively");
 			let headingError;
 			try { Game.parse("IF HEADING NORTH\n  MOVE\nEND", 2); } catch (error) { headingError = error; }
@@ -241,6 +329,17 @@
 			try { Game.parse("FLY"); } catch (error) { parseError = error; }
 			assert(parseError && parseError.code === "UNKNOWN_COMMAND" && parseError.line === 1, "unknown command error is incorrect");
 			messages.push("PASS: parser reports source errors");
+			let missingEnd;
+			try { Game.parse("WHILE NOT AT_GOAL\n  IF WALL FRONT\n    TURN LEFT"); } catch (error) { missingEnd = error; }
+			assert(missingEnd && missingEnd.code === "MISSING_END" && missingEnd.line === 2 && missingEnd.detail === "IF",
+				"missing END did not identify the innermost opener");
+			try { Game.parse("WHILE NOT AT_GOAL\n  IF WALL FRONT\n    TURN LEFT\n  END"); } catch (error) { missingEnd = error; }
+			assert(missingEnd.line === 1 && missingEnd.detail === "WHILE", "outer WHILE opener was not identified");
+			let bracketError;
+			try { Game.parse("IF <WALL FRONT>\n  MOVE\nEND"); } catch (error) { bracketError = error; }
+			assert(bracketError && bracketError.code === "UNKNOWN_CONDITION" && bracketError.detail === "<WALL FRONT>",
+				"literal placeholder brackets were accepted or lost in the error");
+			messages.push("PASS: syntax errors identify block openers and preserve bracket mistakes for guidance");
 
 			const collision = Game.runProgram("MOVE", "collision", 5);
 			assert(collision.error && ["HIT_WALL", "STOPPED_BEFORE_GOAL"].includes(collision.error.code), "unsafe program did not stop");
@@ -249,6 +348,97 @@
 			const stalled = Game.runProgram("WHILE NOT AT_GOAL\nEND", "stalled", 5);
 			assert(stalled.error && stalled.error.code === "LIMIT_REACHED", "empty loop did not hit execution limit");
 			messages.push("PASS: non-progressing loops are bounded");
+
+			const Rewards = window.MazeEscapeRewards;
+			const references = [wallFollower, pledge, depthFirstSearch.replace(/RIGHT/g, "TEMP").replace(/LEFT/g, "RIGHT").replace(/TEMP/g, "LEFT")];
+			references.forEach(function (source, index) {
+				const stage = index + 1;
+				const results = Array.from({ length: 8 }, function (_, seedIndex) {
+					return Game.runProgram(source, Rewards.benchmarkSeed(stage, seedIndex), Rewards.stages[stage].size, stage);
+				});
+				const small = Game.runProgram(source, "reward-visible-small", Rewards.stages[stage].size, stage).world;
+				const large = Game.runProgram(source, "reward-visible-large", 21, stage).world;
+				const validation = Array.from({ length: 3 }, function (_, seedIndex) {
+					return Game.runProgram(source, Rewards.largeSeed(stage, 21, seedIndex), 21, stage);
+				});
+				const normal = Rewards.evaluate(stage, results, small, validation);
+				assert(normal.achievements.join(",") === "true,true,false", "small visible run earned a large-maze star, or reference budget is unreachable");
+				assert(Rewards.evaluate(stage, results, large, validation).achievements[2], "visible large maze with validation did not qualify");
+				assert(!Rewards.evaluate(stage, results, large, []).achievements[2], "large maze qualified without validation");
+				assert(!Rewards.evaluate(stage, results, large, results.slice(0, 3)).achievements[2], "small validation mazes qualified a large run");
+				assert(!Rewards.evaluate(stage, results, { won: false, maze: { size: 21 } }, validation).achievements[2], "unsolved visible large maze qualified");
+				const slower = results.map(function (runner) {
+					return { world: { won: true, moves: runner.world.moves, turns: runner.world.turns + 1000 } };
+				});
+				assert(!Rewards.evaluate(stage, slower, small, []).achievements[1], "efficiency ignored unnecessary turns");
+			});
+			messages.push("PASS: fixed reward benchmarks have achievable moves + turns budgets");
+			messages.push("PASS: large-maze stars require a visible 21×21+ success and validation");
+			const handScores = [wallFollower, leftWallFollower].map(function (source) {
+				const results = Array.from({ length: 8 }, function (_, index) {
+					return Game.runProgram(source, Rewards.benchmarkSeed(1, index), Rewards.stages[1].size, 1);
+				});
+				assert(Rewards.evaluate(1, results, null, []).achievements[1], "a hand rule cannot earn the efficiency star");
+				return results.reduce(function (total, runner) {
+					return { moves: total.moves + runner.world.moves, turns: total.turns + runner.world.turns };
+				}, { moves: 0, turns: 0 });
+			});
+			assert(handScores[0].moves === handScores[1].moves && handScores[0].turns === handScores[1].turns,
+				"Stage 1 benchmark favors one hand rule");
+			messages.push("PASS: both wall followers have equal benchmark moves and turns and earn the efficiency star");
+
+			const progress = Rewards.fresh();
+			assert(Rewards.award(progress, 1, [true, false, false], 500).gained === 1, "first star was not awarded");
+			assert(Rewards.equip(progress, "explorer", "slug"), "slug could not be borrowed for one star");
+			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 2, "additional stars counted incorrectly");
+			assert(Rewards.balance(progress).available === 2, "slug deposit was not reserved");
+			assert(Rewards.equip(progress, "explorer", "bunny"), "slug deposit was not reused for the bunny");
+			assert(Rewards.balance(progress).borrowed === 3 && Rewards.balance(progress).available === 0, "bunny swap double-charged");
+			assert(!Rewards.equip(progress, "floor", "flowers") && !progress.equipped.floor, "borrowing overspent the shared balance");
+			assert(Rewards.equip(progress, "explorer", "racecar"), "equal-cost swap failed");
+			assert(Rewards.equip(progress, "explorer", "original") && Rewards.balance(progress).available === 3, "return did not fully refund deposit");
+			assert(Rewards.equip(progress, "walls", "moss") && Rewards.equip(progress, "floor", "flowers"), "independent slots failed");
+			assert(!Rewards.equip(progress, "outside", "beach"), "outside slot overspent balance");
+			const before = JSON.stringify(progress.equipped);
+			assert(!Rewards.equip(progress, "explorer", "bunny") && JSON.stringify(progress.equipped) === before, "failed swap altered equipment");
+			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 0, "repeated check minted duplicate stars");
+			Rewards.award(progress, 1, [false, false, false], null);
+			assert(Rewards.balance(progress).earned === 3 && progress.best[1] === 450, "unsuccessful experiment lost earned progress");
+			assert(JSON.stringify(Rewards.restore(JSON.parse(JSON.stringify(progress)))) === JSON.stringify(progress), "progress did not survive serialization");
+			const legacy = JSON.parse(JSON.stringify(progress));
+			delete legacy.benchmarkVersions;
+			legacy.best[2] = 987;
+			const migrated = Rewards.restore(legacy);
+			assert(migrated.best[1] === undefined && migrated.best[2] === 987, "benchmark migration kept an incomparable score or reset an unchanged score");
+			assert(JSON.stringify(migrated.achievements) === JSON.stringify(progress.achievements)
+				&& JSON.stringify(migrated.equipped) === JSON.stringify(progress.equipped), "benchmark migration lost stars or deposits");
+			assert(Rewards.award(migrated, 1, [true, true, true], 1790).gained === 0, "benchmark migration re-awarded existing stars");
+			messages.push("PASS: benchmark revisions reset only incomparable personal bests and preserve rewards");
+			assert(Rewards.balance(Rewards.restore({ achievements: progress.achievements, equipped: { explorer: "bunny", walls: "moss", outside: "beach" } })).available >= 0,
+				"invalid saved deposits created a negative balance");
+			messages.push("PASS: refundable deposits support upgrades, returns, shared slots, and persistence");
+			messages.push("PASS: earned stars and personal bests persist without duplicate rewards");
+
+			const learningProgress = Rewards.fresh();
+			assert(Rewards.canAccessStage(learningProgress, 1, false)
+				&& !Rewards.canAccessStage(learningProgress, 2, false) && !Rewards.canAccessStage(learningProgress, 3, false),
+				"fresh progress unlocked a later stage");
+			assert(Rewards.canAccessStage(learningProgress, 2, true), "teacher override no longer permits access");
+			learningProgress.achievements[1][0] = true;
+			assert(Rewards.canAccessStage(learningProgress, 2, false) && Rewards.canAccessStage(learningProgress, 3, false),
+				"saved reliability did not unlock later stages");
+			assert(Rewards.completionAction(learningProgress, 1, 0, true) === "debug", "one-maze success skipped generalisation guidance");
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "improve", "missing efficiency did not recommend improvement");
+			learningProgress.achievements[1][1] = true;
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "large", "missing large-maze star did not recommend the challenge");
+			assert(Rewards.completionAction(learningProgress, 1, 8, true) === "debug", "large validation failure did not recommend debugging");
+			learningProgress.achievements[1][2] = true;
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "advance", "mastered stage did not recommend advancement");
+			learningProgress.achievements[3] = [true, true, true];
+			assert(Rewards.completionAction(learningProgress, 3, 8, false) === "revisit", "final stage ignored missing earlier stars");
+			learningProgress.achievements[2] = [true, true, true];
+			assert(Rewards.completionAction(learningProgress, 3, 8, false) === "practice", "all nine stars did not recommend personal-best practice");
+			messages.push("PASS: reliability unlocks stages and completion recommends each learning objective");
 
 			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
 		})();
