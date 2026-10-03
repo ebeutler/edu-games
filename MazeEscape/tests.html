@@ -389,18 +389,18 @@
 
 			const progress = Rewards.fresh();
 			assert(Rewards.award(progress, 1, [true, false, false], 500).gained === 1, "first star was not awarded");
-			assert(Rewards.equip(progress, "explorer", "slug"), "slug could not be borrowed for one star");
+			assert(Rewards.equip(progress, "explorer", "animal_d_Buggs"), "animal could not be borrowed for one star");
 			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 2, "additional stars counted incorrectly");
-			assert(Rewards.balance(progress).available === 2, "slug deposit was not reserved");
-			assert(Rewards.equip(progress, "explorer", "bunny"), "slug deposit was not reused for the bunny");
-			assert(Rewards.balance(progress).borrowed === 3 && Rewards.balance(progress).available === 0, "bunny swap double-charged");
+			assert(Rewards.balance(progress).available === 2, "animal deposit was not reserved");
+			assert(Rewards.equip(progress, "explorer", "human_f_Aino"), "animal deposit was not reused for the human");
+			assert(Rewards.balance(progress).borrowed === 3 && Rewards.balance(progress).available === 0, "human swap double-charged");
 			assert(!Rewards.equip(progress, "floor", "flowers") && !progress.equipped.floor, "borrowing overspent the shared balance");
-			assert(Rewards.equip(progress, "explorer", "racecar"), "equal-cost swap failed");
+			assert(Rewards.equip(progress, "explorer", "human_f_Laura"), "equal-cost swap failed");
 			assert(Rewards.equip(progress, "explorer", "original") && Rewards.balance(progress).available === 3, "return did not fully refund deposit");
 			assert(Rewards.equip(progress, "walls", "moss") && Rewards.equip(progress, "floor", "flowers"), "independent slots failed");
 			assert(!Rewards.equip(progress, "outside", "beach"), "outside slot overspent balance");
 			const before = JSON.stringify(progress.equipped);
-			assert(!Rewards.equip(progress, "explorer", "bunny") && JSON.stringify(progress.equipped) === before, "failed swap altered equipment");
+			assert(!Rewards.equip(progress, "explorer", "human_f_Aino") && JSON.stringify(progress.equipped) === before, "failed swap altered equipment");
 			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 0, "repeated check minted duplicate stars");
 			Rewards.award(progress, 1, [false, false, false], null);
 			assert(Rewards.balance(progress).earned === 3 && progress.best[1] === 450, "unsuccessful experiment lost earned progress");
@@ -414,8 +414,26 @@
 				&& JSON.stringify(migrated.equipped) === JSON.stringify(progress.equipped), "benchmark migration lost stars or deposits");
 			assert(Rewards.award(migrated, 1, [true, true, true], 1790).gained === 0, "benchmark migration re-awarded existing stars");
 			messages.push("PASS: benchmark revisions reset only incomparable personal bests and preserve rewards");
-			assert(Rewards.balance(Rewards.restore({ achievements: progress.achievements, equipped: { explorer: "bunny", walls: "moss", outside: "beach" } })).available >= 0,
+			assert(Rewards.balance(Rewards.restore({ achievements: progress.achievements, equipped: { explorer: "human_f_Aino", walls: "moss", outside: "beach" } })).available >= 0,
 				"invalid saved deposits created a negative balance");
+			const characters = Rewards.catalog.explorer.filter(function (entry) { return !!entry.image; });
+			assert(characters.length === 28 && new Set(characters.map(function (entry) { return entry.id; })).size === 28,
+				"character assets are missing or duplicated");
+			assert(characters.map(function (entry) { return entry.cost; }).join(",")
+				=== "1,1,1,1,1,1,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4", "character categories have the wrong prices or order");
+			assert(characters.filter(function (entry) { return entry.category === "human"; }).map(function (entry) { return entry.name; }).join(",")
+				=== "Aino,Gillian,Ladina,Laura,Linda,Luigia,Neela,Nora,Denis,Ed,Kariko,Kevin,Kumail,Lars,Paul,Philipp",
+				"humans are not sorted by gender, then name");
+			assert(Rewards.item("explorer", "alien_f_Jax 372").image.includes("%20"), "spaces in asset filenames are not URL-encoded");
+			const oldEquipment = Rewards.fresh();
+			oldEquipment.achievements[1] = [true, true, true];
+			oldEquipment.achievements[2] = [true, true, true];
+			oldEquipment.equipped = { explorer: "bunny", walls: "moss", floor: "flowers" };
+			const newEquipment = Rewards.restore(oldEquipment);
+			assert(!newEquipment.equipped.explorer && newEquipment.equipped.walls === "moss" && newEquipment.equipped.floor === "flowers"
+				&& Rewards.balance(newEquipment).available === 3 && Rewards.balance(newEquipment).earned === 6,
+				"removed explorer did not release its deposit while preserving other rewards");
+			messages.push("PASS: image explorers have category prices, gender/name order, encoded paths, and safe legacy refunds");
 			messages.push("PASS: refundable deposits support upgrades, returns, shared slots, and persistence");
 			messages.push("PASS: earned stars and personal bests persist without duplicate rewards");
 

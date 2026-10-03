@@ -48,6 +48,15 @@
 			<div id="shopItems" class="shop-items"></div>
 		</details>
 	</section>
+	<dialog id="cosmeticPicker" class="cosmetic-picker" aria-labelledby="pickerTitle" aria-describedby="pickerHelp">
+		<div class="picker-header">
+			<h2 id="pickerTitle"></h2>
+			<button id="closePicker" class="button" type="button" data-i18n="closePicker">Close</button>
+		</div>
+		<p id="pickerBalance" aria-live="polite"></p>
+		<p id="pickerHelp" data-i18n="pickerHelp">Changing your selection returns the previous deposit first. Choose the original to return an item.</p>
+		<div id="pickerOptions" class="picker-options"></div>
+	</dialog>
 
 	<main class="app-shell">
 		<section class="maze-panel" aria-labelledby="mazeTitle">

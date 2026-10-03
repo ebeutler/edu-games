@@ -9,13 +9,22 @@
 		3: { size: 15, budget: 2600, revision: 1 }
 	};
 	const stage1Seeds = [84, 258, 60, 265, 135, 295, 226, 314];
+	const characterNames = [
+		"animal_d_Buggs", "animal_d_Emmy", "animal_d_Lizzy", "animal_d_Monks", "animal_d_Pingu", "animal_d_Polbert",
+		"robot_d_N3xus", "robot_d_R9-P4L",
+		"human_f_Aino", "human_f_Gillian", "human_f_Ladina", "human_f_Laura", "human_f_Linda", "human_f_Luigia", "human_f_Neela", "human_f_Nora",
+		"human_m_Denis", "human_m_Ed", "human_m_Kariko", "human_m_Kevin", "human_m_Kumail", "human_m_Lars", "human_m_Paul", "human_m_Philipp",
+		"alien_f_Jax 372", "alien_f_Liara", "alien_m_Jarrak", "alien_m_Slezim"
+	];
+	const characterCosts = { animal: 1, robot: 2, human: 3, alien: 4 };
+	const characters = characterNames.map(function (id) {
+		const parts = id.split("_");
+		return { id: id, category: parts[0], gender: parts[1], name: parts.slice(2).join("_"), cost: characterCosts[parts[0]], image: "assets/images/chars/" + encodeURIComponent(id) + ".png" };
+	}).sort(function (a, b) {
+		return a.cost - b.cost || a.gender.localeCompare(b.gender, "en") || a.name.localeCompare(b.name, "en", { numeric: true, sensitivity: "base" });
+	});
 	const catalog = {
-		explorer: [
-			{ id: "original", cost: 0 },
-			{ id: "slug", cost: 1 },
-			{ id: "bunny", cost: 3 },
-			{ id: "racecar", cost: 3 }
-		],
+		explorer: [{ id: "original", cost: 0 }].concat(characters),
 		walls: [{ id: "original", cost: 0 }, { id: "moss", cost: 2 }],
 		floor: [{ id: "original", cost: 0 }, { id: "flowers", cost: 1 }],
 		goal: [{ id: "original", cost: 0 }, { id: "truck", cost: 2 }],
@@ -84,7 +93,7 @@
 		return { achievements: [reliable, reliable && score <= stages[stage].budget, reliable && large], score: reliable ? score : null };
 	};
 	window.MazeEscapeRewards = {
-		stages: stages, catalog: catalog, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
+		stages: stages, catalog: catalog, item: item, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
 		canAccessStage: function (progress, stage, teacherMode) {
 			return [1, 2, 3].includes(stage) && (stage === 1 || teacherMode || progress.achievements[1][0]);
 		},

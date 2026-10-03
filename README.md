@@ -30,6 +30,15 @@ item refunds it in full. Earned achievements, personal bests, and equipment are 
 `mazeEscapeRewardsV1`. Cosmetics do not affect execution or fog. Hints explain concepts, invariants,
 and debugging experiments rather than complete programs.
 
+Each shop category shows its current selection. Clicking it opens a scrollable selection overlay,
+with keyboard focus contained in the dialog and dismissal via Close, Escape, or the backdrop.
+Explorer images are listed in `assets/rewards.js` from `assets/images/chars/` filenames of the form
+`category_gender_name.png`. The 28 provided characters cost 1 star for animals, 2 for robots, 3 for
+humans, and 4 for aliens, sorted by cost, gender code, and name. Shop previews face south as in the
+source images; the map rotates them to match the heading and retains a direction marker. The
+original explorer is free. Removed legacy explorer selections fall back to the original and release
+their deposits, while earned stars and other decorations remain saved.
+
 The mission above the map emphasises using the same algorithm in unfamiliar mazes. Run, Pause,
 Step, Reset, and Speed sit above the code window. The concise "Stuck? Reveal a hint" shortcut by
 the editor reveals the next hint in the compact card below the map controls and brings it into view.

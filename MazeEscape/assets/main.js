@@ -3,6 +3,7 @@
 
 	const Game = window.MazeEscapeGame;
 	const Rewards = window.MazeEscapeRewards;
+	const characterImages = new Map();
 	const DEFAULT_CODES = {
 		1: "# The same rules must work in unfamiliar mazes\nWHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
 		2: "# The same rules must work in unfamiliar mazes\nSET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
@@ -56,9 +57,12 @@
 			largeChallenge: "Create large maze", shopTitle: "Borrow & decorate", shopHelp: "Stars are refundable deposits. Swapping or returning an item releases its stars. Decorations never change the algorithm or reveal hidden goals.",
 			starsGained: "You earned {count} new ★! Try a new decoration.", benchmarkScore: "Benchmark: {score} moves + turns · Personal best: {best}", newBest: "New personal best: {previous} → {score}",
 			equipped: "Equipped", borrowItem: "Borrow · {cost} ★ deposit", swapItem: "Swap · {cost} ★ deposit", returnItem: "Return / use original", needStars: "Earn {count} more ★ to borrow this item",
+			chooseCosmetic: "Choose: {slot}", changeSelection: "Change selection", selectionCost: "{cost} ★ deposit", selectedCost: "Equipped · {cost} ★ deposit", closePicker: "Close",
+			pickerHelp: "Changing your selection returns the previous deposit first. Choose the original to return an item.",
+			category_animal: "Animal", category_robot: "Robot", category_human: "Human", category_alien: "Alien", gender_d: "Neutral", gender_f: "Female", gender_m: "Male",
 			slot_explorer: "Explorer", slot_walls: "Walls", slot_floor: "Floor", slot_goal: "Goal decoration", slot_outside: "Outside scenery",
 			original_explorer: "Original explorer", original_walls: "Original walls", original_floor: "Original floor", original_goal: "No decoration", original_outside: "Original scenery",
-			item_slug: "Slug", item_bunny: "Bunny", item_racecar: "Racecar", item_moss: "Mossy walls", item_flowers: "Flowers", item_truck: "Ice cream truck", item_beach: "Beach",
+			item_moss: "Mossy walls", item_flowers: "Flowers", item_truck: "Ice cream truck", item_beach: "Beach",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
@@ -133,9 +137,12 @@
 			largeChallenge: "Grosses Labyrinth erstellen", shopTitle: "Ausleihen & dekorieren", shopHelp: "Sterne dienen als rückzahlbares Pfand. Beim Wechseln oder Zurückgeben erhältst du sie zurück. Dekorationen verändern den Algorithmus nicht und verraten keine versteckten Ziele.",
 			starsGained: "Du hast {count} neue ★ verdient! Probiere eine neue Dekoration.", benchmarkScore: "Benchmark: {score} Schritte + Drehungen · Persönlicher Bestwert: {best}", newBest: "Neuer Bestwert: {previous} → {score}",
 			equipped: "Ausgerüstet", borrowItem: "Ausleihen · {cost} ★ Pfand", swapItem: "Wechseln · {cost} ★ Pfand", returnItem: "Zurückgeben / Original nutzen", needStars: "Verdiene noch {count} ★, um diesen Gegenstand auszuleihen",
+			chooseCosmetic: "Auswahl: {slot}", changeSelection: "Auswahl ändern", selectionCost: "{cost} ★ Pfand", selectedCost: "Ausgerüstet · {cost} ★ Pfand", closePicker: "Schliessen",
+			pickerHelp: "Beim Wechseln erhältst du zuerst das bisherige Pfand zurück. Wähle das Original, um einen Gegenstand zurückzugeben.",
+			category_animal: "Tier", category_robot: "Roboter", category_human: "Mensch", category_alien: "Alien", gender_d: "Neutral", gender_f: "Weiblich", gender_m: "Männlich",
 			slot_explorer: "Forscher", slot_walls: "Wände", slot_floor: "Boden", slot_goal: "Zieldekoration", slot_outside: "Umgebung",
 			original_explorer: "Originalforscher", original_walls: "Originalwände", original_floor: "Originalboden", original_goal: "Keine Dekoration", original_outside: "Originalumgebung",
-			item_slug: "Nacktschnecke", item_bunny: "Häschen", item_racecar: "Rennwagen", item_moss: "Mooswände", item_flowers: "Blumen", item_truck: "Glacewagen", item_beach: "Strand",
+			item_moss: "Mooswände", item_flowers: "Blumen", item_truck: "Glacewagen", item_beach: "Strand",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
@@ -173,7 +180,7 @@
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
 		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
-		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null
+		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -522,47 +529,93 @@
 		elements.largeChallenge.hidden = stars[2];
 		elements.shopItems.replaceChildren();
 		Object.keys(Rewards.catalog).forEach(function (slot) {
-			const group = document.createElement("fieldset");
-			const legend = document.createElement("legend");
-			legend.textContent = text("slot_" + slot);
-			group.appendChild(legend);
-			Rewards.catalog[slot].forEach(function (entry) {
-				const button = document.createElement("button");
-				button.type = "button";
-				button.className = "cosmetic-button";
-				button.dataset.slot = slot;
-				button.dataset.item = entry.id;
-				const selected = (state.progress.equipped[slot] || "original") === entry.id;
-				button.setAttribute("aria-pressed", String(selected));
-				const icon = document.createElement("canvas");
-				icon.className = "cosmetic-preview";
-				icon.setAttribute("aria-hidden", "true");
-				icon.width = 80; icon.height = 60;
-				drawPreview(icon, slot, entry.id);
-				button.appendChild(icon);
-				const label = document.createElement("span");
-				label.textContent = text(entry.id === "original" ? "original_" + slot : "item_" + entry.id);
-				button.appendChild(label);
-				const action = document.createElement("small");
-				action.textContent = selected ? text("equipped") : entry.cost === 0 ? text("returnItem")
-					: text(state.progress.equipped[slot] && state.progress.equipped[slot] !== "original" ? "swapItem" : "borrowItem", { cost: entry.cost });
-				button.appendChild(action);
-				group.appendChild(button);
-			});
+			const group = document.createElement("section");
+			group.className = "shop-slot";
+			const heading = document.createElement("h3");
+			heading.textContent = text("slot_" + slot);
+			group.appendChild(heading);
+			const entry = Rewards.item(slot, state.progress.equipped[slot]) || Rewards.catalog[slot][0];
+			const button = cosmeticButton(slot, entry);
+			button.setAttribute("aria-haspopup", "dialog");
+			button.setAttribute("aria-controls", "cosmeticPicker");
+			const action = document.createElement("small");
+			action.textContent = text("selectionCost", { cost: entry.cost }) + " · " + text("changeSelection");
+			button.appendChild(action);
+			group.appendChild(button);
 			elements.shopItems.appendChild(group);
 		});
+		if (elements.cosmeticPicker.open) { renderPicker(); }
 		updateBorrowControls();
+	};
+	const cosmeticButton = function (slot, entry) {
+		const button = document.createElement("button");
+		button.type = "button";
+		button.className = "cosmetic-button";
+		button.dataset.slot = slot;
+		button.dataset.item = entry.id;
+		let preview;
+		if (entry.image) {
+			preview = document.createElement("img");
+			preview.src = entry.image;
+			preview.alt = "";
+			preview.loading = "lazy";
+		} else {
+			preview = document.createElement("canvas");
+			preview.width = 80; preview.height = 60;
+			drawPreview(preview, slot, entry.id);
+		}
+		preview.className = "cosmetic-preview";
+		preview.setAttribute("aria-hidden", "true");
+		button.appendChild(preview);
+		const label = document.createElement("span");
+		label.textContent = entry.name || text(entry.id === "original" ? "original_" + slot : "item_" + entry.id);
+		button.appendChild(label);
+		if (entry.category) {
+			const metadata = document.createElement("small");
+			metadata.textContent = text("category_" + entry.category) + " · " + text("gender_" + entry.gender);
+			button.appendChild(metadata);
+		}
+		return button;
+	};
+	const renderPicker = function () {
+		const slot = state.shopSlot;
+		if (!slot) { return; }
+		elements.pickerTitle.textContent = text("chooseCosmetic", { slot: text("slot_" + slot) });
+		elements.pickerBalance.textContent = text("starBalance", Rewards.balance(state.progress));
+		elements.pickerOptions.replaceChildren();
+		Rewards.catalog[slot].forEach(function (entry) {
+			const button = cosmeticButton(slot, entry);
+			const selected = (state.progress.equipped[slot] || "original") === entry.id;
+			button.setAttribute("aria-pressed", String(selected));
+			const action = document.createElement("small");
+			action.className = "cosmetic-action";
+			action.textContent = selected ? text("selectedCost", { cost: entry.cost }) : entry.cost === 0 ? text("returnItem")
+				: text(state.progress.equipped[slot] && state.progress.equipped[slot] !== "original" ? "swapItem" : "borrowItem", { cost: entry.cost });
+			button.appendChild(action);
+			elements.pickerOptions.appendChild(button);
+		});
+	};
+	const openPicker = function (slot) {
+		if (state.running || !Rewards.catalog[slot]) { return; }
+		state.shopSlot = slot;
+		renderPicker();
+		updateBorrowControls();
+		elements.cosmeticPicker.showModal();
+		document.body.classList.add("cosmetic-picker-open");
+		elements.pickerOptions.querySelector('[aria-pressed="true"]').focus();
 	};
 	const updateBorrowControls = function () {
 		elements.largeChallenge.disabled = state.running;
+		elements.shopItems.querySelectorAll("button").forEach(function (button) { button.disabled = state.running; });
 		const balance = Rewards.balance(state.progress);
-		elements.shopItems.querySelectorAll("button").forEach(function (button) {
+		elements.pickerOptions.querySelectorAll("button").forEach(function (button) {
 			const slot = button.dataset.slot;
-			const current = Rewards.catalog[slot].find(function (entry) { return entry.id === state.progress.equipped[slot]; });
-			const entry = Rewards.catalog[slot].find(function (item) { return item.id === button.dataset.item; });
+			const current = Rewards.item(slot, state.progress.equipped[slot]);
+			const entry = Rewards.item(slot, button.dataset.item);
 			const affordable = entry.cost <= balance.available + (current ? current.cost : 0);
 			button.disabled = state.running || !affordable;
 			button.title = affordable ? "" : text("needStars", { count: entry.cost - balance.available - (current ? current.cost : 0) });
+			if (!affordable) { button.querySelector(".cosmetic-action").textContent = button.title; }
 		});
 	};
 
@@ -777,41 +830,39 @@
 	};
 	const drawExplorer = function (context, cellSize, previewSkin) {
 		const skin = previewSkin || state.progress.equipped.explorer || "original";
+		const entry = Rewards.item("explorer", skin);
+		let image;
+		if (entry && entry.image) {
+			image = characterImages.get(skin);
+			if (!image) {
+				image = new Image();
+				characterImages.set(skin, image);
+				image.onload = function () { draw(); };
+				image.onerror = function () { draw(); };
+				image.src = entry.image;
+			}
+		}
+		const imageReady = image && image.complete && image.naturalWidth > 0;
 		context.save();
 		context.scale(cellSize, cellSize);
-		if (skin === "slug") {
-			context.fillStyle = "#e6c684";
-			context.beginPath(); context.ellipse(0, 0.05, 0.18, 0.3, 0, 0, Math.PI * 2); context.fill();
-			context.strokeStyle = "#e6c684"; context.lineWidth = 0.05;
-			context.beginPath(); context.moveTo(-0.09, -0.17); context.lineTo(-0.16, -0.32);
-			context.moveTo(0.09, -0.17); context.lineTo(0.16, -0.32); context.stroke();
-			context.fillStyle = "#19201a";
-			[-0.16, 0.16].forEach(function (x) { context.beginPath(); context.arc(x, -0.32, 0.025, 0, Math.PI * 2); context.fill(); });
-		} else if (skin === "bunny") {
-			context.fillStyle = "#fff3e5";
-			context.beginPath(); context.ellipse(0, 0.08, 0.22, 0.23, 0, 0, Math.PI * 2); context.fill();
-			[-0.1, 0.1].forEach(function (x) {
-				context.fillStyle = "#fff3e5"; context.beginPath(); context.ellipse(x, -0.22, 0.065, 0.18, 0, 0, Math.PI * 2); context.fill();
-				context.fillStyle = "#e7a1ae"; context.beginPath(); context.ellipse(x, -0.23, 0.03, 0.12, 0, 0, Math.PI * 2); context.fill();
-			});
-			context.fillStyle = "#24322b";
-			[-0.09, 0.09].forEach(function (x) { context.beginPath(); context.arc(x, -0.02, 0.025, 0, Math.PI * 2); context.fill(); });
-		} else if (skin === "racecar") {
-			context.fillStyle = "#101412";
-			[-0.22, 0.12].forEach(function (x) { context.fillRect(x, -0.19, 0.1, 0.13); context.fillRect(x, 0.14, 0.1, 0.13); });
-			context.fillStyle = "#f07c69"; context.fillRect(-0.17, -0.3, 0.34, 0.6);
-			context.fillStyle = "#72c7d4"; context.fillRect(-0.12, -0.13, 0.24, 0.14);
-			context.fillStyle = "#f4f0df"; context.fillRect(-0.025, -0.29, 0.05, 0.57);
-			context.fillStyle = "#f2b84b"; context.fillRect(-0.15, -0.31, 0.07, 0.04); context.fillRect(0.08, -0.31, 0.07, 0.04);
+		if (imageReady) {
+			const ratio = image.naturalWidth / image.naturalHeight;
+			const width = 0.88 * Math.min(1, ratio);
+			const height = 0.88 * Math.min(1, 1 / ratio);
+			context.save();
+			// Source characters face south; the outer map transform uses north as zero.
+			context.rotate(Math.PI);
+			context.drawImage(image, -width / 2, -height / 2, width, height);
+			context.restore();
 		}
 		// Every skin keeps an explicit facing marker, independent of its artwork.
 		context.fillStyle = !previewSkin && state.world && state.world.won ? "#f2b84b" : "#9fd356";
 		context.strokeStyle = "#101412"; context.lineWidth = 0.035;
-		const marker = skin === "original" ? 0 : -0.48;
-		const width = skin === "original" ? 0.22 : 0.09;
-		context.beginPath(); context.moveTo(0, marker - (skin === "original" ? 0.3 : 0.07));
-		context.lineTo(width, marker + (skin === "original" ? 0.22 : 0.07));
-		context.lineTo(-width, marker + (skin === "original" ? 0.22 : 0.07));
+		const marker = imageReady ? -0.48 : 0;
+		const width = imageReady ? 0.09 : 0.22;
+		context.beginPath(); context.moveTo(0, marker - (imageReady ? 0.07 : 0.3));
+		context.lineTo(width, marker + (imageReady ? 0.07 : 0.22));
+		context.lineTo(-width, marker + (imageReady ? 0.07 : 0.22));
 		context.closePath(); context.fill(); context.stroke();
 		context.restore();
 	};
@@ -1070,6 +1121,7 @@
 			"pause", "position", "previousHint", "reset", "resetCode", "results", "revealHint", "run", "seed", "shareMaze", "size", "speed", "speedValue", "stage", "stageField", "stageLabel", "stars",
 			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variableOverlay", "memory", "memoryMetric",
 			"starBalance", "stageProgress", "nextChallenge", "largeChallenge", "rewardNotice", "shopItems",
+			"cosmeticPicker", "closePicker", "pickerTitle", "pickerBalance", "pickerOptions",
 			"mazeDimensions", "mazeNotice", "completionAdvice", "nextAction", "advanceStage", "decorateAction", "editorError", "hintShortcut"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
@@ -1096,12 +1148,45 @@
 		elements.shopItems.addEventListener("click", function (event) {
 			const button = event.target.closest("button");
 			if (!button || state.running) { return; }
-			if ((state.progress.equipped[button.dataset.slot] || "original") === button.dataset.item) { return; }
+			openPicker(button.dataset.slot);
+		});
+		elements.pickerOptions.addEventListener("click", function (event) {
+			const button = event.target.closest("button");
+			if (!button || state.running) { return; }
 			if (Rewards.equip(state.progress, button.dataset.slot, button.dataset.item)) {
 				saveProgress();
 				updateProgress();
 				draw();
-				elements.shopItems.querySelector('[data-slot="' + button.dataset.slot + '"][data-item="' + button.dataset.item + '"]').focus();
+				elements.cosmeticPicker.close();
+			}
+		});
+		elements.closePicker.addEventListener("click", function () { elements.cosmeticPicker.close(); });
+		elements.cosmeticPicker.addEventListener("keydown", function (event) {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				elements.cosmeticPicker.close();
+				return;
+			}
+			if (event.key !== "Tab") { return; }
+			const buttons = elements.cosmeticPicker.querySelectorAll("button:not(:disabled)");
+			const first = buttons[0];
+			const last = buttons[buttons.length - 1];
+			if (event.shiftKey && document.activeElement === first || !event.shiftKey && document.activeElement === last) {
+				event.preventDefault();
+				(event.shiftKey ? last : first).focus();
+			}
+		});
+		elements.cosmeticPicker.addEventListener("close", function () {
+			document.body.classList.remove("cosmetic-picker-open");
+			const button = elements.shopItems.querySelector('[data-slot="' + state.shopSlot + '"]');
+			state.shopSlot = null;
+			if (button) { button.focus(); }
+		});
+		elements.cosmeticPicker.addEventListener("click", function (event) {
+			if (event.target !== elements.cosmeticPicker) { return; }
+			const bounds = elements.cosmeticPicker.getBoundingClientRect();
+			if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) {
+				elements.cosmeticPicker.close();
 			}
 		});
 		elements.stage.addEventListener("change", function () {
