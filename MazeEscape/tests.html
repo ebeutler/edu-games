@@ -417,14 +417,20 @@
 			assert(Rewards.balance(Rewards.restore({ achievements: progress.achievements, equipped: { explorer: "human_f_Aino", walls: "moss", outside: "beach" } })).available >= 0,
 				"invalid saved deposits created a negative balance");
 			const characters = Rewards.catalog.explorer.filter(function (entry) { return !!entry.image; });
-			assert(characters.length === 28 && new Set(characters.map(function (entry) { return entry.id; })).size === 28,
+			assert(characters.length === 42 && new Set(characters.map(function (entry) { return entry.id; })).size === 42,
 				"character assets are missing or duplicated");
-			assert(characters.map(function (entry) { return entry.cost; }).join(",")
-				=== "1,1,1,1,1,1,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4", "character categories have the wrong prices or order");
+			assert(characters.filter(function (entry) { return entry.cost === 1; }).length === 6
+				&& characters.filter(function (entry) { return entry.cost === 2; }).length === 2
+				&& characters.filter(function (entry) { return entry.cost === 3; }).length === 28
+				&& characters.filter(function (entry) { return entry.cost === 4; }).length === 6,
+				"character categories have the wrong prices");
 			assert(characters.filter(function (entry) { return entry.category === "human"; }).map(function (entry) { return entry.name; }).join(",")
-				=== "Aino,Gillian,Ladina,Laura,Linda,Luigia,Neela,Nora,Denis,Ed,Kariko,Kevin,Kumail,Lars,Paul,Philipp",
+				=== "Aino,Alex,Gillian,Julia,Ladina,Laura,Linda,Luigia,Lydia,Mina,Neela,Nora,Nova,Pia,Rose,Daniel,Denis,Ed,Julius,Kariko,Kevin,Kumail,Lars,Linus,Olly,Paul,Philipp,Sato",
 				"humans are not sorted by gender, then name");
 			assert(Rewards.item("explorer", "alien_f_Jax 372").image.includes("%20"), "spaces in asset filenames are not URL-encoded");
+			assert(Rewards.item("explorer", "alien_m_Floater #938").image.includes("%23"), "hash in asset filename is treated as a fragment");
+			assert(Rewards.item("explorer", "humen_f_Mina").category === "human" && Rewards.item("explorer", "humen_f_Mina").cost === 3,
+				"Mina's existing filename is not recognised as human");
 			const oldEquipment = Rewards.fresh();
 			oldEquipment.achievements[1] = [true, true, true];
 			oldEquipment.achievements[2] = [true, true, true];
@@ -436,6 +442,27 @@
 			messages.push("PASS: image explorers have category prices, gender/name order, encoded paths, and safe legacy refunds");
 			messages.push("PASS: refundable deposits support upgrades, returns, shared slots, and persistence");
 			messages.push("PASS: earned stars and personal bests persist without duplicate rewards");
+
+			const teacherProgress = Rewards.fresh();
+			assert(Rewards.balance(teacherProgress, true).available === 5 && Rewards.balance(teacherProgress, true).earned === 0
+				&& Rewards.balance(teacherProgress).available === 0, "virtual teacher credit leaked into earned or normal stars");
+			assert(Rewards.equip(teacherProgress, "explorer", "humen_f_Mina", true), "teacher cannot try a human without achievements");
+			assert(Rewards.equip(teacherProgress, "explorer", "alien_m_Floater #938", true)
+				&& Rewards.equip(teacherProgress, "floor", "flowers", true), "teacher deposit swaps did not reuse virtual credit");
+			assert(!Rewards.equip(teacherProgress, "walls", "moss", true), "teacher exceeded the five-star shared credit");
+			const savedTeacher = JSON.parse(JSON.stringify(teacherProgress));
+			assert(!Object.prototype.hasOwnProperty.call(savedTeacher, "virtual"), "teacher credit was stored as persistent currency");
+			const restoredTeacher = Rewards.restore(savedTeacher, true);
+			assert(Rewards.balance(restoredTeacher, true).borrowed === 5 && Rewards.balance(restoredTeacher, true).available === 0,
+				"teacher reload lost the outfit or accumulated extra credit");
+			const restoredStudent = Rewards.restore(savedTeacher);
+			assert(Rewards.balance(restoredStudent).earned === 0 && Rewards.balance(restoredStudent).borrowed === 0
+				&& Rewards.balance(restoredStudent).available === 0 && !restoredStudent.achievements[1][0],
+				"leaving teacher mode retained unaffordable loans or awarded achievements");
+			Rewards.award(teacherProgress, 1, [true, false, false], 500);
+			assert(Rewards.balance(teacherProgress, true).earned === 1 && Rewards.balance(teacherProgress, true).available === 1,
+				"real achievements did not add to the separate virtual credit");
+			messages.push("PASS: teacher mode adds exactly five virtual shop stars without minting achievements");
 
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)

@@ -33,11 +33,19 @@ and debugging experiments rather than complete programs.
 Each shop category shows its current selection. Clicking it opens a scrollable selection overlay,
 with keyboard focus contained in the dialog and dismissal via Close, Escape, or the backdrop.
 Explorer images are listed in `assets/rewards.js` from `assets/images/chars/` filenames of the form
-`category_gender_name.png`. The 28 provided characters cost 1 star for animals, 2 for robots, 3 for
+`category_gender_name.png`. The 42 provided characters cost 1 star for animals, 2 for robots, 3 for
 humans, and 4 for aliens, sorted by cost, gender code, and name. Shop previews face south as in the
 source images; the map rotates them to match the heading and retains a direction marker. The
 original explorer is free. Removed legacy explorer selections fall back to the original and release
 their deposits, while earned stars and other decorations remain saved.
+
+`teacher=1` supplies five additional virtual shop stars, shown separately from earned stars in both
+the shop balance and selection overlay. They are not saved as currency or awarded as achievements;
+reloading teacher mode grants the same five-star allowance, rather than accumulating more. Saved
+selections are retained in teacher mode when affordable. Without teacher mode, restoration uses only
+earned stars and falls back to the original for selections that exceed that budget. The existing
+`humen_f_Mina.png` filename is treated as human without renaming the asset; spaces and `#` in
+character filenames are URL-encoded.
 
 The mission above the map emphasises using the same algorithm in unfamiliar mazes. Run, Pause,
 Step, Reset, and Speed sit above the code window. The concise "Stuck? Reveal a hint" shortcut by

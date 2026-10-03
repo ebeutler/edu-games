@@ -52,6 +52,7 @@
 			stage2TestsPassed: "Your algorithm escaped all {count} braided mazes.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} braided mazes.",
 			stage3TestsPassed: "Your algorithm found all {count} hidden goals.", stage3TestsFailed: "Your algorithm found {passed} of {count} hidden goals.",
 			progressTitle: "Your progress", starBalance: "Earned: {earned}/9 ★ · Borrowed: {borrowed} ★ · Available: {available} ★",
+			teacherStarBalance: "Earned: {earned}/9 ★ · Teacher credit: {virtual} ★ · Borrowed: {borrowed} ★ · Available: {available} ★",
 			progressHelp: "Each achievement earns one permanent star. Experiments and returns never erase earned stars.",
 			stageProgress: "Stage {stage}", nextChallenge: "Next challenge: {goal}", stageMastered: "All three stars earned in this stage!",
 			largeChallenge: "Create large maze", shopTitle: "Borrow & decorate", shopHelp: "Stars are refundable deposits. Swapping or returning an item releases its stars. Decorations never change the algorithm or reveal hidden goals.",
@@ -132,6 +133,7 @@
 			stage2TestsPassed: "Dein Algorithmus hat alle {count} Labyrinthe mit Schleifen verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} Labyrinthen mit Schleifen verlassen.",
 			stage3TestsPassed: "Dein Algorithmus hat alle {count} versteckten Ziele gefunden.", stage3TestsFailed: "Dein Algorithmus hat {passed} von {count} versteckten Zielen gefunden.",
 			progressTitle: "Dein Fortschritt", starBalance: "Verdient: {earned}/9 ★ · Geliehen: {borrowed} ★ · Verfügbar: {available} ★",
+			teacherStarBalance: "Verdient: {earned}/9 ★ · Lehrperson-Guthaben: {virtual} ★ · Geliehen: {borrowed} ★ · Verfügbar: {available} ★",
 			progressHelp: "Jede Herausforderung bringt einen dauerhaften Stern. Experimente und Rückgaben löschen keine verdienten Sterne.",
 			stageProgress: "Stufe {stage}", nextChallenge: "Nächste Herausforderung: {goal}", stageMastered: "Alle drei Sterne dieser Stufe verdient!",
 			largeChallenge: "Grosses Labyrinth erstellen", shopTitle: "Ausleihen & dekorieren", shopHelp: "Sterne dienen als rückzahlbares Pfand. Beim Wechseln oder Zurückgeben erhältst du sie zurück. Dekorationen verändern den Algorithmus nicht und verraten keine versteckten Ziele.",
@@ -513,8 +515,8 @@
 	};
 
 	const updateProgress = function () {
-		const balance = Rewards.balance(state.progress);
-		elements.starBalance.textContent = text("starBalance", balance);
+		const balance = Rewards.balance(state.progress, state.teacherMode);
+		elements.starBalance.textContent = text(state.teacherMode ? "teacherStarBalance" : "starBalance", balance);
 		elements.stageProgress.replaceChildren();
 		[1, 2, 3].forEach(function (stage) {
 			const item = document.createElement("p");
@@ -581,7 +583,7 @@
 		const slot = state.shopSlot;
 		if (!slot) { return; }
 		elements.pickerTitle.textContent = text("chooseCosmetic", { slot: text("slot_" + slot) });
-		elements.pickerBalance.textContent = text("starBalance", Rewards.balance(state.progress));
+		elements.pickerBalance.textContent = text(state.teacherMode ? "teacherStarBalance" : "starBalance", Rewards.balance(state.progress, state.teacherMode));
 		elements.pickerOptions.replaceChildren();
 		Rewards.catalog[slot].forEach(function (entry) {
 			const button = cosmeticButton(slot, entry);
@@ -607,7 +609,7 @@
 	const updateBorrowControls = function () {
 		elements.largeChallenge.disabled = state.running;
 		elements.shopItems.querySelectorAll("button").forEach(function (button) { button.disabled = state.running; });
-		const balance = Rewards.balance(state.progress);
+		const balance = Rewards.balance(state.progress, state.teacherMode);
 		elements.pickerOptions.querySelectorAll("button").forEach(function (button) {
 			const slot = button.dataset.slot;
 			const current = Rewards.item(slot, state.progress.equipped[slot]);
@@ -1153,7 +1155,7 @@
 		elements.pickerOptions.addEventListener("click", function (event) {
 			const button = event.target.closest("button");
 			if (!button || state.running) { return; }
-			if (Rewards.equip(state.progress, button.dataset.slot, button.dataset.item)) {
+			if (Rewards.equip(state.progress, button.dataset.slot, button.dataset.item, state.teacherMode)) {
 				saveProgress();
 				updateProgress();
 				draw();
@@ -1243,9 +1245,9 @@
 
 	const initialize = function () {
 		cacheElements();
-		state.progress = Rewards.restore(safeStorage(function () { return JSON.parse(localStorage.getItem("mazeEscapeRewardsV1")); }, null));
-		state.stage1Solved = state.progress.achievements[1][0];
 		state.teacherMode = new URLSearchParams(window.location.search).get("teacher") === "1";
+		state.progress = Rewards.restore(safeStorage(function () { return JSON.parse(localStorage.getItem("mazeEscapeRewardsV1")); }, null), state.teacherMode);
+		state.stage1Solved = state.progress.achievements[1][0];
 		const parameters = mazeParameters();
 		if (!Rewards.canAccessStage(state.progress, parameters.stage, state.teacherMode)) {
 			parameters.stage = 1;

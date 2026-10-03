@@ -12,14 +12,16 @@
 	const characterNames = [
 		"animal_d_Buggs", "animal_d_Emmy", "animal_d_Lizzy", "animal_d_Monks", "animal_d_Pingu", "animal_d_Polbert",
 		"robot_d_N3xus", "robot_d_R9-P4L",
-		"human_f_Aino", "human_f_Gillian", "human_f_Ladina", "human_f_Laura", "human_f_Linda", "human_f_Luigia", "human_f_Neela", "human_f_Nora",
-		"human_m_Denis", "human_m_Ed", "human_m_Kariko", "human_m_Kevin", "human_m_Kumail", "human_m_Lars", "human_m_Paul", "human_m_Philipp",
-		"alien_f_Jax 372", "alien_f_Liara", "alien_m_Jarrak", "alien_m_Slezim"
+		"human_f_Aino", "human_f_Alex", "human_f_Gillian", "human_f_Julia", "human_f_Ladina", "human_f_Laura", "human_f_Linda", "human_f_Luigia", "human_f_Lydia",
+		"humen_f_Mina", "human_f_Neela", "human_f_Nora", "human_f_Nova", "human_f_Pia", "human_f_Rose",
+		"human_m_Daniel", "human_m_Denis", "human_m_Ed", "human_m_Julius", "human_m_Kariko", "human_m_Kevin", "human_m_Kumail", "human_m_Lars", "human_m_Linus", "human_m_Olly", "human_m_Paul", "human_m_Philipp", "human_m_Sato",
+		"alien_f_Jax 372", "alien_f_Liara", "alien_f_Ralaki", "alien_m_Floater #938", "alien_m_Jarrak", "alien_m_Slezim"
 	];
 	const characterCosts = { animal: 1, robot: 2, human: 3, alien: 4 };
 	const characters = characterNames.map(function (id) {
 		const parts = id.split("_");
-		return { id: id, category: parts[0], gender: parts[1], name: parts.slice(2).join("_"), cost: characterCosts[parts[0]], image: "assets/images/chars/" + encodeURIComponent(id) + ".png" };
+		const category = parts[0] === "humen" ? "human" : parts[0];
+		return { id: id, category: category, gender: parts[1], name: parts.slice(2).join("_"), cost: characterCosts[category], image: "assets/images/chars/" + encodeURIComponent(id) + ".png" };
 	}).sort(function (a, b) {
 		return a.cost - b.cost || a.gender.localeCompare(b.gender, "en") || a.name.localeCompare(b.name, "en", { numeric: true, sensitivity: "base" });
 	});
@@ -38,24 +40,25 @@
 	const item = function (slot, id) {
 		return (catalog[slot] || []).find(function (entry) { return entry.id === id; });
 	};
-	const balance = function (progress) {
+	const balance = function (progress, teacherMode) {
 		const earned = Object.values(progress.achievements).reduce(function (total, stars) {
 			return total + stars.filter(Boolean).length;
 		}, 0);
 		const borrowed = Object.keys(catalog).reduce(function (total, slot) {
 			return total + (item(slot, progress.equipped[slot]) || catalog[slot][0]).cost;
 		}, 0);
-		return { earned: earned, borrowed: borrowed, available: earned - borrowed };
+		const virtual = teacherMode ? 5 : 0;
+		return { earned: earned, virtual: virtual, borrowed: borrowed, available: earned + virtual - borrowed };
 	};
-	const equip = function (progress, slot, id) {
+	const equip = function (progress, slot, id, teacherMode) {
 		const next = item(slot, id);
 		if (!next) { return false; }
 		const current = item(slot, progress.equipped[slot]) || catalog[slot][0];
-		if (next.cost > balance(progress).available + current.cost) { return false; }
+		if (next.cost > balance(progress, teacherMode).available + current.cost) { return false; }
 		progress.equipped[slot] = id;
 		return true;
 	};
-	const restore = function (saved) {
+	const restore = function (saved, teacherMode) {
 		const progress = fresh();
 		if (!saved || typeof saved !== "object") { return progress; }
 		Object.keys(stages).forEach(function (stage) {
@@ -66,7 +69,7 @@
 			if (revision === stages[stage].revision && Number.isSafeInteger(best) && best >= 0) { progress.best[stage] = best; }
 		});
 		Object.keys(catalog).forEach(function (slot) {
-			if (saved.equipped && saved.equipped[slot]) { equip(progress, slot, saved.equipped[slot]); }
+			if (saved.equipped && saved.equipped[slot]) { equip(progress, slot, saved.equipped[slot], teacherMode); }
 		});
 		return progress;
 	};
