@@ -38,14 +38,17 @@ humans, and 4 for aliens, sorted by cost, gender code, and name. Shop previews f
 source images; the map rotates them to match the heading and retains a direction marker. The
 original explorer is free. Removed legacy explorer selections fall back to the original and release
 their deposits, while earned stars and other decorations remain saved.
+Tiles show only the image, name, and a large top-right star-cost badge. Bright green means affordable
+(including the deposit released by a swap); dark red means more stars are needed. Selected state and
+affordability are also exposed to assistive technology. Category and gender remain sorting metadata.
 
 `teacher=1` supplies five additional virtual shop stars, shown separately from earned stars in both
 the shop balance and selection overlay. They are not saved as currency or awarded as achievements;
 reloading teacher mode grants the same five-star allowance, rather than accumulating more. Saved
 selections are retained in teacher mode when affordable. Without teacher mode, restoration uses only
 earned stars and falls back to the original for selections that exceed that budget. The existing
-`humen_f_Mina.png` filename is treated as human without renaming the asset; spaces and `#` in
-character filenames are URL-encoded.
+`human_f_Mina.png` filename is corrected; saved selections under the old `humen_f_Mina` ID migrate
+without losing the selection or its deposit. Spaces and `#` in character filenames are URL-encoded.
 
 The mission above the map emphasises using the same algorithm in unfamiliar mazes. Run, Pause,
 Step, Reset, and Speed sit above the code window. The concise "Stuck? Reveal a hint" shortcut by

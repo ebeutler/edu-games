@@ -429,8 +429,14 @@
 				"humans are not sorted by gender, then name");
 			assert(Rewards.item("explorer", "alien_f_Jax 372").image.includes("%20"), "spaces in asset filenames are not URL-encoded");
 			assert(Rewards.item("explorer", "alien_m_Floater #938").image.includes("%23"), "hash in asset filename is treated as a fragment");
-			assert(Rewards.item("explorer", "humen_f_Mina").category === "human" && Rewards.item("explorer", "humen_f_Mina").cost === 3,
-				"Mina's existing filename is not recognised as human");
+			assert(Rewards.item("explorer", "human_f_Mina").category === "human" && Rewards.item("explorer", "human_f_Mina").cost === 3
+				&& Rewards.item("explorer", "human_f_Mina").image.endsWith("human_f_Mina.png"), "Mina's renamed asset is not in the catalog");
+			const oldMina = Rewards.fresh();
+			oldMina.achievements[1] = [true, true, true];
+			oldMina.equipped.explorer = "humen_f_Mina";
+			const renamedMina = Rewards.restore(oldMina);
+			assert(renamedMina.equipped.explorer === "human_f_Mina" && Rewards.balance(renamedMina).borrowed === 3,
+				"Mina's rename lost a saved selection or its deposit");
 			const oldEquipment = Rewards.fresh();
 			oldEquipment.achievements[1] = [true, true, true];
 			oldEquipment.achievements[2] = [true, true, true];
@@ -446,7 +452,7 @@
 			const teacherProgress = Rewards.fresh();
 			assert(Rewards.balance(teacherProgress, true).available === 5 && Rewards.balance(teacherProgress, true).earned === 0
 				&& Rewards.balance(teacherProgress).available === 0, "virtual teacher credit leaked into earned or normal stars");
-			assert(Rewards.equip(teacherProgress, "explorer", "humen_f_Mina", true), "teacher cannot try a human without achievements");
+			assert(Rewards.equip(teacherProgress, "explorer", "human_f_Mina", true), "teacher cannot try a human without achievements");
 			assert(Rewards.equip(teacherProgress, "explorer", "alien_m_Floater #938", true)
 				&& Rewards.equip(teacherProgress, "floor", "flowers", true), "teacher deposit swaps did not reuse virtual credit");
 			assert(!Rewards.equip(teacherProgress, "walls", "moss", true), "teacher exceeded the five-star shared credit");

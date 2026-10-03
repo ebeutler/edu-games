@@ -13,14 +13,14 @@
 		"animal_d_Buggs", "animal_d_Emmy", "animal_d_Lizzy", "animal_d_Monks", "animal_d_Pingu", "animal_d_Polbert",
 		"robot_d_N3xus", "robot_d_R9-P4L",
 		"human_f_Aino", "human_f_Alex", "human_f_Gillian", "human_f_Julia", "human_f_Ladina", "human_f_Laura", "human_f_Linda", "human_f_Luigia", "human_f_Lydia",
-		"humen_f_Mina", "human_f_Neela", "human_f_Nora", "human_f_Nova", "human_f_Pia", "human_f_Rose",
+		"human_f_Mina", "human_f_Neela", "human_f_Nora", "human_f_Nova", "human_f_Pia", "human_f_Rose",
 		"human_m_Daniel", "human_m_Denis", "human_m_Ed", "human_m_Julius", "human_m_Kariko", "human_m_Kevin", "human_m_Kumail", "human_m_Lars", "human_m_Linus", "human_m_Olly", "human_m_Paul", "human_m_Philipp", "human_m_Sato",
 		"alien_f_Jax 372", "alien_f_Liara", "alien_f_Ralaki", "alien_m_Floater #938", "alien_m_Jarrak", "alien_m_Slezim"
 	];
 	const characterCosts = { animal: 1, robot: 2, human: 3, alien: 4 };
 	const characters = characterNames.map(function (id) {
 		const parts = id.split("_");
-		const category = parts[0] === "humen" ? "human" : parts[0];
+		const category = parts[0];
 		return { id: id, category: category, gender: parts[1], name: parts.slice(2).join("_"), cost: characterCosts[category], image: "assets/images/chars/" + encodeURIComponent(id) + ".png" };
 	}).sort(function (a, b) {
 		return a.cost - b.cost || a.gender.localeCompare(b.gender, "en") || a.name.localeCompare(b.name, "en", { numeric: true, sensitivity: "base" });
@@ -69,7 +69,10 @@
 			if (revision === stages[stage].revision && Number.isSafeInteger(best) && best >= 0) { progress.best[stage] = best; }
 		});
 		Object.keys(catalog).forEach(function (slot) {
-			if (saved.equipped && saved.equipped[slot]) { equip(progress, slot, saved.equipped[slot], teacherMode); }
+			if (saved.equipped && saved.equipped[slot]) {
+				const id = slot === "explorer" && saved.equipped[slot] === "humen_f_Mina" ? "human_f_Mina" : saved.equipped[slot];
+				equip(progress, slot, id, teacherMode);
+			}
 		});
 		return progress;
 	};

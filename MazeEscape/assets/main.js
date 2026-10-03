@@ -58,9 +58,8 @@
 			largeChallenge: "Create large maze", shopTitle: "Borrow & decorate", shopHelp: "Stars are refundable deposits. Swapping or returning an item releases its stars. Decorations never change the algorithm or reveal hidden goals.",
 			starsGained: "You earned {count} new ★! Try a new decoration.", benchmarkScore: "Benchmark: {score} moves + turns · Personal best: {best}", newBest: "New personal best: {previous} → {score}",
 			equipped: "Equipped", borrowItem: "Borrow · {cost} ★ deposit", swapItem: "Swap · {cost} ★ deposit", returnItem: "Return / use original", needStars: "Earn {count} more ★ to borrow this item",
-			chooseCosmetic: "Choose: {slot}", changeSelection: "Change selection", selectionCost: "{cost} ★ deposit", selectedCost: "Equipped · {cost} ★ deposit", closePicker: "Close",
+			chooseCosmetic: "Choose: {slot}", changeSelection: "Change selection", selectionCost: "{cost} ★ deposit", closePicker: "Close",
 			pickerHelp: "Changing your selection returns the previous deposit first. Choose the original to return an item.",
-			category_animal: "Animal", category_robot: "Robot", category_human: "Human", category_alien: "Alien", gender_d: "Neutral", gender_f: "Female", gender_m: "Male",
 			slot_explorer: "Explorer", slot_walls: "Walls", slot_floor: "Floor", slot_goal: "Goal decoration", slot_outside: "Outside scenery",
 			original_explorer: "Original explorer", original_walls: "Original walls", original_floor: "Original floor", original_goal: "No decoration", original_outside: "Original scenery",
 			item_moss: "Mossy walls", item_flowers: "Flowers", item_truck: "Ice cream truck", item_beach: "Beach",
@@ -139,9 +138,8 @@
 			largeChallenge: "Grosses Labyrinth erstellen", shopTitle: "Ausleihen & dekorieren", shopHelp: "Sterne dienen als rückzahlbares Pfand. Beim Wechseln oder Zurückgeben erhältst du sie zurück. Dekorationen verändern den Algorithmus nicht und verraten keine versteckten Ziele.",
 			starsGained: "Du hast {count} neue ★ verdient! Probiere eine neue Dekoration.", benchmarkScore: "Benchmark: {score} Schritte + Drehungen · Persönlicher Bestwert: {best}", newBest: "Neuer Bestwert: {previous} → {score}",
 			equipped: "Ausgerüstet", borrowItem: "Ausleihen · {cost} ★ Pfand", swapItem: "Wechseln · {cost} ★ Pfand", returnItem: "Zurückgeben / Original nutzen", needStars: "Verdiene noch {count} ★, um diesen Gegenstand auszuleihen",
-			chooseCosmetic: "Auswahl: {slot}", changeSelection: "Auswahl ändern", selectionCost: "{cost} ★ Pfand", selectedCost: "Ausgerüstet · {cost} ★ Pfand", closePicker: "Schliessen",
+			chooseCosmetic: "Auswahl: {slot}", changeSelection: "Auswahl ändern", selectionCost: "{cost} ★ Pfand", closePicker: "Schliessen",
 			pickerHelp: "Beim Wechseln erhältst du zuerst das bisherige Pfand zurück. Wähle das Original, um einen Gegenstand zurückzugeben.",
-			category_animal: "Tier", category_robot: "Roboter", category_human: "Mensch", category_alien: "Alien", gender_d: "Neutral", gender_f: "Weiblich", gender_m: "Männlich",
 			slot_explorer: "Forscher", slot_walls: "Wände", slot_floor: "Boden", slot_goal: "Zieldekoration", slot_outside: "Umgebung",
 			original_explorer: "Originalforscher", original_walls: "Originalwände", original_floor: "Originalboden", original_goal: "Keine Dekoration", original_outside: "Originalumgebung",
 			item_moss: "Mooswände", item_flowers: "Blumen", item_truck: "Glacewagen", item_beach: "Strand",
@@ -540,9 +538,8 @@
 			const button = cosmeticButton(slot, entry);
 			button.setAttribute("aria-haspopup", "dialog");
 			button.setAttribute("aria-controls", "cosmeticPicker");
-			const action = document.createElement("small");
-			action.textContent = text("selectionCost", { cost: entry.cost }) + " · " + text("changeSelection");
-			button.appendChild(action);
+			button.title = text("changeSelection");
+			button.setAttribute("aria-label", button.getAttribute("aria-label") + " · " + text("changeSelection"));
 			group.appendChild(button);
 			elements.shopItems.appendChild(group);
 		});
@@ -572,11 +569,12 @@
 		const label = document.createElement("span");
 		label.textContent = entry.name || text(entry.id === "original" ? "original_" + slot : "item_" + entry.id);
 		button.appendChild(label);
-		if (entry.category) {
-			const metadata = document.createElement("small");
-			metadata.textContent = text("category_" + entry.category) + " · " + text("gender_" + entry.gender);
-			button.appendChild(metadata);
-		}
+		const cost = document.createElement("span");
+		cost.className = "cosmetic-cost";
+		cost.textContent = entry.cost + " ★";
+		cost.setAttribute("aria-hidden", "true");
+		button.appendChild(cost);
+		button.setAttribute("aria-label", label.textContent + " · " + text("selectionCost", { cost: entry.cost }));
 		return button;
 	};
 	const renderPicker = function () {
@@ -589,11 +587,6 @@
 			const button = cosmeticButton(slot, entry);
 			const selected = (state.progress.equipped[slot] || "original") === entry.id;
 			button.setAttribute("aria-pressed", String(selected));
-			const action = document.createElement("small");
-			action.className = "cosmetic-action";
-			action.textContent = selected ? text("selectedCost", { cost: entry.cost }) : entry.cost === 0 ? text("returnItem")
-				: text(state.progress.equipped[slot] && state.progress.equipped[slot] !== "original" ? "swapItem" : "borrowItem", { cost: entry.cost });
-			button.appendChild(action);
 			elements.pickerOptions.appendChild(button);
 		});
 	};
@@ -608,16 +601,24 @@
 	};
 	const updateBorrowControls = function () {
 		elements.largeChallenge.disabled = state.running;
-		elements.shopItems.querySelectorAll("button").forEach(function (button) { button.disabled = state.running; });
+		elements.shopItems.querySelectorAll("button").forEach(function (button) {
+			button.disabled = state.running;
+			button.dataset.affordable = "true";
+		});
 		const balance = Rewards.balance(state.progress, state.teacherMode);
 		elements.pickerOptions.querySelectorAll("button").forEach(function (button) {
 			const slot = button.dataset.slot;
 			const current = Rewards.item(slot, state.progress.equipped[slot]);
 			const entry = Rewards.item(slot, button.dataset.item);
 			const affordable = entry.cost <= balance.available + (current ? current.cost : 0);
+			button.dataset.affordable = String(affordable);
 			button.disabled = state.running || !affordable;
-			button.title = affordable ? "" : text("needStars", { count: entry.cost - balance.available - (current ? current.cost : 0) });
-			if (!affordable) { button.querySelector(".cosmetic-action").textContent = button.title; }
+			const selected = button.getAttribute("aria-pressed") === "true";
+			button.title = !affordable ? text("needStars", { count: entry.cost - balance.available - (current ? current.cost : 0) })
+				: selected ? text("equipped") : entry.cost === 0 ? text("returnItem")
+					: text(current && current.cost ? "swapItem" : "borrowItem", { cost: entry.cost });
+			const name = entry.name || text(entry.id === "original" ? "original_" + slot : "item_" + entry.id);
+			button.setAttribute("aria-label", name + " · " + text("selectionCost", { cost: entry.cost }) + " · " + button.title);
 		});
 	};
 
