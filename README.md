@@ -82,6 +82,11 @@ physical wall has one canonical horizontal/vertical segment shared by its adjace
 segment is created for a passage or exit, and protruding attachments stay away from segment ends.
 All walls are drawn after tile backgrounds so attachments are not erased by neighbouring tiles.
 Removed moss selections fall back to Original and release their old two-star deposit.
+Living hedges scatter 10–20 leaves per wall segment, and Crystal growth scatters 3–5 crystals.
+Both randomise along-wall position, perpendicular offset, size, shade, shape variant, and full-circle
+orientation using separate seeded streams. Elements may overlap to form organic clusters but stay
+clear of wall endpoints and within 20% of a tile width on either side. Pipe and brick patterns retain
+their original seeded details.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

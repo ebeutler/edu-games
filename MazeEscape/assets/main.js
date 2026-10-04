@@ -823,8 +823,9 @@
 		updateActiveLine();
 	};
 
-	const drawWallSegment = function (target, x, y, length, axis, theme, details, bright) {
+	const drawWallSegment = function (target, x, y, length, axis, theme, segment, bright) {
 		const style = Rewards.wallThemes[theme];
+		const details = segment.details;
 		target.save(); target.translate(x, y);
 		if (axis === "vertical") { target.rotate(Math.PI / 2); }
 		target.scale(length, length);
@@ -834,12 +835,9 @@
 		target.beginPath(); target.moveTo(0, 0); target.lineTo(1, 0); target.stroke();
 		if (theme === "living_hedges" || theme === "crystal_growth") {
 			const motif = theme === "living_hedges" ? "leaves" : "crystals";
-			details.forEach(function (detail) {
-				[-1, 1].forEach(function (side) {
-					const orientation = (side > 0 ? Math.PI : 0) + detail.tilt;
-					drawFloorDecoration(target, detail.position, side * 0.065, (motif === "leaves" ? 0.055 : 0.05) * detail.size,
-						bright, (detail.shade + (side > 0 ? 1 : 0)) % 3, { motif: motif }, orientation, 0);
-				});
+			segment.growth[theme].forEach(function (element) {
+				drawFloorDecoration(target, element.position, element.offset, element.radius,
+					bright, element.shade, { motif: motif }, element.orientation, element.variant);
 			});
 		} else if (theme === "industrial_pipes") {
 			target.strokeStyle = bright ? "#c8d2da" : "#6b7986"; target.lineWidth = 0.025;
@@ -887,8 +885,8 @@
 				drawFloorDecoration(context, 55, 43, 4, true, floor.components ? 0 : 2, floor, -0.15, 0, 2);
 			}
 			if (slot === "walls") {
-				drawWallSegment(context, 12, 17, 54, "horizontal", id, WALL_PREVIEW_SEGMENTS[0].details, true);
-				drawWallSegment(context, 66, 17, 29, "vertical", id, WALL_PREVIEW_SEGMENTS[2].details, true);
+				drawWallSegment(context, 12, 17, 54, "horizontal", id, WALL_PREVIEW_SEGMENTS[0], true);
+				drawWallSegment(context, 66, 17, 29, "vertical", id, WALL_PREVIEW_SEGMENTS[2], true);
 			}
 		}
 	};
@@ -1127,7 +1125,7 @@
 			state.wallSegments.forEach(function (segment) {
 				if (!segment.cells.some(include)) { return; }
 				drawWallSegment(target, offsetX + segment.x * cellSize, offsetY + segment.y * cellSize, cellSize,
-					segment.axis, state.progress.equipped.walls || "original", segment.details, bright);
+				segment.axis, state.progress.equipped.walls || "original", segment, bright);
 			});
 		};
 

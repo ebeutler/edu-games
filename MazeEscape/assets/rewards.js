@@ -188,10 +188,21 @@
 		const add = function (x, y, axis, cells) {
 			const key = axis + ":" + x + ":" + y;
 			const random = window.MazeEscapeGame.randomFor("walls:" + maze.seed + ":" + maze.size + ":" + key);
+			const growth = {};
+			["living_hedges", "crystal_growth"].forEach(function (theme) {
+				const organicRandom = window.MazeEscapeGame.randomFor("wall-growth:" + maze.seed + ":" + maze.size + ":" + key + ":" + theme);
+				const count = theme === "living_hedges" ? 10 + Math.floor(organicRandom() * 11) : 3 + Math.floor(organicRandom() * 3);
+				growth[theme] = Array.from({ length: count }, function () {
+					const radius = 0.055 + organicRandom() * 0.02;
+					const margin = radius * 1.7 + 0.035;
+					return { position: margin + (1 - 2 * margin) * organicRandom(), offset: (organicRandom() - 0.5) * 0.13,
+						radius: radius, orientation: organicRandom() * Math.PI * 2, shade: Math.floor(organicRandom() * 3), variant: Math.floor(organicRandom() * 2) };
+				});
+			});
 			segments.push({ x: x, y: y, axis: axis, cells: cells, key: key, details: [0.22, 0.5, 0.78].map(function (position) {
 				return { position: position + (random() - 0.5) * 0.08, size: 0.85 + random() * 0.3,
 					side: random() < 0.5 ? -1 : 1, shade: Math.floor(random() * 3), tilt: (random() - 0.5) * 0.6 };
-			}) });
+			}), growth: growth });
 		};
 		for (let y = 0; y <= maze.size; y++) {
 			for (let x = 0; x < maze.size; x++) {

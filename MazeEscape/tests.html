@@ -600,6 +600,10 @@
 					"wall theme does not use a reusable one-star deposit");
 			});
 			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "crystal_growth", "wall theme did not persist");
+			const hedgeCounts = new Set();
+			const crystalCounts = new Set();
+			const organicAngles = new Set();
+			const organicPositions = new Set();
 			[7, 11, 31].forEach(function (size) {
 				[Game.createMaze, Game.createPledgeMaze, Game.createDfsMaze].forEach(function (create) {
 					const maze = create("wall-check-" + size, size);
@@ -624,11 +628,30 @@
 							assert(detail.position > 0.17 && detail.position < 0.83 && detail.size >= 0.85 && detail.size < 1.15,
 								"wall attachment may extend into an opening");
 						});
+						["living_hedges", "crystal_growth"].forEach(function (theme) {
+							const elements = segment.growth[theme];
+							const minimum = theme === "living_hedges" ? 10 : 3;
+							const maximum = theme === "living_hedges" ? 20 : 5;
+							assert(elements.length >= minimum && elements.length <= maximum, "organic wall count is outside the requested range");
+							(theme === "living_hedges" ? hedgeCounts : crystalCounts).add(elements.length);
+							elements.forEach(function (element) {
+								const extent = element.radius * 1.7;
+								assert(element.position - extent >= 0.035 - 1e-10 && element.position + extent <= 0.965 + 1e-10,
+									"organic growth reaches into a passage at a wall endpoint");
+								assert(Math.abs(element.offset) + extent < 0.2, "organic growth protrudes too far into a corridor");
+								assert(element.orientation >= 0 && element.orientation < Math.PI * 2, "organic wall orientation is invalid");
+								organicAngles.add(element.orientation);
+								organicPositions.add(element.position + "," + element.offset);
+							});
+						});
 					});
 					assert(JSON.stringify(layout) === JSON.stringify(Rewards.wallLayout(maze)), "wall attachments change on redraw");
 				});
 			});
 			messages.push("PASS: four one-star wall themes use stable canonical segments and leave passages undecorated");
+			assert(hedgeCounts.size === 11 && crystalCounts.size === 3 && organicAngles.size > 100 && organicPositions.size > 100,
+				"organic walls lack count, orientation, or placement variation");
+			messages.push("PASS: hedges have 10–20 leaves and crystal walls 3–5 randomly oriented, bounded elements");
 
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)
