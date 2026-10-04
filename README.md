@@ -41,8 +41,11 @@ their deposits, while earned stars and other decorations remain saved.
 Tiles show only the image, name, and a large top-right star-cost badge. Bright green means affordable
 (including the deposit released by a swap); dark red means more stars are needed. Selected state and
 affordability are also exposed to assistive technology. Category and gender remain sorting metadata.
+Flower floor options appear in this order: Pink, Red, Orange, Gold, White, Light blue, Dark blue,
+Purple, and Gray. Each costs one star and provides three distinct shades plus dimmed equivalents.
+The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
-two, and 3% have three. Each flower has a jittered position, one of three golden shades, and a size
+two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size
 within ±15% of the base size. Placement avoids walls and central visit marks and remains stable
 across redraws, resets, and revisiting the same maze seed and size.
 

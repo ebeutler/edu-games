@@ -25,10 +25,23 @@
 	}).sort(function (a, b) {
 		return a.cost - b.cost || a.gender.localeCompare(b.gender, "en") || a.name.localeCompare(b.name, "en", { numeric: true, sensitivity: "base" });
 	});
+	const flowerPalettes = {
+		pink: { dim: ["#86506b", "#6d3150", "#a27b8d"], bright: ["#ee83b5", "#c84885", "#ffc9df"] },
+		red: { dim: ["#834040", "#6a2630", "#a77474"], bright: ["#e86060", "#b92e3b", "#ffaaaa"] },
+		orange: { dim: ["#886033", "#74411e", "#a38659"], bright: ["#eea044", "#cc6823", "#ffd08a"] },
+		gold: { dim: ["#786442", "#6b4816", "#a39262"], bright: ["#e6c684", "#cf902c", "#fff0b8"] },
+		white: { dim: ["#8b897f", "#626d77", "#a8aaa9"], bright: ["#f4f0df", "#b8c2cc", "#ffffff"] },
+		light_blue: { dim: ["#4c7b91", "#376176", "#819fa9"], bright: ["#82cdec", "#409dc6", "#c4efff"] },
+		dark_blue: { dim: ["#3d5189", "#293767", "#657caa"], bright: ["#416bdc", "#25449e", "#8aacf6"] },
+		purple: { dim: ["#71528b", "#4e3569", "#9784aa"], bright: ["#b083e0", "#8046b2", "#dec3ff"] },
+		gray: { dim: ["#666b72", "#424b57", "#969aa0"], bright: ["#999fa7", "#626975", "#ced2d8"] }
+	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),
 		walls: [{ id: "original", cost: 0 }, { id: "moss", cost: 2 }],
-		floor: [{ id: "original", cost: 0 }, { id: "flowers", cost: 1 }],
+		floor: [{ id: "original", cost: 0 }].concat(Object.keys(flowerPalettes).map(function (palette) {
+			return { id: palette === "gold" ? "flowers" : "flowers_" + palette, cost: 1, palette: palette };
+		})),
 		goal: [{ id: "original", cost: 0 }, { id: "truck", cost: 2 }],
 		outside: [{ id: "original", cost: 0 }, { id: "beach", cost: 3 }]
 	};
@@ -117,7 +130,7 @@
 		});
 	};
 	window.MazeEscapeRewards = {
-		stages: stages, catalog: catalog, item: item, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate, flowerLayout: flowerLayout,
+		stages: stages, catalog: catalog, item: item, flowerPalettes: flowerPalettes, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate, flowerLayout: flowerLayout,
 		canAccessStage: function (progress, stage, teacherMode) {
 			return [1, 2, 3].includes(stage) && (stage === 1 || teacherMode || progress.achievements[1][0]);
 		},

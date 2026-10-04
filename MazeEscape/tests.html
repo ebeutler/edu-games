@@ -502,6 +502,23 @@
 			assert(Math.abs(flowerCounts[3] / tileCount - 0.03) < 0.003, "third-flower probability is not about 3%");
 			assert(flowerShades.size === 3 && flowerSizes.size > 100 && flowerPositions.size > 100, "flowers lack shade, size, or position variation");
 			messages.push("PASS: seeded flowers have 25%/8%/3% coverage, varied shades and sizes, and clear placement");
+			assert(Rewards.catalog.floor.map(function (entry) { return entry.palette || entry.id; }).join(",")
+				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray", "flower palette order is incorrect");
+			const paletteProgress = Rewards.fresh();
+			Rewards.award(paletteProgress, 1, [true, false, false], 500);
+			Rewards.catalog.floor.filter(function (entry) { return !!entry.palette; }).forEach(function (entry) {
+				const palette = Rewards.flowerPalettes[entry.palette];
+				assert(entry.cost === 1 && palette.bright.length === 3 && palette.dim.length === 3
+					&& new Set(palette.bright).size === 3 && new Set(palette.dim).size === 3, "flower option lacks three shades or has a different cost");
+				assert(Rewards.equip(paletteProgress, "floor", entry.id) && Rewards.balance(paletteProgress).borrowed === 1
+					&& Rewards.balance(paletteProgress).available === 0, "flower palette swap requires additional stars");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(paletteProgress))).equipped.floor === "flowers_gray", "flower palette selection was not persisted");
+			paletteProgress.equipped.floor = "flowers";
+			assert(Rewards.restore(paletteProgress).equipped.floor === "flowers" && Rewards.item("floor", "flowers").palette === "gold",
+				"existing gold selection lost its palette or deposit");
+			assert(Rewards.flowerPalettes.gold.bright.join(",") === "#e6c684,#cf902c,#fff0b8", "existing gold shades changed");
+			messages.push("PASS: ordered flower palettes share one-star deposits, three shades, and saved gold compatibility");
 
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)

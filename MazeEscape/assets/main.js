@@ -4,7 +4,6 @@
 	const Game = window.MazeEscapeGame;
 	const Rewards = window.MazeEscapeRewards;
 	const characterImages = new Map();
-	const FLOWER_COLORS = [["#786442", "#6b4816", "#a39262"], ["#e6c684", "#cf902c", "#fff0b8"]];
 	const DEFAULT_CODES = {
 		1: "# The same rules must work in unfamiliar mazes\nWHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
 		2: "# The same rules must work in unfamiliar mazes\nSET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
@@ -63,7 +62,9 @@
 			pickerHelp: "Changing your selection returns the previous deposit first. Choose the original to return an item.",
 			slot_explorer: "Explorer", slot_walls: "Walls", slot_floor: "Floor", slot_goal: "Goal decoration", slot_outside: "Outside scenery",
 			original_explorer: "Original explorer", original_walls: "Original walls", original_floor: "Original floor", original_goal: "No decoration", original_outside: "Original scenery",
-			item_moss: "Mossy walls", item_flowers: "Flowers", item_truck: "Ice cream truck", item_beach: "Beach",
+			item_moss: "Mossy walls", item_flowers: "Gold flowers", item_truck: "Ice cream truck", item_beach: "Beach",
+			item_flowers_pink: "Pink flowers", item_flowers_red: "Red flowers", item_flowers_orange: "Orange flowers", item_flowers_white: "White flowers",
+			item_flowers_light_blue: "Light blue flowers", item_flowers_dark_blue: "Dark blue flowers", item_flowers_purple: "Purple flowers", item_flowers_gray: "Gray flowers",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
@@ -143,7 +144,9 @@
 			pickerHelp: "Beim Wechseln erhältst du zuerst das bisherige Pfand zurück. Wähle das Original, um einen Gegenstand zurückzugeben.",
 			slot_explorer: "Forscher", slot_walls: "Wände", slot_floor: "Boden", slot_goal: "Zieldekoration", slot_outside: "Umgebung",
 			original_explorer: "Originalforscher", original_walls: "Originalwände", original_floor: "Originalboden", original_goal: "Keine Dekoration", original_outside: "Originalumgebung",
-			item_moss: "Mooswände", item_flowers: "Blumen", item_truck: "Glacewagen", item_beach: "Strand",
+			item_moss: "Mooswände", item_flowers: "Goldene Blumen", item_truck: "Glacewagen", item_beach: "Strand",
+			item_flowers_pink: "Rosa Blumen", item_flowers_red: "Rote Blumen", item_flowers_orange: "Orange Blumen", item_flowers_white: "Weisse Blumen",
+			item_flowers_light_blue: "Hellblaue Blumen", item_flowers_dark_blue: "Dunkelblaue Blumen", item_flowers_purple: "Violette Blumen", item_flowers_gray: "Graue Blumen",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
@@ -818,15 +821,16 @@
 			if (id === "beach") { context.fillStyle = "#d9bd7b"; context.fillRect(8, 26, 64, 26); drawUmbrella(context, 40, 42, 30); }
 		} else {
 			context.fillStyle = "#26322b"; context.fillRect(10, 10, 60, 40);
-			if (slot === "floor" && id === "flowers") { drawFlower(context, 40, 30, 8, true); }
+			const floor = slot === "floor" && Rewards.item(slot, id);
+			if (floor && floor.palette) { drawFlower(context, 40, 30, 8, true, 0, floor.palette); }
 			if (slot === "walls") {
 				context.strokeStyle = id === "moss" ? "#b4d68c" : "#b9d3bc"; context.lineWidth = 5;
 				context.beginPath(); context.moveTo(10, 10); context.lineTo(70, 10); context.lineTo(70, 50); context.stroke();
 			}
 		}
 	};
-	const drawFlower = function (target, x, y, radius, bright, shade) {
-		target.fillStyle = FLOWER_COLORS[bright ? 1 : 0][shade || 0];
+	const drawFlower = function (target, x, y, radius, bright, shade, palette) {
+		target.fillStyle = Rewards.flowerPalettes[palette || "gold"][bright ? "bright" : "dim"][shade || 0];
 		for (let petal = 0; petal < 5; petal++) {
 			const angle = petal * Math.PI * 2 / 5;
 			target.beginPath(); target.arc(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, radius * 0.7, 0, Math.PI * 2); target.fill();
@@ -909,6 +913,8 @@
 		const offsetX = displaySize / 2 - (camera.x + 0.5) * cellSize + viewX;
 		const offsetY = displaySize / 2 - (camera.y + 0.5) * cellSize + viewY;
 		const walls = Game.constants.WALLS;
+		const floor = Rewards.item("floor", state.progress.equipped.floor);
+		const flowerPalette = floor && floor.palette;
 
 		const drawCells = function (target, include, bright) {
 			for (let y = 0; y < state.maze.size; y++) {
@@ -918,9 +924,9 @@
 					const obstacle = state.maze.blocked && state.maze.blocked.has(index);
 					target.fillStyle = obstacle ? (bright ? "#3b463f" : "#1c221f") : bright ? "#26322b" : "#151b18";
 					target.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
-					if (!obstacle && state.progress.equipped.floor === "flowers") {
+					if (!obstacle && flowerPalette) {
 						state.flowers[index].forEach(function (flower) {
-							drawFlower(target, offsetX + (x + flower.x) * cellSize, offsetY + (y + flower.y) * cellSize, cellSize * flower.radius, bright, flower.shade);
+							drawFlower(target, offsetX + (x + flower.x) * cellSize, offsetY + (y + flower.y) * cellSize, cellSize * flower.radius, bright, flower.shade, flowerPalette);
 						});
 					}
 					target.strokeStyle = state.progress.equipped.walls === "moss" ? (bright ? "#b4d68c" : "#5a7051") : (bright ? "#b9d3bc" : "#526158");
