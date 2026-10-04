@@ -4,6 +4,7 @@
 	const Game = window.MazeEscapeGame;
 	const Rewards = window.MazeEscapeRewards;
 	const characterImages = new Map();
+	const WALL_PREVIEW_SEGMENTS = Rewards.wallLayout({ seed: "wall-preview", size: 1, cells: [15] });
 	const CONFETTI_CIRCLE = new Path2D();
 	CONFETTI_CIRCLE.arc(25, 25, 25, 0, Math.PI * 2);
 	const CONFETTI_CURVED = new Path2D("M 25 0 H 40 A 25 25 0 0 0 65 25 V 40 A 25 25 0 0 0 40 65 H 25 A 25 25 0 0 0 0 40 V 25 A 25 25 0 0 0 25 0 Z");
@@ -65,7 +66,8 @@
 			pickerHelp: "Changing your selection returns the previous deposit first. Choose the original to return an item.",
 			slot_explorer: "Explorer", slot_walls: "Walls", slot_floor: "Floor", slot_goal: "Goal decoration", slot_outside: "Outside scenery",
 			original_explorer: "Original explorer", original_walls: "Original walls", original_floor: "Original floor", original_goal: "No decoration", original_outside: "Original scenery",
-			item_moss: "Mossy walls", item_flowers: "Gold flowers", item_truck: "Ice cream truck", item_beach: "Beach",
+			item_living_hedges: "Living hedges", item_industrial_pipes: "Industrial pipes", item_brickwork: "Brickwork", item_crystal_growth: "Crystal growth",
+			item_flowers: "Gold flowers", item_truck: "Ice cream truck", item_beach: "Beach",
 			item_flowers_pink: "Pink flowers", item_flowers_red: "Red flowers", item_flowers_orange: "Orange flowers", item_flowers_white: "White flowers",
 			item_flowers_light_blue: "Light blue flowers", item_flowers_dark_blue: "Dark blue flowers", item_flowers_purple: "Purple flowers", item_flowers_gray: "Gray flowers",
 			item_flowers_mix_pink_white_purple: "Pink / White / Purple", item_flowers_mix_red_gold_gray: "Red / Gold / Gray",
@@ -153,7 +155,8 @@
 			pickerHelp: "Beim Wechseln erhältst du zuerst das bisherige Pfand zurück. Wähle das Original, um einen Gegenstand zurückzugeben.",
 			slot_explorer: "Forscher", slot_walls: "Wände", slot_floor: "Boden", slot_goal: "Zieldekoration", slot_outside: "Umgebung",
 			original_explorer: "Originalforscher", original_walls: "Originalwände", original_floor: "Originalboden", original_goal: "Keine Dekoration", original_outside: "Originalumgebung",
-			item_moss: "Mooswände", item_flowers: "Goldene Blumen", item_truck: "Glacewagen", item_beach: "Strand",
+			item_living_hedges: "Lebende Hecken", item_industrial_pipes: "Industrierohre", item_brickwork: "Ziegelmauerwerk", item_crystal_growth: "Kristallbewuchs",
+			item_flowers: "Goldene Blumen", item_truck: "Glacewagen", item_beach: "Strand",
 			item_flowers_pink: "Rosa Blumen", item_flowers_red: "Rote Blumen", item_flowers_orange: "Orange Blumen", item_flowers_white: "Weisse Blumen",
 			item_flowers_light_blue: "Hellblaue Blumen", item_flowers_dark_blue: "Dunkelblaue Blumen", item_flowers_purple: "Violette Blumen", item_flowers_gray: "Graue Blumen",
 			item_flowers_mix_pink_white_purple: "Rosa / Weiss / Violett", item_flowers_mix_red_gold_gray: "Rot / Gold / Grau",
@@ -199,7 +202,7 @@
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
 		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
-		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null, decorations: []
+		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null, decorations: [], wallSegments: []
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -326,6 +329,7 @@
 		state.creationNotice = !!announce;
 		state.maze = state.stage === 3 ? Game.createDfsMaze(seed, size) : state.stage === 2 ? Game.createPledgeMaze(seed, size) : Game.createMaze(seed, size);
 		state.decorations = Rewards.decorationLayout(state.maze.seed, state.maze.size);
+		state.wallSegments = Rewards.wallLayout(state.maze);
 		state.world = Game.createWorld(state.maze);
 		state.camera = {
 			fromX: state.world.player.x,
@@ -819,6 +823,46 @@
 		updateActiveLine();
 	};
 
+	const drawWallSegment = function (target, x, y, length, axis, theme, details, bright) {
+		const style = Rewards.wallThemes[theme];
+		target.save(); target.translate(x, y);
+		if (axis === "vertical") { target.rotate(Math.PI / 2); }
+		target.scale(length, length);
+		target.strokeStyle = style ? style[bright ? "bright" : "dim"] : bright ? "#b9d3bc" : "#526158";
+		target.lineWidth = theme === "industrial_pipes" ? 0.12 : 0.07;
+		target.lineCap = "butt";
+		target.beginPath(); target.moveTo(0, 0); target.lineTo(1, 0); target.stroke();
+		if (theme === "living_hedges" || theme === "crystal_growth") {
+			const motif = theme === "living_hedges" ? "leaves" : "crystals";
+			details.forEach(function (detail) {
+				[-1, 1].forEach(function (side) {
+					const orientation = (side > 0 ? Math.PI : 0) + detail.tilt;
+					drawFloorDecoration(target, detail.position, side * 0.065, (motif === "leaves" ? 0.055 : 0.05) * detail.size,
+						bright, (detail.shade + (side > 0 ? 1 : 0)) % 3, { motif: motif }, orientation, 0);
+				});
+			});
+		} else if (theme === "industrial_pipes") {
+			target.strokeStyle = bright ? "#c8d2da" : "#6b7986"; target.lineWidth = 0.025;
+			target.beginPath(); target.moveTo(0, -0.026); target.lineTo(1, -0.026); target.stroke();
+			details.forEach(function (detail) {
+				target.fillStyle = Rewards.floorMotifs.nuts_bolts[bright ? "bright" : "dim"][detail.shade];
+				target.fillRect(detail.position - 0.035 * detail.size, -0.085 * detail.size, 0.07 * detail.size, 0.17 * detail.size);
+			});
+			const valve = details[1];
+			target.strokeStyle = bright ? "#bcd1d9" : "#62777e"; target.lineWidth = 0.022;
+			target.beginPath(); target.moveTo(valve.position, 0); target.lineTo(valve.position, valve.side * 0.11); target.stroke();
+			target.beginPath(); target.arc(valve.position, valve.side * 0.11, 0.055 * valve.size, 0, Math.PI * 2); target.stroke();
+			target.beginPath(); target.moveTo(valve.position - 0.04, valve.side * 0.11); target.lineTo(valve.position + 0.04, valve.side * 0.11); target.stroke();
+		} else if (theme === "brickwork") {
+			target.fillStyle = style[bright ? "bright" : "dim"]; target.fillRect(0, -0.085, 1, 0.17);
+			const colors = bright ? ["#c97957", "#e6bd87", "#b86550"] : ["#7c4937", "#927b56", "#6d3b31"];
+			for (let brick = 0; brick < 6; brick++) {
+				target.fillStyle = colors[(details[Math.floor(brick / 2)].shade + brick) % 3];
+				target.fillRect(0.025 + brick * 0.16, -0.07, 0.145, 0.14);
+			}
+		}
+		target.restore();
+	};
 	const drawPreview = function (canvas, slot, id) {
 		const scale = 4 * (window.devicePixelRatio || 1);
 		canvas.width = Math.round(80 * scale);
@@ -843,8 +887,8 @@
 				drawFloorDecoration(context, 55, 43, 4, true, floor.components ? 0 : 2, floor, -0.15, 0, 2);
 			}
 			if (slot === "walls") {
-				context.strokeStyle = id === "moss" ? "#b4d68c" : "#b9d3bc"; context.lineWidth = 5;
-				context.beginPath(); context.moveTo(10, 10); context.lineTo(70, 10); context.lineTo(70, 50); context.stroke();
+				drawWallSegment(context, 12, 17, 54, "horizontal", id, WALL_PREVIEW_SEGMENTS[0].details, true);
+				drawWallSegment(context, 66, 17, 29, "vertical", id, WALL_PREVIEW_SEGMENTS[2].details, true);
 			}
 		}
 	};
@@ -1056,7 +1100,6 @@
 		const viewY = state.viewOffsetY * cellSize;
 		const offsetX = displaySize / 2 - (camera.x + 0.5) * cellSize + viewX;
 		const offsetY = displaySize / 2 - (camera.y + 0.5) * cellSize + viewY;
-		const walls = Game.constants.WALLS;
 		const floor = Rewards.item("floor", state.progress.equipped.floor);
 		const decoratedFloor = floor && (floor.palette || floor.motif || floor.components);
 
@@ -1073,15 +1116,6 @@
 							drawFloorDecoration(target, offsetX + (x + decoration.x) * cellSize, offsetY + (y + decoration.y) * cellSize, cellSize * decoration.radius, bright, decoration.shade, floor, decoration.orientation, decoration.variant, decoration.component);
 						});
 					}
-					target.strokeStyle = state.progress.equipped.walls === "moss" ? (bright ? "#b4d68c" : "#5a7051") : (bright ? "#b9d3bc" : "#526158");
-					target.lineWidth = Math.max(1, cellSize * 0.07);
-					target.beginPath();
-					const cell = state.maze.cells[index];
-					if (cell & walls[0]) { target.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); target.lineTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); }
-					if (cell & walls[1]) { target.moveTo(offsetX + (x + 1) * cellSize, offsetY + y * cellSize); target.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
-					if (cell & walls[2]) { target.moveTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); target.lineTo(offsetX + (x + 1) * cellSize, offsetY + (y + 1) * cellSize); }
-					if (cell & walls[3]) { target.moveTo(offsetX + x * cellSize, offsetY + y * cellSize); target.lineTo(offsetX + x * cellSize, offsetY + (y + 1) * cellSize); }
-					target.stroke();
 					if (state.world.marked.has(index)) {
 						target.fillStyle = bright ? "#72c7d4" : "#31565b";
 						target.beginPath();
@@ -1090,6 +1124,11 @@
 					}
 				}
 			}
+			state.wallSegments.forEach(function (segment) {
+				if (!segment.cells.some(include)) { return; }
+				drawWallSegment(target, offsetX + segment.x * cellSize, offsetY + segment.y * cellSize, cellSize,
+					segment.axis, state.progress.equipped.walls || "original", segment.details, bright);
+			});
 		};
 
 		drawCells(context, function (index) { return state.world.explored.has(index); }, false);

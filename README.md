@@ -75,6 +75,13 @@ are selected by a separate seeded random stream, independently of color, orienta
 variant, so other decoration properties remain unchanged. Robot workshop deliberately uses nuts
 without bolts. Packs reuse their three-star deposit when swapped and refund the difference when
 returned or exchanged for cheaper floor sets.
+Wall choices are Original (free), Living hedges, Industrial pipes, Brickwork, and Crystal growth
+(one star each). Their map and shop drawings share the same renderer, combining a continuous wall
+spine with seeded leaf/crystal attachments, pipe clamps and valves, or mortar-backed bricks. Each
+physical wall has one canonical horizontal/vertical segment shared by its adjacent cells. No
+segment is created for a passage or exit, and protruding attachments stay away from segment ends.
+All walls are drawn after tile backgrounds so attachments are not erased by neighbouring tiles.
+Removed moss selections fall back to Original and release their old two-star deposit.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

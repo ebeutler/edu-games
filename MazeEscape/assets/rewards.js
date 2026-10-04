@@ -70,9 +70,17 @@
 		celebration: [{ palette: "gold" }, { motif: "confetti" }, { motif: "paint_splashes" }],
 		alien_landscape: [{ motif: "crystals" }, { motif: "meteor_fragments" }, { motif: "slime_droplets" }]
 	};
+	const wallThemes = {
+		living_hedges: { bright: "#799d59", dim: "#475b36" },
+		industrial_pipes: { bright: "#6b7e8c", dim: "#34414d" },
+		brickwork: { bright: "#dec6aa", dim: "#796958" },
+		crystal_growth: { bright: "#768daf", dim: "#42525f" }
+	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),
-		walls: [{ id: "original", cost: 0 }, { id: "moss", cost: 2 }],
+		walls: [{ id: "original", cost: 0 }].concat(Object.keys(wallThemes).map(function (theme) {
+			return { id: theme, cost: 1 };
+		})),
 		floor: [{ id: "original", cost: 0 }].concat(Object.keys(flowerPalettes).map(function (palette) {
 			return { id: palette === "gold" ? "flowers" : "flowers_" + palette, cost: flowerPalettes[palette].cost || 1, palette: palette };
 		})).concat(Object.keys(floorMotifs).map(function (motif) {
@@ -174,8 +182,39 @@
 			});
 		});
 	};
+	const wallLayout = function (maze) {
+		const walls = window.MazeEscapeGame.constants.WALLS;
+		const segments = [];
+		const add = function (x, y, axis, cells) {
+			const key = axis + ":" + x + ":" + y;
+			const random = window.MazeEscapeGame.randomFor("walls:" + maze.seed + ":" + maze.size + ":" + key);
+			segments.push({ x: x, y: y, axis: axis, cells: cells, key: key, details: [0.22, 0.5, 0.78].map(function (position) {
+				return { position: position + (random() - 0.5) * 0.08, size: 0.85 + random() * 0.3,
+					side: random() < 0.5 ? -1 : 1, shade: Math.floor(random() * 3), tilt: (random() - 0.5) * 0.6 };
+			}) });
+		};
+		for (let y = 0; y <= maze.size; y++) {
+			for (let x = 0; x < maze.size; x++) {
+				const above = (y - 1) * maze.size + x;
+				const below = y * maze.size + x;
+				if (maze.cells[y === 0 ? below : above] & walls[y === 0 ? 0 : 2]) {
+					add(x, y, "horizontal", y === 0 ? [below] : y === maze.size ? [above] : [above, below]);
+				}
+			}
+		}
+		for (let x = 0; x <= maze.size; x++) {
+			for (let y = 0; y < maze.size; y++) {
+				const left = y * maze.size + x - 1;
+				const right = y * maze.size + x;
+				if (maze.cells[x === 0 ? right : left] & walls[x === 0 ? 3 : 1]) {
+					add(x, y, "vertical", x === 0 ? [right] : x === maze.size ? [left] : [left, right]);
+				}
+			}
+		}
+		return segments;
+	};
 	window.MazeEscapeRewards = {
-		stages: stages, catalog: catalog, item: item, flowerPalettes: flowerPalettes, floorMotifs: floorMotifs, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
+		stages: stages, catalog: catalog, item: item, flowerPalettes: flowerPalettes, floorMotifs: floorMotifs, wallThemes: wallThemes, wallLayout: wallLayout, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
 		decorationLayout: decorationLayout, flowerLayout: decorationLayout,
 		canAccessStage: function (progress, stage, teacherMode) {
 			return [1, 2, 3].includes(stage) && (stage === 1 || teacherMode || progress.achievements[1][0]);
