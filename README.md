@@ -54,7 +54,10 @@ one star. Color changes preserve the existing seeded positions and sizes.
 Four themed floors follow, each with a two-star deposit: Paw prints (animal), Nuts and bolts (robot),
 Confetti (human), and Crystals (alien). Any explorer can use any theme. They share the flowers'
 seeded positions, 25%/8%/3% coverage, and ±15% size variation, with three bright/dim colors per
-theme. Robot debris alternates nuts and bolts; confetti includes rectangles, triangles, and ribbons.
+theme. Robot debris randomly alternates nuts and bolts. Confetti uses only a circle and the supplied
+curved SVG silhouette, with shape choice independent of color. All scattered decorations have
+individual seeded orientations over a full rotation, also independent of color. Separate random
+streams keep the original positions, colors, sizes, and counts intact and prevent redraw flicker.
 Shop previews use the same motif renderer as the maze. Shapes fit within the existing decoration
 bounds so walls and visit marks remain clear. `decorationLayout` generalises the placement API;
 `flowerLayout` remains an alias and keeps the original seed namespace for existing layouts.

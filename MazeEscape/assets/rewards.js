@@ -136,6 +136,8 @@
 	const decorationLayout = function (seed, size) {
 		// Keep the original seed namespace so existing flower placement stays unchanged.
 		const random = window.MazeEscapeGame.randomFor("flowers:" + seed + ":" + size);
+		const orientationRandom = window.MazeEscapeGame.randomFor("decorations:orientation:" + seed + ":" + size);
+		const shapeRandom = window.MazeEscapeGame.randomFor("decorations:shape:" + seed + ":" + size);
 		return Array.from({ length: size * size }, function () {
 			const chance = random();
 			const count = chance < 0.03 ? 3 : chance < 0.08 ? 2 : chance < 0.25 ? 1 : 0;
@@ -147,7 +149,9 @@
 					x: 0.15 + 0.2 * random() + 0.5 * (quadrant % 2),
 					y: 0.15 + 0.2 * random() + 0.5 * Math.floor(quadrant / 2),
 					shade: Math.floor(random() * 3),
-					radius: 0.05 * (0.85 + 0.3 * random())
+					radius: 0.05 * (0.85 + 0.3 * random()),
+					orientation: orientationRandom() * Math.PI * 2,
+					variant: Math.floor(shapeRandom() * 2)
 				};
 			});
 		});

@@ -4,6 +4,9 @@
 	const Game = window.MazeEscapeGame;
 	const Rewards = window.MazeEscapeRewards;
 	const characterImages = new Map();
+	const CONFETTI_CIRCLE = new Path2D();
+	CONFETTI_CIRCLE.arc(25, 25, 25, 0, Math.PI * 2);
+	const CONFETTI_CURVED = new Path2D("M 25 0 H 40 A 25 25 0 0 0 65 25 V 40 A 25 25 0 0 0 40 65 H 25 A 25 25 0 0 0 0 40 V 25 A 25 25 0 0 0 25 0 Z");
 	const DEFAULT_CODES = {
 		1: "# The same rules must work in unfamiliar mazes\nWHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
 		2: "# The same rules must work in unfamiliar mazes\nSET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
@@ -829,9 +832,9 @@
 			context.fillStyle = "#26322b"; context.fillRect(10, 10, 60, 40);
 			const floor = slot === "floor" && Rewards.item(slot, id);
 			if (floor && (floor.palette || floor.motif)) {
-				drawFloorDecoration(context, 28, 30, 8, true, 0, floor);
-				drawFloorDecoration(context, 56, 22, 6, true, 1, floor);
-				drawFloorDecoration(context, 55, 43, 4, true, 2, floor);
+				drawFloorDecoration(context, 28, 30, 8, true, 0, floor, -0.25, 0);
+				drawFloorDecoration(context, 56, 22, 6, true, 1, floor, 0.35, 1);
+				drawFloorDecoration(context, 55, 43, 4, true, 2, floor, -0.15, 0);
 			}
 			if (slot === "walls") {
 				context.strokeStyle = id === "moss" ? "#b4d68c" : "#b9d3bc"; context.lineWidth = 5;
@@ -839,22 +842,22 @@
 			}
 		}
 	};
-	const drawFlower = function (target, x, y, radius, bright, shade, palette) {
+	const drawFlower = function (target, x, y, radius, bright, shade, palette, orientation) {
 		target.fillStyle = Rewards.flowerPalettes[palette || "gold"][bright ? "bright" : "dim"][shade || 0];
 		for (let petal = 0; petal < 5; petal++) {
-			const angle = petal * Math.PI * 2 / 5;
+			const angle = petal * Math.PI * 2 / 5 + (orientation || 0);
 			target.beginPath(); target.arc(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, radius * 0.7, 0, Math.PI * 2); target.fill();
 		}
 	};
-	const drawFloorDecoration = function (target, x, y, radius, bright, shade, floor) {
+	const drawFloorDecoration = function (target, x, y, radius, bright, shade, floor, orientation, variant) {
 		if (floor.palette) {
-			drawFlower(target, x, y, radius, bright, shade, floor.palette);
+			drawFlower(target, x, y, radius, bright, shade, floor.palette, orientation);
 			return;
 		}
 		const colors = Rewards.floorMotifs[floor.motif];
 		target.save();
 		target.translate(x, y);
-		target.rotate((shade - 1) * 0.35);
+		target.rotate(orientation || 0);
 		target.scale(radius, radius);
 		target.fillStyle = colors[bright ? "bright" : "dim"][shade];
 		if (floor.motif === "paw_prints") {
@@ -863,7 +866,7 @@
 				target.beginPath(); target.arc(toe[0], toe[1], 0.42, 0, Math.PI * 2); target.fill();
 			});
 		} else if (floor.motif === "nuts_bolts") {
-			if (shade === 1) {
+			if (variant === 1) {
 				target.fillRect(-0.3, -0.32, 1.5, 0.64);
 				target.beginPath();
 				for (let corner = 0; corner < 6; corner++) {
@@ -885,10 +888,10 @@
 				target.fill("evenodd");
 			}
 		} else if (floor.motif === "confetti") {
-			if (shade === 0) { target.fillRect(-1, -0.7, 2, 1.4); }
-			else if (shade === 1) {
-				target.beginPath(); target.moveTo(0, -1.4); target.lineTo(1.2, 1); target.lineTo(-1.2, 1); target.closePath(); target.fill();
-			} else { target.fillRect(-0.3, -1.5, 0.6, 3); }
+			const size = variant === 1 ? 65 : 50;
+			target.scale(2.8 / size, 2.8 / size);
+			target.translate(-size / 2, -size / 2);
+			target.fill(variant === 1 ? CONFETTI_CURVED : CONFETTI_CIRCLE);
 		} else if (floor.motif === "crystals") {
 			target.beginPath(); target.moveTo(0, -1.6); target.lineTo(0.85, -0.7); target.lineTo(0.65, 0.9);
 			target.lineTo(0, 1.5); target.lineTo(-0.65, 0.9); target.lineTo(-0.85, -0.7); target.closePath(); target.fill();
@@ -988,7 +991,7 @@
 					target.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
 					if (!obstacle && decoratedFloor) {
 						state.decorations[index].forEach(function (decoration) {
-							drawFloorDecoration(target, offsetX + (x + decoration.x) * cellSize, offsetY + (y + decoration.y) * cellSize, cellSize * decoration.radius, bright, decoration.shade, floor);
+							drawFloorDecoration(target, offsetX + (x + decoration.x) * cellSize, offsetY + (y + decoration.y) * cellSize, cellSize * decoration.radius, bright, decoration.shade, floor, decoration.orientation, decoration.variant);
 						});
 					}
 					target.strokeStyle = state.progress.equipped.walls === "moss" ? (bright ? "#b4d68c" : "#5a7051") : (bright ? "#b9d3bc" : "#526158");
