@@ -98,8 +98,26 @@
 			});
 		return { achievements: [reliable, reliable && score <= stages[stage].budget, reliable && large], score: reliable ? score : null };
 	};
+	const flowerLayout = function (seed, size) {
+		const random = window.MazeEscapeGame.randomFor("flowers:" + seed + ":" + size);
+		return Array.from({ length: size * size }, function () {
+			const chance = random();
+			const count = chance < 0.03 ? 3 : chance < 0.08 ? 2 : chance < 0.25 ? 1 : 0;
+			const quadrants = [0, 1, 2, 3];
+			return Array.from({ length: count }, function () {
+				// Separate jittered quadrants keep petals clear of walls and the central visit mark.
+				const quadrant = quadrants.splice(Math.floor(random() * quadrants.length), 1)[0];
+				return {
+					x: 0.15 + 0.2 * random() + 0.5 * (quadrant % 2),
+					y: 0.15 + 0.2 * random() + 0.5 * Math.floor(quadrant / 2),
+					shade: Math.floor(random() * 3),
+					radius: 0.05 * (0.85 + 0.3 * random())
+				};
+			});
+		});
+	};
 	window.MazeEscapeRewards = {
-		stages: stages, catalog: catalog, item: item, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
+		stages: stages, catalog: catalog, item: item, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate, flowerLayout: flowerLayout,
 		canAccessStage: function (progress, stage, teacherMode) {
 			return [1, 2, 3].includes(stage) && (stage === 1 || teacherMode || progress.achievements[1][0]);
 		},

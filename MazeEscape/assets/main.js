@@ -4,6 +4,7 @@
 	const Game = window.MazeEscapeGame;
 	const Rewards = window.MazeEscapeRewards;
 	const characterImages = new Map();
+	const FLOWER_COLORS = [["#786442", "#72603e", "#806c4c"], ["#e6c684", "#e1bc7a", "#edcf93"]];
 	const DEFAULT_CODES = {
 		1: "# The same rules must work in unfamiliar mazes\nWHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
 		2: "# The same rules must work in unfamiliar mazes\nSET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
@@ -180,7 +181,7 @@
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
 		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
-		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null
+		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null, flowers: []
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -306,6 +307,7 @@
 		stop();
 		state.creationNotice = !!announce;
 		state.maze = state.stage === 3 ? Game.createDfsMaze(seed, size) : state.stage === 2 ? Game.createPledgeMaze(seed, size) : Game.createMaze(seed, size);
+		state.flowers = Rewards.flowerLayout(state.maze.seed, state.maze.size);
 		state.world = Game.createWorld(state.maze);
 		state.camera = {
 			fromX: state.world.player.x,
@@ -823,8 +825,8 @@
 			}
 		}
 	};
-	const drawFlower = function (target, x, y, radius, bright) {
-		target.fillStyle = bright ? "#e6c684" : "#786442";
+	const drawFlower = function (target, x, y, radius, bright, shade) {
+		target.fillStyle = FLOWER_COLORS[bright ? 1 : 0][shade || 0];
 		for (let petal = 0; petal < 5; petal++) {
 			const angle = petal * Math.PI * 2 / 5;
 			target.beginPath(); target.arc(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, radius * 0.7, 0, Math.PI * 2); target.fill();
@@ -916,8 +918,10 @@
 					const obstacle = state.maze.blocked && state.maze.blocked.has(index);
 					target.fillStyle = obstacle ? (bright ? "#3b463f" : "#1c221f") : bright ? "#26322b" : "#151b18";
 					target.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
-					if (state.progress.equipped.floor === "flowers" && index % 4 === 0) {
-						drawFlower(target, offsetX + (x + 0.23) * cellSize, offsetY + (y + 0.73) * cellSize, cellSize * 0.05, bright);
+					if (!obstacle && state.progress.equipped.floor === "flowers") {
+						state.flowers[index].forEach(function (flower) {
+							drawFlower(target, offsetX + (x + flower.x) * cellSize, offsetY + (y + flower.y) * cellSize, cellSize * flower.radius, bright, flower.shade);
+						});
 					}
 					target.strokeStyle = state.progress.equipped.walls === "moss" ? (bright ? "#b4d68c" : "#5a7051") : (bright ? "#b9d3bc" : "#526158");
 					target.lineWidth = Math.max(1, cellSize * 0.07);

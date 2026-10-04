@@ -470,6 +470,39 @@
 				"real achievements did not add to the separate virtual credit");
 			messages.push("PASS: teacher mode adds exactly five virtual shop stars without minting achievements");
 
+			const flowers = Rewards.flowerLayout("flower-repeatable", 11);
+			assert(JSON.stringify(flowers) === JSON.stringify(Rewards.flowerLayout("flower-repeatable", 11)), "flower layout changes on redraw or reset");
+			assert(JSON.stringify(flowers) !== JSON.stringify(Rewards.flowerLayout("flower-different", 11)), "different seeds share the same flower layout");
+			const flowerCounts = [0, 0, 0, 0];
+			const flowerShades = new Set();
+			const flowerSizes = new Set();
+			const flowerPositions = new Set();
+			for (let seedIndex = 0; seedIndex < 50; seedIndex++) {
+				Rewards.flowerLayout("flower-distribution-" + seedIndex, 31).forEach(function (tile) {
+					assert(tile.length <= 3, "tile has more than three flowers");
+					flowerCounts[tile.length]++;
+					tile.forEach(function (flower, index) {
+						assert(flower.radius >= 0.0425 && flower.radius <= 0.0575, "flower size is outside the small variation range");
+						const extent = flower.radius * 1.7;
+						assert(flower.x - extent > 0.035 && flower.x + extent < 0.965
+							&& flower.y - extent > 0.035 && flower.y + extent < 0.965, "flower overlaps a wall");
+						assert(Math.hypot(flower.x - 0.5, flower.y - 0.5) > extent + 0.08, "flower covers a central visit mark");
+						tile.slice(0, index).forEach(function (other) {
+							assert(Math.hypot(flower.x - other.x, flower.y - other.y) > extent + other.radius * 1.7, "flowers overlap each other");
+						});
+						flowerShades.add(flower.shade);
+						flowerSizes.add(flower.radius);
+						flowerPositions.add(flower.x + "," + flower.y);
+					});
+				});
+			}
+			const tileCount = flowerCounts.reduce(function (total, count) { return total + count; }, 0);
+			assert(Math.abs((flowerCounts[1] + flowerCounts[2] + flowerCounts[3]) / tileCount - 0.25) < 0.01, "first-flower probability is not about 25%");
+			assert(Math.abs((flowerCounts[2] + flowerCounts[3]) / tileCount - 0.08) < 0.005, "second-flower probability is not about 8%");
+			assert(Math.abs(flowerCounts[3] / tileCount - 0.03) < 0.003, "third-flower probability is not about 3%");
+			assert(flowerShades.size === 3 && flowerSizes.size > 100 && flowerPositions.size > 100, "flowers lack shade, size, or position variation");
+			messages.push("PASS: seeded flowers have 25%/8%/3% coverage, varied shades and sizes, and clear placement");
+
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)
 				&& !Rewards.canAccessStage(learningProgress, 2, false) && !Rewards.canAccessStage(learningProgress, 3, false),
