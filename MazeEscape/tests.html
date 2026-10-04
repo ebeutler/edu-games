@@ -591,7 +591,7 @@
 			assert(Rewards.restore(JSON.parse(JSON.stringify(packProgress))).equipped.floor === "alien_landscape", "mixed pack did not survive a reload");
 			assert(Rewards.equip(packProgress, "floor", "meteor_fragments") && Rewards.balance(packProgress).available === 1, "downgrading a pack did not refund one star");
 			messages.push("PASS: four mixed theme packs have correct components, independent selection, and three-star deposits");
-			assert(Rewards.catalog.walls.map(function (entry) { return entry.id; }).join(",") === "original,living_hedges,industrial_pipes,brickwork,crystal_growth",
+			assert(Rewards.catalog.walls.map(function (entry) { return entry.id; }).join(",") === "original,living_hedges,industrial_pipes,brickwork,crystal_growth,woodland_fences,mushroom_wall,riveted_panels,circuit_walls,festival_bunting,flower_planters,bioluminescent_tendrils,slime_walls",
 				"new wall themes are missing or moss was retained");
 			const wallProgress = Rewards.fresh();
 			Rewards.award(wallProgress, 1, [true, false, false], 500);
@@ -599,7 +599,7 @@
 				assert(entry.cost === 1 && Rewards.equip(wallProgress, "walls", entry.id) && Rewards.balance(wallProgress).available === 0,
 					"wall theme does not use a reusable one-star deposit");
 			});
-			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "crystal_growth", "wall theme did not persist");
+			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "slime_walls", "wall theme did not persist");
 			const hedgeCounts = new Set();
 			const crystalCounts = new Set();
 			const organicAngles = new Set();
@@ -644,11 +644,21 @@
 								organicPositions.add(element.position + "," + element.offset);
 							});
 						});
+						["mushroom_wall", "flower_planters", "bioluminescent_tendrils", "slime_walls"].forEach(function (theme) {
+							const elements = segment.growth[theme];
+							const range = Rewards.wallThemes[theme].growth;
+							assert(elements.length >= range[0] && elements.length <= range[1], "new wall growth has an invalid count");
+							elements.forEach(function (element) {
+								const extent = element.radius * 1.7;
+								assert(element.position - extent >= 0.035 - 1e-10 && element.position + extent <= 0.965 + 1e-10
+									&& Math.abs(element.offset) + extent < 0.2, "new wall growth covers an opening or corridor center");
+							});
+						});
 					});
 					assert(JSON.stringify(layout) === JSON.stringify(Rewards.wallLayout(maze)), "wall attachments change on redraw");
 				});
 			});
-			messages.push("PASS: four one-star wall themes use stable canonical segments and leave passages undecorated");
+			messages.push("PASS: twelve one-star wall themes use stable canonical segments and leave passages undecorated");
 			assert(hedgeCounts.size === 11 && crystalCounts.size === 3 && organicAngles.size > 100 && organicPositions.size > 100,
 				"organic walls lack count, orientation, or placement variation");
 			messages.push("PASS: hedges have 10–20 leaves and crystal walls 3–5 randomly oriented, bounded elements");

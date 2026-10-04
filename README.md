@@ -87,6 +87,12 @@ Both randomise along-wall position, perpendicular offset, size, shade, shape var
 orientation using separate seeded streams. Elements may overlap to form organic clusters but stay
 clear of wall endpoints and within 20% of a tile width on either side. Pipe and brick patterns retain
 their original seeded details.
+Eight further one-star wall themes are available: Woodland fences (rails, posts, and knots),
+Mushroom wall (spotted caps and stems), Riveted panels (metal plates and rivets), Circuit walls
+(angular traces and connection nodes), Festival bunting (colored pennants), Flower planters
+(terracotta pots and flowers), Bioluminescent tendrils (curved branches and glowing tips), and
+Slime walls (overlapping highlighted droplets). Organic details have independently seeded layouts;
+all themes reuse canonical wall segments, continuous spines, fog, and shared preview/map rendering.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

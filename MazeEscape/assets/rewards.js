@@ -71,10 +71,18 @@
 		alien_landscape: [{ motif: "crystals" }, { motif: "meteor_fragments" }, { motif: "slime_droplets" }]
 	};
 	const wallThemes = {
-		living_hedges: { bright: "#799d59", dim: "#475b36" },
+		living_hedges: { bright: "#799d59", dim: "#475b36", growth: [10, 20] },
 		industrial_pipes: { bright: "#6b7e8c", dim: "#34414d" },
 		brickwork: { bright: "#dec6aa", dim: "#796958" },
-		crystal_growth: { bright: "#768daf", dim: "#42525f" }
+		crystal_growth: { bright: "#768daf", dim: "#42525f", growth: [3, 5] },
+		woodland_fences: { bright: "#96714c", dim: "#53412f" },
+		mushroom_wall: { bright: "#aa8870", dim: "#665242", growth: [4, 7] },
+		riveted_panels: { bright: "#8799a3", dim: "#4b5962" },
+		circuit_walls: { bright: "#668996", dim: "#3c545b" },
+		festival_bunting: { bright: "#bd9d74", dim: "#6e5d46" },
+		flower_planters: { bright: "#ab8768", dim: "#68513f", growth: [2, 4] },
+		bioluminescent_tendrils: { bright: "#63887a", dim: "#385348", growth: [5, 9] },
+		slime_walls: { bright: "#689e5a", dim: "#3e6038", growth: [6, 12] }
 	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),
@@ -189,9 +197,10 @@
 			const key = axis + ":" + x + ":" + y;
 			const random = window.MazeEscapeGame.randomFor("walls:" + maze.seed + ":" + maze.size + ":" + key);
 			const growth = {};
-			["living_hedges", "crystal_growth"].forEach(function (theme) {
+			Object.keys(wallThemes).filter(function (theme) { return !!wallThemes[theme].growth; }).forEach(function (theme) {
 				const organicRandom = window.MazeEscapeGame.randomFor("wall-growth:" + maze.seed + ":" + maze.size + ":" + key + ":" + theme);
-				const count = theme === "living_hedges" ? 10 + Math.floor(organicRandom() * 11) : 3 + Math.floor(organicRandom() * 3);
+				const range = wallThemes[theme].growth;
+				const count = range[0] + Math.floor(organicRandom() * (range[1] - range[0] + 1));
 				growth[theme] = Array.from({ length: count }, function () {
 					const radius = 0.055 + organicRandom() * 0.02;
 					const margin = radius * 1.7 + 0.035;

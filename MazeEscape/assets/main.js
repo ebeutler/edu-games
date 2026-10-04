@@ -67,6 +67,8 @@
 			slot_explorer: "Explorer", slot_walls: "Walls", slot_floor: "Floor", slot_goal: "Goal decoration", slot_outside: "Outside scenery",
 			original_explorer: "Original explorer", original_walls: "Original walls", original_floor: "Original floor", original_goal: "No decoration", original_outside: "Original scenery",
 			item_living_hedges: "Living hedges", item_industrial_pipes: "Industrial pipes", item_brickwork: "Brickwork", item_crystal_growth: "Crystal growth",
+			item_woodland_fences: "Woodland fences", item_mushroom_wall: "Mushroom wall", item_riveted_panels: "Riveted panels", item_circuit_walls: "Circuit walls",
+			item_festival_bunting: "Festival bunting", item_flower_planters: "Flower planters", item_bioluminescent_tendrils: "Bioluminescent tendrils", item_slime_walls: "Slime walls",
 			item_flowers: "Gold flowers", item_truck: "Ice cream truck", item_beach: "Beach",
 			item_flowers_pink: "Pink flowers", item_flowers_red: "Red flowers", item_flowers_orange: "Orange flowers", item_flowers_white: "White flowers",
 			item_flowers_light_blue: "Light blue flowers", item_flowers_dark_blue: "Dark blue flowers", item_flowers_purple: "Purple flowers", item_flowers_gray: "Gray flowers",
@@ -156,6 +158,8 @@
 			slot_explorer: "Forscher", slot_walls: "Wände", slot_floor: "Boden", slot_goal: "Zieldekoration", slot_outside: "Umgebung",
 			original_explorer: "Originalforscher", original_walls: "Originalwände", original_floor: "Originalboden", original_goal: "Keine Dekoration", original_outside: "Originalumgebung",
 			item_living_hedges: "Lebende Hecken", item_industrial_pipes: "Industrierohre", item_brickwork: "Ziegelmauerwerk", item_crystal_growth: "Kristallbewuchs",
+			item_woodland_fences: "Waldzäune", item_mushroom_wall: "Pilzwand", item_riveted_panels: "Genietete Platten", item_circuit_walls: "Leiterbahnwände",
+			item_festival_bunting: "Wimpelgirlanden", item_flower_planters: "Blumenkästen", item_bioluminescent_tendrils: "Leuchtende Ranken", item_slime_walls: "Schleimwände",
 			item_flowers: "Goldene Blumen", item_truck: "Glacewagen", item_beach: "Strand",
 			item_flowers_pink: "Rosa Blumen", item_flowers_red: "Rote Blumen", item_flowers_orange: "Orange Blumen", item_flowers_white: "Weisse Blumen",
 			item_flowers_light_blue: "Hellblaue Blumen", item_flowers_dark_blue: "Dunkelblaue Blumen", item_flowers_purple: "Violette Blumen", item_flowers_gray: "Graue Blumen",
@@ -833,8 +837,8 @@
 		target.lineWidth = theme === "industrial_pipes" ? 0.12 : 0.07;
 		target.lineCap = "butt";
 		target.beginPath(); target.moveTo(0, 0); target.lineTo(1, 0); target.stroke();
-		if (theme === "living_hedges" || theme === "crystal_growth") {
-			const motif = theme === "living_hedges" ? "leaves" : "crystals";
+		if (theme === "living_hedges" || theme === "crystal_growth" || theme === "slime_walls") {
+			const motif = theme === "living_hedges" ? "leaves" : theme === "crystal_growth" ? "crystals" : "slime_droplets";
 			segment.growth[theme].forEach(function (element) {
 				drawFloorDecoration(target, element.position, element.offset, element.radius,
 					bright, element.shade, { motif: motif }, element.orientation, element.variant);
@@ -858,6 +862,77 @@
 				target.fillStyle = colors[(details[Math.floor(brick / 2)].shade + brick) % 3];
 				target.fillRect(0.025 + brick * 0.16, -0.07, 0.145, 0.14);
 			}
+		} else if (theme === "woodland_fences") {
+			target.strokeStyle = bright ? "#d2ad7c" : "#7b6448"; target.lineWidth = 0.03;
+			[-0.04, 0.04].forEach(function (rail) {
+				target.beginPath(); target.moveTo(0, rail); target.lineTo(1, rail); target.stroke();
+			});
+			details.forEach(function (detail) {
+				target.fillStyle = bright ? ["#bb8d5e", "#d0a16c", "#99704c"][detail.shade] : ["#725439", "#806343", "#5c432e"][detail.shade];
+				target.fillRect(detail.position - 0.025, -0.14 * detail.size, 0.05, 0.28 * detail.size);
+				target.fillStyle = bright ? "#694b31" : "#3e2e20";
+				target.beginPath(); target.ellipse(detail.position, 0, 0.012, 0.025, detail.tilt, 0, Math.PI * 2); target.fill();
+			});
+		} else if (theme === "riveted_panels") {
+			details.forEach(function (detail) {
+				const width = 0.2 * detail.size, height = 0.17 * detail.size;
+				target.fillStyle = bright ? ["#c2ced4", "#7c9bad", "#9ba5ae"][detail.shade] : ["#74818a", "#496171", "#5b646b"][detail.shade];
+				target.fillRect(detail.position - width / 2, -height / 2, width, height);
+				target.strokeStyle = bright ? "#485966" : "#293740"; target.lineWidth = 0.015;
+				target.strokeRect(detail.position - width / 2, -height / 2, width, height);
+				target.fillStyle = bright ? "#e3ebee" : "#9ba6ad";
+				[-1, 1].forEach(function (side) { [-1, 1].forEach(function (end) {
+					target.beginPath(); target.arc(detail.position + end * width * 0.32, side * height * 0.32, 0.012, 0, Math.PI * 2); target.fill();
+				}); });
+			});
+		} else if (theme === "circuit_walls") {
+			details.forEach(function (detail) {
+				const color = bright ? ["#a6e582", "#77d5ee", "#e8be70"][detail.shade] : ["#63884d", "#477f91", "#887142"][detail.shade];
+				target.strokeStyle = color; target.lineWidth = 0.018;
+				target.beginPath(); target.moveTo(detail.position - 0.065, 0); target.lineTo(detail.position - 0.065, detail.side * 0.09);
+				target.lineTo(detail.position + 0.035, detail.side * 0.09); target.lineTo(detail.position + 0.035, detail.side * 0.14); target.stroke();
+				target.fillStyle = color; target.beginPath(); target.arc(detail.position + 0.035, detail.side * 0.14, 0.025 * detail.size, 0, Math.PI * 2); target.fill();
+			});
+		} else if (theme === "festival_bunting") {
+			details.forEach(function (detail) {
+				target.fillStyle = Rewards.floorMotifs.confetti[bright ? "bright" : "dim"][detail.shade];
+				target.beginPath(); target.moveTo(detail.position - 0.07 * detail.size, 0); target.lineTo(detail.position + 0.07 * detail.size, 0);
+				target.lineTo(detail.position + 0.02 * detail.size, detail.side * 0.16 * detail.size); target.closePath(); target.fill();
+			});
+		} else if (theme === "mushroom_wall" || theme === "flower_planters") {
+			segment.growth[theme].forEach(function (element) {
+				target.save(); target.translate(element.position, element.offset);
+				target.rotate((element.offset >= 0 ? Math.PI : 0) + Math.sin(element.orientation) * 0.4);
+				target.scale(element.radius, element.radius);
+				if (theme === "mushroom_wall") {
+					target.fillStyle = bright ? "#e6d7b3" : "#8a806d"; target.fillRect(-0.16, -0.2, 0.32, 1.3);
+					target.fillStyle = bright ? ["#e78075", "#e8c68d", "#b08ddb"][element.shade] : ["#8b4b44", "#89744f", "#695583"][element.shade];
+					target.beginPath(); target.arc(0, -0.25, 1.1, Math.PI, Math.PI * 2);
+					target.lineTo(1.1, 0); target.lineTo(-1.1, 0); target.closePath(); target.fill();
+					target.fillStyle = bright ? "#fff1db" : "#a1937c";
+					[[-0.4, -0.55], [0.35, -0.72]].forEach(function (spot) {
+						target.beginPath(); target.arc(spot[0], spot[1], 0.15, 0, Math.PI * 2); target.fill();
+					});
+				} else {
+					target.fillStyle = bright ? "#bc7955" : "#714a35";
+					target.beginPath(); target.moveTo(-0.65, 0); target.lineTo(0.65, 0); target.lineTo(0.43, 1.05); target.lineTo(-0.43, 1.05); target.closePath(); target.fill();
+					drawFlower(target, 0, -0.65, 0.42, bright, element.shade, "mix_pink_white_purple", element.orientation);
+				}
+				target.restore();
+			});
+		} else if (theme === "bioluminescent_tendrils") {
+			segment.growth[theme].forEach(function (element) {
+				const side = element.offset >= 0 ? 1 : -1;
+				const tip = element.position + Math.sin(element.orientation) * 0.05;
+				const color = bright ? ["#7df3c7", "#ae8dea", "#78cfe5"][element.shade] : ["#4b8c72", "#685187", "#497d8b"][element.shade];
+				target.strokeStyle = color; target.lineWidth = 0.018;
+				target.beginPath(); target.moveTo(element.position, 0);
+				target.bezierCurveTo(element.position - 0.055, side * 0.045, element.position + 0.055, side * 0.1, tip, side * 0.14); target.stroke();
+				const glow = target.createRadialGradient(tip, side * 0.14, 0, tip, side * 0.14, 0.035);
+				glow.addColorStop(0, color + (bright ? "66" : "33")); glow.addColorStop(1, color + "00");
+				target.fillStyle = glow; target.beginPath(); target.arc(tip, side * 0.14, 0.035, 0, Math.PI * 2); target.fill();
+				target.fillStyle = color; target.beginPath(); target.arc(tip, side * 0.14, 0.016, 0, Math.PI * 2); target.fill();
+			});
 		}
 		target.restore();
 	};
