@@ -73,6 +73,7 @@
 	const wallThemes = {
 		living_hedges: { bright: "#799d59", dim: "#475b36", growth: [10, 20] },
 		industrial_pipes: { bright: "#6b7e8c", dim: "#34414d" },
+		spikes: { bright: "#889daa", dim: "#475560" },
 		brickwork: { bright: "#dec6aa", dim: "#796958" },
 		crystal_growth: { bright: "#768daf", dim: "#42525f", growth: [3, 5] },
 		woodland_fences: { bright: "#96714c", dim: "#53412f" },
@@ -82,12 +83,20 @@
 		festival_bunting: { bright: "#bd9d74", dim: "#6e5d46" },
 		flower_planters: { bright: "#ab8768", dim: "#68513f", growth: [2, 4] },
 		bioluminescent_tendrils: { bright: "#63887a", dim: "#385348", growth: [5, 9] },
-		slime_walls: { bright: "#689e5a", dim: "#3e6038", growth: [3, 5] }
+		slime_walls: { bright: "#689e5a", dim: "#3e6038", growth: [3, 5] },
+		enchanted_garden: { cost: 2, components: [
+			{ theme: "living_hedges" }, { theme: "mushroom_wall", growth: [0, 2] }, { theme: "flower_planters", growth: [0, 2] }
+		] },
+		robot_factory: { cost: 2, components: [{ theme: "industrial_pipes" }, { theme: "circuit_walls" }] },
+		street_festival: { cost: 2, components: [{ theme: "brickwork" }, { theme: "festival_bunting" }] },
+		alien_hive: { cost: 2, components: [
+			{ theme: "crystal_growth" }, { theme: "bioluminescent_tendrils" }, { theme: "slime_walls", growth: [0, 2] }
+		] }
 	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),
 		walls: [{ id: "original", cost: 0 }].concat(Object.keys(wallThemes).map(function (theme) {
-			return { id: theme, cost: 1 };
+			return { id: theme, cost: wallThemes[theme].cost || 1 };
 		})),
 		floor: [{ id: "original", cost: 0 }].concat(Object.keys(flowerPalettes).map(function (palette) {
 			return { id: palette === "gold" ? "flowers" : "flowers_" + palette, cost: flowerPalettes[palette].cost || 1, palette: palette };
@@ -190,6 +199,15 @@
 			});
 		});
 	};
+	const wallGrowth = function (random, range) {
+		const count = range[0] + Math.floor(random() * (range[1] - range[0] + 1));
+		return Array.from({ length: count }, function () {
+			const radius = 0.055 + random() * 0.02;
+			const margin = radius * 1.7 + 0.035;
+			return { position: margin + (1 - 2 * margin) * random(), offset: (random() - 0.5) * 0.13,
+				radius: radius, orientation: random() * Math.PI * 2, shade: Math.floor(random() * 3), variant: Math.floor(random() * 2) };
+		});
+	};
 	const wallLayout = function (maze) {
 		const walls = window.MazeEscapeGame.constants.WALLS;
 		const segments = [];
@@ -199,19 +217,24 @@
 			const growth = {};
 			Object.keys(wallThemes).filter(function (theme) { return !!wallThemes[theme].growth; }).forEach(function (theme) {
 				const organicRandom = window.MazeEscapeGame.randomFor("wall-growth:" + maze.seed + ":" + maze.size + ":" + key + ":" + theme);
-				const range = wallThemes[theme].growth;
-				const count = range[0] + Math.floor(organicRandom() * (range[1] - range[0] + 1));
-				growth[theme] = Array.from({ length: count }, function () {
-					const radius = 0.055 + organicRandom() * 0.02;
-					const margin = radius * 1.7 + 0.035;
-					return { position: margin + (1 - 2 * margin) * organicRandom(), offset: (organicRandom() - 0.5) * 0.13,
-						radius: radius, orientation: organicRandom() * Math.PI * 2, shade: Math.floor(organicRandom() * 3), variant: Math.floor(organicRandom() * 2) };
+				growth[theme] = wallGrowth(organicRandom, wallThemes[theme].growth);
+			});
+			const combinations = {};
+			Object.keys(wallThemes).filter(function (theme) { return !!wallThemes[theme].components; }).forEach(function (theme) {
+				combinations[theme] = {};
+				wallThemes[theme].components.filter(function (part) { return !!part.growth; }).forEach(function (part) {
+					const combinedRandom = window.MazeEscapeGame.randomFor("wall-combination:" + maze.seed + ":" + maze.size + ":" + key + ":" + theme + ":" + part.theme);
+					combinations[theme][part.theme] = wallGrowth(combinedRandom, part.growth);
 				});
+			});
+			const spikeRandom = window.MazeEscapeGame.randomFor("wall-spikes:" + maze.seed + ":" + maze.size + ":" + key);
+			const spikes = [0.18, 0.34, 0.5, 0.66, 0.82].map(function (position) {
+				return { position: position + (spikeRandom() - 0.5) * 0.04, size: 0.85 + spikeRandom() * 0.3, shade: Math.floor(spikeRandom() * 3) };
 			});
 			segments.push({ x: x, y: y, axis: axis, cells: cells, key: key, details: [0.22, 0.5, 0.78].map(function (position) {
 				return { position: position + (random() - 0.5) * 0.08, size: 0.85 + random() * 0.3,
 					side: random() < 0.5 ? -1 : 1, shade: Math.floor(random() * 3), tilt: (random() - 0.5) * 0.6 };
-			}), growth: growth });
+			}), growth: growth, combinations: combinations, spikes: spikes });
 		};
 		for (let y = 0; y <= maze.size; y++) {
 			for (let x = 0; x < maze.size; x++) {

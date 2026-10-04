@@ -95,6 +95,14 @@ Slime walls (overlapping highlighted droplets). Organic details have independent
 all themes reuse canonical wall segments, continuous spines, fog, and shared preview/map rendering.
 Flower planters stay upright in world coordinates on both horizontal and vertical walls: flowers
 face north and pots south. Slime walls use a sparser three to five droplets per segment.
+Spikes appears immediately after Industrial pipes, at one star, with five seeded attachment
+positions per segment and a pair of slim spikes pointing to opposite sides at each position.
+Four two-star wall combinations follow the single themes: Enchanted garden (10–20 leaves plus
+0–2 mushrooms and 0–2 upright planters), Robot factory (industrial pipes, clamps, valves, and
+circuit traces), Street festival (brickwork and bunting only), and Alien hive (3–5 crystals,
+bioluminescent tendrils, and 0–2 slime droplets). Combinations share one continuous wall spine;
+later components add attachments without overwriting it. Rare component layouts and spikes use
+their own seeded streams, leaving the existing single-theme patterns unchanged.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

@@ -67,6 +67,7 @@
 			slot_explorer: "Explorer", slot_walls: "Walls", slot_floor: "Floor", slot_goal: "Goal decoration", slot_outside: "Outside scenery",
 			original_explorer: "Original explorer", original_walls: "Original walls", original_floor: "Original floor", original_goal: "No decoration", original_outside: "Original scenery",
 			item_living_hedges: "Living hedges", item_industrial_pipes: "Industrial pipes", item_brickwork: "Brickwork", item_crystal_growth: "Crystal growth",
+			item_spikes: "Spikes", item_enchanted_garden: "Enchanted garden", item_robot_factory: "Robot factory", item_street_festival: "Street festival", item_alien_hive: "Alien hive",
 			item_woodland_fences: "Woodland fences", item_mushroom_wall: "Mushroom wall", item_riveted_panels: "Riveted panels", item_circuit_walls: "Circuit walls",
 			item_festival_bunting: "Festival bunting", item_flower_planters: "Flower planters", item_bioluminescent_tendrils: "Bioluminescent tendrils", item_slime_walls: "Slime walls",
 			item_flowers: "Gold flowers", item_truck: "Ice cream truck", item_beach: "Beach",
@@ -158,6 +159,7 @@
 			slot_explorer: "Forscher", slot_walls: "Wände", slot_floor: "Boden", slot_goal: "Zieldekoration", slot_outside: "Umgebung",
 			original_explorer: "Originalforscher", original_walls: "Originalwände", original_floor: "Originalboden", original_goal: "Keine Dekoration", original_outside: "Originalumgebung",
 			item_living_hedges: "Lebende Hecken", item_industrial_pipes: "Industrierohre", item_brickwork: "Ziegelmauerwerk", item_crystal_growth: "Kristallbewuchs",
+			item_spikes: "Spitzen", item_enchanted_garden: "Zaubergarten", item_robot_factory: "Roboterfabrik", item_street_festival: "Strassenfest", item_alien_hive: "Aliennest",
 			item_woodland_fences: "Waldzäune", item_mushroom_wall: "Pilzwand", item_riveted_panels: "Genietete Platten", item_circuit_walls: "Leiterbahnwände",
 			item_festival_bunting: "Wimpelgirlanden", item_flower_planters: "Blumenkästen", item_bioluminescent_tendrils: "Leuchtende Ranken", item_slime_walls: "Schleimwände",
 			item_flowers: "Goldene Blumen", item_truck: "Glacewagen", item_beach: "Strand",
@@ -827,8 +829,15 @@
 		updateActiveLine();
 	};
 
-	const drawWallSegment = function (target, x, y, length, axis, theme, segment, bright) {
+	const drawWallSegment = function (target, x, y, length, axis, theme, segment, bright, attachmentsOnly) {
 		const style = Rewards.wallThemes[theme];
+		if (style && style.components) {
+			const combined = Object.assign({}, segment, { growth: Object.assign({}, segment.growth, segment.combinations[theme]) });
+			style.components.forEach(function (part, index) {
+				drawWallSegment(target, x, y, length, axis, part.theme, combined, bright, index > 0);
+			});
+			return;
+		}
 		const details = segment.details;
 		target.save(); target.translate(x, y);
 		if (axis === "vertical") { target.rotate(Math.PI / 2); }
@@ -836,7 +845,7 @@
 		target.strokeStyle = style ? style[bright ? "bright" : "dim"] : bright ? "#b9d3bc" : "#526158";
 		target.lineWidth = theme === "industrial_pipes" ? 0.12 : 0.07;
 		target.lineCap = "butt";
-		target.beginPath(); target.moveTo(0, 0); target.lineTo(1, 0); target.stroke();
+		if (!attachmentsOnly) { target.beginPath(); target.moveTo(0, 0); target.lineTo(1, 0); target.stroke(); }
 		if (theme === "living_hedges" || theme === "crystal_growth" || theme === "slime_walls") {
 			const motif = theme === "living_hedges" ? "leaves" : theme === "crystal_growth" ? "crystals" : "slime_droplets";
 			segment.growth[theme].forEach(function (element) {
@@ -855,6 +864,15 @@
 			target.beginPath(); target.moveTo(valve.position, 0); target.lineTo(valve.position, valve.side * 0.11); target.stroke();
 			target.beginPath(); target.arc(valve.position, valve.side * 0.11, 0.055 * valve.size, 0, Math.PI * 2); target.stroke();
 			target.beginPath(); target.moveTo(valve.position - 0.04, valve.side * 0.11); target.lineTo(valve.position + 0.04, valve.side * 0.11); target.stroke();
+		} else if (theme === "spikes") {
+			segment.spikes.forEach(function (spike) {
+				target.fillStyle = Rewards.floorMotifs.nuts_bolts[bright ? "bright" : "dim"][spike.shade];
+				[-1, 1].forEach(function (side) {
+					target.beginPath(); target.moveTo(spike.position - 0.014 * spike.size, side * 0.02);
+					target.lineTo(spike.position + 0.014 * spike.size, side * 0.02);
+					target.lineTo(spike.position, side * 0.17 * spike.size); target.closePath(); target.fill();
+				});
+			});
 		} else if (theme === "brickwork") {
 			target.fillStyle = style[bright ? "bright" : "dim"]; target.fillRect(0, -0.085, 1, 0.17);
 			const colors = bright ? ["#c97957", "#e6bd87", "#b86550"] : ["#7c4937", "#927b56", "#6d3b31"];

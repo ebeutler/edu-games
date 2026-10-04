@@ -591,20 +591,34 @@
 			assert(Rewards.restore(JSON.parse(JSON.stringify(packProgress))).equipped.floor === "alien_landscape", "mixed pack did not survive a reload");
 			assert(Rewards.equip(packProgress, "floor", "meteor_fragments") && Rewards.balance(packProgress).available === 1, "downgrading a pack did not refund one star");
 			messages.push("PASS: four mixed theme packs have correct components, independent selection, and three-star deposits");
-			assert(Rewards.catalog.walls.map(function (entry) { return entry.id; }).join(",") === "original,living_hedges,industrial_pipes,brickwork,crystal_growth,woodland_fences,mushroom_wall,riveted_panels,circuit_walls,festival_bunting,flower_planters,bioluminescent_tendrils,slime_walls",
+			assert(Rewards.catalog.walls.map(function (entry) { return entry.id; }).join(",") === "original,living_hedges,industrial_pipes,spikes,brickwork,crystal_growth,woodland_fences,mushroom_wall,riveted_panels,circuit_walls,festival_bunting,flower_planters,bioluminescent_tendrils,slime_walls,enchanted_garden,robot_factory,street_festival,alien_hive",
 				"new wall themes are missing or moss was retained");
 			const wallProgress = Rewards.fresh();
 			Rewards.award(wallProgress, 1, [true, false, false], 500);
-			Rewards.catalog.walls.slice(1).forEach(function (entry) {
+			Rewards.catalog.walls.filter(function (entry) { return entry.cost === 1; }).forEach(function (entry) {
 				assert(entry.cost === 1 && Rewards.equip(wallProgress, "walls", entry.id) && Rewards.balance(wallProgress).available === 0,
 					"wall theme does not use a reusable one-star deposit");
 			});
 			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "slime_walls", "wall theme did not persist");
+			const wallCombinations = Rewards.catalog.walls.filter(function (entry) { return entry.cost === 2; });
+			assert(wallCombinations.map(function (entry) { return entry.id; }).join(",") === "enchanted_garden,robot_factory,street_festival,alien_hive", "wall combinations are missing or incorrectly priced");
+			const wallComponents = ["living_hedges,mushroom_wall,flower_planters", "industrial_pipes,circuit_walls", "brickwork,festival_bunting", "crystal_growth,bioluminescent_tendrils,slime_walls"];
+			wallCombinations.forEach(function (entry, index) {
+				assert(Rewards.wallThemes[entry.id].components.map(function (part) { return part.theme; }).join(",") === wallComponents[index], "wall combination contains the wrong decorations");
+			});
+			assert(!Rewards.equip(wallProgress, "walls", "enchanted_garden") && wallProgress.equipped.walls === "slime_walls", "wall combination upgrade ignored the extra-star cost");
+			Rewards.award(wallProgress, 1, [true, true, false], 450);
+			wallCombinations.forEach(function (entry) {
+				assert(Rewards.equip(wallProgress, "walls", entry.id) && Rewards.balance(wallProgress).borrowed === 2 && Rewards.balance(wallProgress).available === 0, "combination swaps did not reuse their two-star deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "alien_hive", "wall combination did not persist");
+			assert(Rewards.equip(wallProgress, "walls", "spikes") && Rewards.balance(wallProgress).available === 1, "returning to single walls did not refund one star");
 			assert(Rewards.wallThemes.slime_walls.growth.join(",") === "3,5", "slime walls do not use the sparser 3–5 count");
 			const hedgeCounts = new Set();
 			const crystalCounts = new Set();
 			const organicAngles = new Set();
 			const organicPositions = new Set();
+			const rareWallCounts = new Set();
 			[7, 11, 31].forEach(function (size) {
 				[Game.createMaze, Game.createPledgeMaze, Game.createDfsMaze].forEach(function (create) {
 					const maze = create("wall-check-" + size, size);
@@ -629,6 +643,23 @@
 							assert(detail.position > 0.17 && detail.position < 0.83 && detail.size >= 0.85 && detail.size < 1.15,
 								"wall attachment may extend into an opening");
 						});
+						assert(segment.spikes.length === 5, "wall does not have five paired spike positions");
+						segment.spikes.forEach(function (spike) {
+							assert(spike.position - 0.014 * spike.size > 0.035 && spike.position + 0.014 * spike.size < 0.965
+								&& spike.size * 0.17 < 0.2, "spikes reach into an opening or too far into a corridor");
+						});
+						const garden = segment.combinations.enchanted_garden;
+						const hive = segment.combinations.alien_hive;
+						[garden.mushroom_wall, garden.flower_planters, hive.slime_walls].forEach(function (elements) {
+							assert(elements.length >= 0 && elements.length <= 2, "rare combination detail exceeds zero to two elements");
+							rareWallCounts.add(elements.length);
+							elements.forEach(function (element) {
+								const extent = element.radius * 1.7;
+								assert(element.position - extent >= 0.035 - 1e-10 && element.position + extent <= 0.965 + 1e-10
+									&& Math.abs(element.offset) + extent < 0.2, "combined wall growth covers a gap or corridor center");
+							});
+						});
+						assert(segment.growth.living_hedges.length > garden.mushroom_wall.length + garden.flower_planters.length, "garden is not mostly leaves");
 						["living_hedges", "crystal_growth"].forEach(function (theme) {
 							const elements = segment.growth[theme];
 							const minimum = theme === "living_hedges" ? 10 : 3;
@@ -659,10 +690,12 @@
 					assert(JSON.stringify(layout) === JSON.stringify(Rewards.wallLayout(maze)), "wall attachments change on redraw");
 				});
 			});
-			messages.push("PASS: twelve one-star wall themes use stable canonical segments and leave passages undecorated");
+			messages.push("PASS: single wall themes and spikes use stable canonical segments and leave passages undecorated");
 			assert(hedgeCounts.size === 11 && crystalCounts.size === 3 && organicAngles.size > 100 && organicPositions.size > 100,
 				"organic walls lack count, orientation, or placement variation");
 			messages.push("PASS: hedges have 10–20 leaves and crystal walls 3–5 randomly oriented, bounded elements");
+			assert(rareWallCounts.size === 3, "rare combination elements do not include all zero-to-two counts");
+			messages.push("PASS: four two-star wall combinations have the requested components, rare-element counts, and reusable deposits");
 
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)
