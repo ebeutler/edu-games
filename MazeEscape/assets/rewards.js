@@ -82,7 +82,7 @@
 		festival_bunting: { bright: "#bd9d74", dim: "#6e5d46" },
 		flower_planters: { bright: "#ab8768", dim: "#68513f", growth: [2, 4] },
 		bioluminescent_tendrils: { bright: "#63887a", dim: "#385348", growth: [5, 9] },
-		slime_walls: { bright: "#689e5a", dim: "#3e6038", growth: [6, 12] }
+		slime_walls: { bright: "#689e5a", dim: "#3e6038", growth: [3, 5] }
 	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),

@@ -93,6 +93,8 @@ Mushroom wall (spotted caps and stems), Riveted panels (metal plates and rivets)
 (terracotta pots and flowers), Bioluminescent tendrils (curved branches and glowing tips), and
 Slime walls (overlapping highlighted droplets). Organic details have independently seeded layouts;
 all themes reuse canonical wall segments, continuous spines, fog, and shared preview/map rendering.
+Flower planters stay upright in world coordinates on both horizontal and vertical walls: flowers
+face north and pots south. Slime walls use a sparser three to five droplets per segment.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

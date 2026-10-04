@@ -600,6 +600,7 @@
 					"wall theme does not use a reusable one-star deposit");
 			});
 			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "slime_walls", "wall theme did not persist");
+			assert(Rewards.wallThemes.slime_walls.growth.join(",") === "3,5", "slime walls do not use the sparser 3–5 count");
 			const hedgeCounts = new Set();
 			const crystalCounts = new Set();
 			const organicAngles = new Set();

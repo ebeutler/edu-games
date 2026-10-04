@@ -902,7 +902,9 @@
 		} else if (theme === "mushroom_wall" || theme === "flower_planters") {
 			segment.growth[theme].forEach(function (element) {
 				target.save(); target.translate(element.position, element.offset);
-				target.rotate((element.offset >= 0 ? Math.PI : 0) + Math.sin(element.orientation) * 0.4);
+				const orientation = theme === "flower_planters" ? (axis === "vertical" ? -Math.PI / 2 : 0)
+					: (element.offset >= 0 ? Math.PI : 0) + Math.sin(element.orientation) * 0.4;
+				target.rotate(orientation);
 				target.scale(element.radius, element.radius);
 				if (theme === "mushroom_wall") {
 					target.fillStyle = bright ? "#e6d7b3" : "#8a806d"; target.fillRect(-0.16, -0.2, 0.32, 1.3);
