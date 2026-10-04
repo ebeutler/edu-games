@@ -54,7 +54,13 @@
 		paw_prints: { bright: ["#edcf9d", "#d29a62", "#ad744e"], dim: ["#8b785b", "#7c593b", "#65452f"] },
 		nuts_bolts: { bright: ["#d5dce5", "#79a6ca", "#849098"], dim: ["#858b93", "#47667e", "#505a62"] },
 		confetti: { bright: ["#ee83b5", "#82cdec", "#f7d378"], dim: ["#86506b", "#4c7b91", "#927b49"] },
-		crystals: { bright: ["#78d7dd", "#b482e8", "#ee96bc"], dim: ["#4b858a", "#71528b", "#936079"] }
+		crystals: { bright: ["#78d7dd", "#b482e8", "#ee96bc"], dim: ["#4b858a", "#71528b", "#936079"] },
+		bones: { bright: ["#f4e2b7", "#cfb083", "#fff4df"], dim: ["#927f62", "#786249", "#ab9c83"] },
+		leaves: { bright: ["#a5d36b", "#5ca870", "#e2b95f"], dim: ["#607d42", "#386647", "#89723d"] },
+		gears: { bright: ["#d7b063", "#c3ced8", "#7aadd2"], dim: ["#836b3d", "#737e89", "#486b86"] },
+		microchips: { bright: ["#8cc781", "#75b6de", "#d5a06b"], dim: ["#52784d", "#476e89", "#80613f"] },
+		slime_droplets: { bright: ["#acd95b", "#68d4b4", "#b58be3"], dim: ["#647a38", "#408370", "#70548e"] },
+		paint_splashes: { bright: ["#65b9ef", "#e677b7", "#f3cf65"], dim: ["#3c6e8f", "#88476f", "#8b793d"] }
 	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),

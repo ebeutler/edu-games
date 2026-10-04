@@ -61,6 +61,12 @@ streams keep the original positions, colors, sizes, and counts intact and preven
 Shop previews use the same motif renderer as the maze. Shapes fit within the existing decoration
 bounds so walls and visit marks remain clear. `decorationLayout` generalises the placement API;
 `flowerLayout` remains an alias and keeps the original seed namespace for existing layouts.
+Six further two-star themes follow: Bones, Leaves, Gears, Microchips, Slime droplets, and Paint
+splashes. They use rounded bones, pointed leaf silhouettes, hollow eight-tooth gears, chips with
+pins, highlighted teardrops, and irregular paint blobs respectively. Each has three bright/dim
+colors, independently seeded rotations, and the same stable scatter layout and size variation.
+They share their canvas drawings between shop previews and maze rendering and remain within
+the existing decoration bounds.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

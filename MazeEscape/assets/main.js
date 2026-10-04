@@ -71,6 +71,7 @@
 			item_flowers_mix_pink_white_purple: "Pink / White / Purple", item_flowers_mix_red_gold_gray: "Red / Gold / Gray",
 			item_flowers_mix_orange_light_blue_purple: "Orange / Light blue / Purple", item_flowers_mix_red_gold_dark_blue: "Red / Gold / Dark blue",
 			item_paw_prints: "Paw prints", item_nuts_bolts: "Nuts and bolts", item_confetti: "Confetti", item_crystals: "Crystals",
+			item_bones: "Bones", item_leaves: "Leaves", item_gears: "Gears", item_microchips: "Microchips", item_slime_droplets: "Slime droplets", item_paint_splashes: "Paint splashes",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
@@ -156,6 +157,7 @@
 			item_flowers_mix_pink_white_purple: "Rosa / Weiss / Violett", item_flowers_mix_red_gold_gray: "Rot / Gold / Grau",
 			item_flowers_mix_orange_light_blue_purple: "Orange / Hellblau / Violett", item_flowers_mix_red_gold_dark_blue: "Rot / Gold / Dunkelblau",
 			item_paw_prints: "Pfotenabdrücke", item_nuts_bolts: "Muttern und Schrauben", item_confetti: "Konfetti", item_crystals: "Kristalle",
+			item_bones: "Knochen", item_leaves: "Blätter", item_gears: "Zahnräder", item_microchips: "Mikrochips", item_slime_droplets: "Schleimtropfen", item_paint_splashes: "Farbspritzer",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
@@ -898,6 +900,59 @@
 			target.fillStyle = bright ? "rgba(255, 255, 255, 0.32)" : "rgba(255, 255, 255, 0.14)";
 			target.beginPath(); target.moveTo(0, -1.6); target.lineTo(0, 1.5);
 			target.lineTo(-0.65, 0.9); target.lineTo(-0.85, -0.7); target.closePath(); target.fill();
+		} else if (floor.motif === "bones") {
+			target.fillRect(-1, -0.32, 2, 0.64);
+			[-1.03, 1.03].forEach(function (end) {
+				[-0.33, 0.33].forEach(function (lobe) {
+					target.beginPath(); target.arc(end, lobe, 0.4, 0, Math.PI * 2); target.fill();
+				});
+			});
+		} else if (floor.motif === "leaves") {
+			const width = variant === 1 ? 1.3 : 1;
+			target.beginPath(); target.moveTo(0, -1.55);
+			target.bezierCurveTo(-width, -0.75, -width, 0.75, 0, 1.55);
+			target.bezierCurveTo(width, 0.75, width, -0.75, 0, -1.55); target.closePath(); target.fill();
+			target.strokeStyle = bright ? "rgba(25, 49, 28, 0.65)" : "rgba(13, 28, 16, 0.5)";
+			target.lineWidth = 0.16; target.beginPath(); target.moveTo(0, -1.3); target.lineTo(0, 1.3); target.stroke();
+		} else if (floor.motif === "gears") {
+			target.beginPath();
+			for (let point = 0; point < 32; point++) {
+				const angle = point * Math.PI * 2 / 32;
+				const toothRadius = point % 4 < 2 ? 1.12 : 1.55;
+				target.lineTo(Math.cos(angle) * toothRadius, Math.sin(angle) * toothRadius);
+			}
+			target.closePath(); target.moveTo(0.5, 0); target.arc(0, 0, 0.5, 0, Math.PI * 2); target.fill("evenodd");
+		} else if (floor.motif === "microchips") {
+			[-0.6, -0.2, 0.2, 0.6].forEach(function (pin) {
+				target.fillRect(pin - 0.08, -1.4, 0.16, 0.55); target.fillRect(pin - 0.08, 0.85, 0.16, 0.55);
+				target.fillRect(-1.4, pin - 0.08, 0.55, 0.16); target.fillRect(0.85, pin - 0.08, 0.55, 0.16);
+			});
+			target.fillRect(-0.85, -0.85, 1.7, 1.7);
+			target.fillStyle = bright ? "#25372f" : "#17251d"; target.fillRect(-0.55, -0.55, 1.1, 1.1);
+		} else if (floor.motif === "slime_droplets") {
+			const width = variant === 1 ? 0.9 : 1.15;
+			target.beginPath(); target.moveTo(0, -1.55);
+			target.bezierCurveTo(0.2, -0.6, width, -0.25, width, 0.5);
+			target.bezierCurveTo(0.95, 1.25, -0.95, 1.25, -width, 0.5);
+			target.bezierCurveTo(-width, -0.25, -0.2, -0.6, 0, -1.55); target.closePath(); target.fill();
+			target.fillStyle = bright ? "rgba(255, 255, 255, 0.4)" : "rgba(255, 255, 255, 0.15)";
+			target.beginPath(); target.ellipse(-0.28, 0.35, 0.17, 0.38, -0.3, 0, Math.PI * 2); target.fill();
+		} else if (floor.motif === "paint_splashes") {
+			const radii = variant === 1 ? [1.45, 0.65, 1.1, 1.4, 0.8, 1.25, 0.7] : [1.3, 0.8, 1.45, 0.75, 1.1, 0.65, 1.4];
+			const points = radii.map(function (length, index) {
+				const angle = index * Math.PI * 2 / radii.length;
+				return [Math.cos(angle) * length, Math.sin(angle) * length];
+			});
+			const last = points[points.length - 1];
+			target.beginPath(); target.moveTo((last[0] + points[0][0]) / 2, (last[1] + points[0][1]) / 2);
+			points.forEach(function (point, index) {
+				const next = points[(index + 1) % points.length];
+				target.quadraticCurveTo(point[0], point[1], (point[0] + next[0]) / 2, (point[1] + next[1]) / 2);
+			});
+			target.closePath(); target.fill();
+			[[-1.35, 0.5], [0.65, -1.3], [0.9, 1.15]].forEach(function (drop) {
+				target.beginPath(); target.arc(drop[0], drop[1], 0.18, 0, Math.PI * 2); target.fill();
+			});
 		}
 		target.restore();
 	};

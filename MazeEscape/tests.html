@@ -512,7 +512,7 @@
 			messages.push("PASS: seeded flowers have 25%/8%/3% coverage, varied shades and sizes, and clear placement");
 			messages.push("PASS: seeded decoration orientations and two shape variants are independent of color");
 			assert(Rewards.catalog.floor.map(function (entry) { return entry.palette || entry.id; }).join(",")
-				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray,mix_pink_white_purple,mix_red_gold_gray,mix_orange_light_blue_purple,mix_red_gold_dark_blue,paw_prints,nuts_bolts,confetti,crystals", "floor option order is incorrect");
+				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray,mix_pink_white_purple,mix_red_gold_gray,mix_orange_light_blue_purple,mix_red_gold_dark_blue,paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes", "floor option order is incorrect");
 			const paletteProgress = Rewards.fresh();
 			Rewards.award(paletteProgress, 1, [true, false, false], 500);
 			Rewards.catalog.floor.filter(function (entry) { return !!entry.palette && entry.cost === 1; }).forEach(function (entry) {
@@ -549,7 +549,7 @@
 			assert(Rewards.equip(paletteProgress, "floor", "flowers") && Rewards.balance(paletteProgress).available === 1, "returning to a single color did not refund one star");
 			messages.push("PASS: four ordered mixed flower sets use the requested colors and refundable two-star deposits");
 			const themedOptions = Rewards.catalog.floor.filter(function (entry) { return !!entry.motif; });
-			assert(themedOptions.map(function (entry) { return entry.id; }).join(",") === "paw_prints,nuts_bolts,confetti,crystals",
+			assert(themedOptions.map(function (entry) { return entry.id; }).join(",") === "paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes",
 				"recommended themed floors are missing or out of order");
 			assert(Rewards.decorationLayout === Rewards.flowerLayout, "new motifs do not share the original placement generator");
 			const motifProgress = Rewards.fresh();
@@ -565,10 +565,10 @@
 				assert(Rewards.equip(motifProgress, "floor", entry.id) && Rewards.balance(motifProgress).borrowed === 2
 					&& Rewards.balance(motifProgress).available === 0, "themed floor swap did not reuse its deposit");
 			});
-			assert(Rewards.restore(JSON.parse(JSON.stringify(motifProgress))).equipped.floor === "crystals", "themed floor did not survive a reload");
+			assert(Rewards.restore(JSON.parse(JSON.stringify(motifProgress))).equipped.floor === "paint_splashes", "themed floor did not survive a reload");
 			assert(Rewards.equip(motifProgress, "floor", "original") && Rewards.balance(motifProgress).available === 2,
 				"returning a themed floor did not refund two stars");
-			messages.push("PASS: paw prints, nuts/bolts, confetti, and crystals reuse seeded placement and refundable two-star deposits");
+			messages.push("PASS: all ten themed floors reuse seeded placement and refundable two-star deposits");
 
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)
