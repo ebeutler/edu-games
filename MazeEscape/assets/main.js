@@ -4,7 +4,7 @@
 	const Game = window.MazeEscapeGame;
 	const Rewards = window.MazeEscapeRewards;
 	const characterImages = new Map();
-	const FLOWER_COLORS = [["#786442", "#72603e", "#806c4c"], ["#e6c684", "#e1bc7a", "#edcf93"]];
+	const FLOWER_COLORS = [["#786442", "#6b4816", "#a39262"], ["#e6c684", "#cf902c", "#fff0b8"]];
 	const DEFAULT_CODES = {
 		1: "# The same rules must work in unfamiliar mazes\nWHILE NOT AT_GOAL\n  # Add your wall-following rules here\nEND",
 		2: "# The same rules must work in unfamiliar mazes\nSET turnBalance TO 0\n\nWHILE NOT AT_GOAL\n  # Keep your initial direction and count every turn\nEND",
