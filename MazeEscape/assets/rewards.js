@@ -60,7 +60,15 @@
 		gears: { bright: ["#d7b063", "#c3ced8", "#7aadd2"], dim: ["#836b3d", "#737e89", "#486b86"] },
 		microchips: { bright: ["#8cc781", "#75b6de", "#d5a06b"], dim: ["#52784d", "#476e89", "#80613f"] },
 		slime_droplets: { bright: ["#acd95b", "#68d4b4", "#b58be3"], dim: ["#647a38", "#408370", "#70548e"] },
-		paint_splashes: { bright: ["#65b9ef", "#e677b7", "#f3cf65"], dim: ["#3c6e8f", "#88476f", "#8b793d"] }
+		paint_splashes: { bright: ["#65b9ef", "#e677b7", "#f3cf65"], dim: ["#3c6e8f", "#88476f", "#8b793d"] },
+		meteor_fragments: { bright: ["#87929e", "#bd7b58", "#c8c3b5"], dim: ["#505964", "#764b36", "#7a786e"] },
+		sparkles: { bright: ["#fcdf95", "#b6e5ff", "#dfbbf7"], dim: ["#978657", "#6e8b9b", "#887298"] }
+	};
+	const floorPacks = {
+		animal_playground: [{ motif: "paw_prints" }, { motif: "bones" }, { motif: "leaves" }],
+		robot_workshop: [{ motif: "nuts_bolts", variant: 0 }, { motif: "microchips" }, { motif: "gears" }],
+		celebration: [{ palette: "gold" }, { motif: "confetti" }, { motif: "paint_splashes" }],
+		alien_landscape: [{ motif: "crystals" }, { motif: "meteor_fragments" }, { motif: "slime_droplets" }]
 	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),
@@ -69,6 +77,8 @@
 			return { id: palette === "gold" ? "flowers" : "flowers_" + palette, cost: flowerPalettes[palette].cost || 1, palette: palette };
 		})).concat(Object.keys(floorMotifs).map(function (motif) {
 			return { id: motif, cost: 2, motif: motif };
+		})).concat(Object.keys(floorPacks).map(function (pack) {
+			return { id: pack, cost: 3, components: floorPacks[pack] };
 		})),
 		goal: [{ id: "original", cost: 0 }, { id: "truck", cost: 2 }],
 		outside: [{ id: "original", cost: 0 }, { id: "beach", cost: 3 }]
@@ -144,6 +154,7 @@
 		const random = window.MazeEscapeGame.randomFor("flowers:" + seed + ":" + size);
 		const orientationRandom = window.MazeEscapeGame.randomFor("decorations:orientation:" + seed + ":" + size);
 		const shapeRandom = window.MazeEscapeGame.randomFor("decorations:shape:" + seed + ":" + size);
+		const componentRandom = window.MazeEscapeGame.randomFor("decorations:component:" + seed + ":" + size);
 		return Array.from({ length: size * size }, function () {
 			const chance = random();
 			const count = chance < 0.03 ? 3 : chance < 0.08 ? 2 : chance < 0.25 ? 1 : 0;
@@ -157,7 +168,8 @@
 					shade: Math.floor(random() * 3),
 					radius: 0.05 * (0.85 + 0.3 * random()),
 					orientation: orientationRandom() * Math.PI * 2,
-					variant: Math.floor(shapeRandom() * 2)
+					variant: Math.floor(shapeRandom() * 2),
+					component: Math.floor(componentRandom() * 3)
 				};
 			});
 		});

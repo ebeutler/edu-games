@@ -67,6 +67,14 @@ pins, highlighted teardrops, and irregular paint blobs respectively. Each has th
 colors, independently seeded rotations, and the same stable scatter layout and size variation.
 They share their canvas drawings between shop previews and maze rendering and remain within
 the existing decoration bounds.
+Meteor fragments and four-point Sparkles are also available at two stars each. Four mixed theme
+packs cost three stars: Animal playground (paw print/bone/leaf), Robot workshop
+(nut/microchip/gear), Celebration (gold flower/confetti/paint splash), and Alien landscape
+(crystal/meteor fragment/slime droplet). Previews show one of each component. Scattered components
+are selected by a separate seeded random stream, independently of color, orientation, and shape
+variant, so other decoration properties remain unchanged. Robot workshop deliberately uses nuts
+without bolts. Packs reuse their three-star deposit when swapped and refund the difference when
+returned or exchanged for cheaper floor sets.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

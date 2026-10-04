@@ -479,6 +479,7 @@
 			const flowerPositions = new Set();
 			const orientationsByShade = [new Set(), new Set(), new Set()];
 			const variantsByShade = [new Set(), new Set(), new Set()];
+			const componentsByShade = [new Set(), new Set(), new Set()];
 			for (let seedIndex = 0; seedIndex < 50; seedIndex++) {
 				Rewards.flowerLayout("flower-distribution-" + seedIndex, 31).forEach(function (tile) {
 					assert(tile.length <= 3, "tile has more than three flowers");
@@ -488,6 +489,8 @@
 						assert(flower.variant === 0 || flower.variant === 1, "decoration uses an unsupported shape variant");
 						orientationsByShade[flower.shade].add(flower.orientation);
 						variantsByShade[flower.shade].add(flower.variant);
+						assert(flower.component >= 0 && flower.component < 3, "mixed decoration has an invalid component");
+						componentsByShade[flower.shade].add(flower.component);
 						assert(flower.radius >= 0.0425 && flower.radius <= 0.0575, "flower size is outside the small variation range");
 						const extent = flower.radius * 1.7;
 						assert(flower.x - extent > 0.035 && flower.x + extent < 0.965
@@ -508,11 +511,12 @@
 			assert(Math.abs(flowerCounts[3] / tileCount - 0.03) < 0.003, "third-flower probability is not about 3%");
 			assert(flowerShades.size === 3 && flowerSizes.size > 100 && flowerPositions.size > 100, "flowers lack shade, size, or position variation");
 			assert(orientationsByShade.every(function (angles) { return angles.size > 100; })
-				&& variantsByShade.every(function (variants) { return variants.size === 2; }), "orientation or shape is tied to color");
+				&& variantsByShade.every(function (variants) { return variants.size === 2; })
+				&& componentsByShade.every(function (components) { return components.size === 3; }), "orientation, shape, or mixed component is tied to color");
 			messages.push("PASS: seeded flowers have 25%/8%/3% coverage, varied shades and sizes, and clear placement");
 			messages.push("PASS: seeded decoration orientations and two shape variants are independent of color");
 			assert(Rewards.catalog.floor.map(function (entry) { return entry.palette || entry.id; }).join(",")
-				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray,mix_pink_white_purple,mix_red_gold_gray,mix_orange_light_blue_purple,mix_red_gold_dark_blue,paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes", "floor option order is incorrect");
+				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray,mix_pink_white_purple,mix_red_gold_gray,mix_orange_light_blue_purple,mix_red_gold_dark_blue,paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes,meteor_fragments,sparkles,animal_playground,robot_workshop,celebration,alien_landscape", "floor option order is incorrect");
 			const paletteProgress = Rewards.fresh();
 			Rewards.award(paletteProgress, 1, [true, false, false], 500);
 			Rewards.catalog.floor.filter(function (entry) { return !!entry.palette && entry.cost === 1; }).forEach(function (entry) {
@@ -549,7 +553,7 @@
 			assert(Rewards.equip(paletteProgress, "floor", "flowers") && Rewards.balance(paletteProgress).available === 1, "returning to a single color did not refund one star");
 			messages.push("PASS: four ordered mixed flower sets use the requested colors and refundable two-star deposits");
 			const themedOptions = Rewards.catalog.floor.filter(function (entry) { return !!entry.motif; });
-			assert(themedOptions.map(function (entry) { return entry.id; }).join(",") === "paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes",
+			assert(themedOptions.map(function (entry) { return entry.id; }).join(",") === "paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes,meteor_fragments,sparkles",
 				"recommended themed floors are missing or out of order");
 			assert(Rewards.decorationLayout === Rewards.flowerLayout, "new motifs do not share the original placement generator");
 			const motifProgress = Rewards.fresh();
@@ -565,10 +569,28 @@
 				assert(Rewards.equip(motifProgress, "floor", entry.id) && Rewards.balance(motifProgress).borrowed === 2
 					&& Rewards.balance(motifProgress).available === 0, "themed floor swap did not reuse its deposit");
 			});
-			assert(Rewards.restore(JSON.parse(JSON.stringify(motifProgress))).equipped.floor === "paint_splashes", "themed floor did not survive a reload");
+			assert(Rewards.restore(JSON.parse(JSON.stringify(motifProgress))).equipped.floor === "sparkles", "themed floor did not survive a reload");
 			assert(Rewards.equip(motifProgress, "floor", "original") && Rewards.balance(motifProgress).available === 2,
 				"returning a themed floor did not refund two stars");
-			messages.push("PASS: all ten themed floors reuse seeded placement and refundable two-star deposits");
+			messages.push("PASS: all twelve themed floors reuse seeded placement and refundable two-star deposits");
+			const packs = Rewards.catalog.floor.filter(function (entry) { return !!entry.components; });
+			assert(packs.map(function (entry) { return entry.id; }).join(",") === "animal_playground,robot_workshop,celebration,alien_landscape", "mixed theme packs are missing or out of order");
+			const packComponents = ["paw_prints,bones,leaves", "nuts_bolts,microchips,gears", "gold,confetti,paint_splashes", "crystals,meteor_fragments,slime_droplets"];
+			packs.forEach(function (pack, index) {
+				assert(pack.cost === 3 && pack.components.map(function (part) { return part.motif || part.palette; }).join(",") === packComponents[index], "mixed pack has incorrect components or cost");
+			});
+			assert(packs[1].components[0].variant === 0, "Robot workshop includes bolts instead of only nuts");
+			const packProgress = Rewards.fresh();
+			Rewards.award(packProgress, 1, [true, true, false], 500);
+			Rewards.equip(packProgress, "floor", "sparkles");
+			assert(!Rewards.equip(packProgress, "floor", "animal_playground") && packProgress.equipped.floor === "sparkles", "pack upgrade ignored its extra-star cost");
+			Rewards.award(packProgress, 1, [true, true, true], 450);
+			packs.forEach(function (pack) {
+				assert(Rewards.equip(packProgress, "floor", pack.id) && Rewards.balance(packProgress).borrowed === 3 && Rewards.balance(packProgress).available === 0, "pack swap did not reuse its three-star deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(packProgress))).equipped.floor === "alien_landscape", "mixed pack did not survive a reload");
+			assert(Rewards.equip(packProgress, "floor", "meteor_fragments") && Rewards.balance(packProgress).available === 1, "downgrading a pack did not refund one star");
+			messages.push("PASS: four mixed theme packs have correct components, independent selection, and three-star deposits");
 
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)
