@@ -822,7 +822,11 @@
 		} else {
 			context.fillStyle = "#26322b"; context.fillRect(10, 10, 60, 40);
 			const floor = slot === "floor" && Rewards.item(slot, id);
-			if (floor && floor.palette) { drawFlower(context, 40, 30, 8, true, 0, floor.palette); }
+			if (floor && floor.palette) {
+				drawFlower(context, 28, 30, 8, true, 0, floor.palette);
+				drawFlower(context, 56, 22, 6, true, 1, floor.palette);
+				drawFlower(context, 55, 43, 4, true, 2, floor.palette);
+			}
 			if (slot === "walls") {
 				context.strokeStyle = id === "moss" ? "#b4d68c" : "#b9d3bc"; context.lineWidth = 5;
 				context.beginPath(); context.moveTo(10, 10); context.lineTo(70, 10); context.lineTo(70, 50); context.stroke();

@@ -81,8 +81,9 @@ h1 {
 #shop { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
 #shop summary { cursor: pointer; color: var(--blue); font-weight: 700; }
 #shop > p { margin: 12px 0; color: var(--muted); font-size: 0.83rem; }
-.shop-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-.shop-slot { min-width: 0; }
+.shop-items { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
+.shop-slot { display: flex; flex-direction: column; min-width: 0; }
+.shop-slot .cosmetic-button { flex: 1; align-content: center; }
 .shop-slot h3 { margin: 0 0 8px; color: var(--amber); font-size: 0.8rem; }
 .cosmetic-button { position: relative; display: grid; justify-items: center; gap: 5px; min-width: 0; width: 100%; padding: 34px 10px 10px; border: 1px solid var(--line); background: var(--panel-deep); color: var(--ink); cursor: pointer; font-size: 0.78rem; }
 .cosmetic-cost { position: absolute; top: 6px; right: 8px; font-size: 1.25rem; line-height: 1; font-weight: 800; color: var(--moss); }

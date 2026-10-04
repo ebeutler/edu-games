@@ -32,6 +32,9 @@ and debugging experiments rather than complete programs.
 
 Each shop category shows its current selection. Clicking it opens a scrollable selection overlay,
 with keyboard focus contained in the dialog and dismissal via Close, Escape, or the backdrop.
+Selected-item cards match the tallest card, including across wrapped rows, while their previews
+fill the available width and preserve aspect ratio. Flower previews show three different sizes and
+all three palette shades; the largest flower uses the main color of the set.
 Explorer images are listed in `assets/rewards.js` from `assets/images/chars/` filenames of the form
 `category_gender_name.png`. The 42 provided characters cost 1 star for animals, 2 for robots, 3 for
 humans, and 4 for aliens, sorted by cost, gender code, and name. Shop previews face south as in the
