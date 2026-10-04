@@ -67,6 +67,7 @@
 			item_flowers_light_blue: "Light blue flowers", item_flowers_dark_blue: "Dark blue flowers", item_flowers_purple: "Purple flowers", item_flowers_gray: "Gray flowers",
 			item_flowers_mix_pink_white_purple: "Pink / White / Purple", item_flowers_mix_red_gold_gray: "Red / Gold / Gray",
 			item_flowers_mix_orange_light_blue_purple: "Orange / Light blue / Purple", item_flowers_mix_red_gold_dark_blue: "Red / Gold / Dark blue",
+			item_paw_prints: "Paw prints", item_nuts_bolts: "Nuts and bolts", item_confetti: "Confetti", item_crystals: "Crystals",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
@@ -151,6 +152,7 @@
 			item_flowers_light_blue: "Hellblaue Blumen", item_flowers_dark_blue: "Dunkelblaue Blumen", item_flowers_purple: "Violette Blumen", item_flowers_gray: "Graue Blumen",
 			item_flowers_mix_pink_white_purple: "Rosa / Weiss / Violett", item_flowers_mix_red_gold_gray: "Rot / Gold / Grau",
 			item_flowers_mix_orange_light_blue_purple: "Orange / Hellblau / Violett", item_flowers_mix_red_gold_dark_blue: "Rot / Gold / Dunkelblau",
+			item_paw_prints: "Pfotenabdrücke", item_nuts_bolts: "Muttern und Schrauben", item_confetti: "Konfetti", item_crystals: "Kristalle",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
@@ -188,7 +190,7 @@
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
 		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
-		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null, flowers: []
+		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null, decorations: []
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -314,7 +316,7 @@
 		stop();
 		state.creationNotice = !!announce;
 		state.maze = state.stage === 3 ? Game.createDfsMaze(seed, size) : state.stage === 2 ? Game.createPledgeMaze(seed, size) : Game.createMaze(seed, size);
-		state.flowers = Rewards.flowerLayout(state.maze.seed, state.maze.size);
+		state.decorations = Rewards.decorationLayout(state.maze.seed, state.maze.size);
 		state.world = Game.createWorld(state.maze);
 		state.camera = {
 			fromX: state.world.player.x,
@@ -826,10 +828,10 @@
 		} else {
 			context.fillStyle = "#26322b"; context.fillRect(10, 10, 60, 40);
 			const floor = slot === "floor" && Rewards.item(slot, id);
-			if (floor && floor.palette) {
-				drawFlower(context, 28, 30, 8, true, 0, floor.palette);
-				drawFlower(context, 56, 22, 6, true, 1, floor.palette);
-				drawFlower(context, 55, 43, 4, true, 2, floor.palette);
+			if (floor && (floor.palette || floor.motif)) {
+				drawFloorDecoration(context, 28, 30, 8, true, 0, floor);
+				drawFloorDecoration(context, 56, 22, 6, true, 1, floor);
+				drawFloorDecoration(context, 55, 43, 4, true, 2, floor);
 			}
 			if (slot === "walls") {
 				context.strokeStyle = id === "moss" ? "#b4d68c" : "#b9d3bc"; context.lineWidth = 5;
@@ -843,6 +845,58 @@
 			const angle = petal * Math.PI * 2 / 5;
 			target.beginPath(); target.arc(x + Math.cos(angle) * radius, y + Math.sin(angle) * radius, radius * 0.7, 0, Math.PI * 2); target.fill();
 		}
+	};
+	const drawFloorDecoration = function (target, x, y, radius, bright, shade, floor) {
+		if (floor.palette) {
+			drawFlower(target, x, y, radius, bright, shade, floor.palette);
+			return;
+		}
+		const colors = Rewards.floorMotifs[floor.motif];
+		target.save();
+		target.translate(x, y);
+		target.rotate((shade - 1) * 0.35);
+		target.scale(radius, radius);
+		target.fillStyle = colors[bright ? "bright" : "dim"][shade];
+		if (floor.motif === "paw_prints") {
+			target.beginPath(); target.ellipse(0, 0.45, 0.82, 0.67, 0, 0, Math.PI * 2); target.fill();
+			[[-1.1, -0.25], [-0.45, -1.02], [0.45, -1.02], [1.1, -0.25]].forEach(function (toe) {
+				target.beginPath(); target.arc(toe[0], toe[1], 0.42, 0, Math.PI * 2); target.fill();
+			});
+		} else if (floor.motif === "nuts_bolts") {
+			if (shade === 1) {
+				target.fillRect(-0.3, -0.32, 1.5, 0.64);
+				target.beginPath();
+				for (let corner = 0; corner < 6; corner++) {
+					const angle = corner * Math.PI / 3;
+					target.lineTo(-0.85 + Math.cos(angle) * 0.65, Math.sin(angle) * 0.65);
+				}
+				target.closePath(); target.fill();
+				target.strokeStyle = bright ? "#354454" : "#202c35"; target.lineWidth = 0.16;
+				[0, 0.45, 0.9].forEach(function (thread) {
+					target.beginPath(); target.moveTo(thread - 0.1, -0.3); target.lineTo(thread + 0.1, 0.3); target.stroke();
+				});
+			} else {
+				target.beginPath();
+				for (let corner = 0; corner < 6; corner++) {
+					const angle = corner * Math.PI / 3;
+					target.lineTo(Math.cos(angle) * 1.4, Math.sin(angle) * 1.4);
+				}
+				target.closePath(); target.moveTo(0.55, 0); target.arc(0, 0, 0.55, 0, Math.PI * 2);
+				target.fill("evenodd");
+			}
+		} else if (floor.motif === "confetti") {
+			if (shade === 0) { target.fillRect(-1, -0.7, 2, 1.4); }
+			else if (shade === 1) {
+				target.beginPath(); target.moveTo(0, -1.4); target.lineTo(1.2, 1); target.lineTo(-1.2, 1); target.closePath(); target.fill();
+			} else { target.fillRect(-0.3, -1.5, 0.6, 3); }
+		} else if (floor.motif === "crystals") {
+			target.beginPath(); target.moveTo(0, -1.6); target.lineTo(0.85, -0.7); target.lineTo(0.65, 0.9);
+			target.lineTo(0, 1.5); target.lineTo(-0.65, 0.9); target.lineTo(-0.85, -0.7); target.closePath(); target.fill();
+			target.fillStyle = bright ? "rgba(255, 255, 255, 0.32)" : "rgba(255, 255, 255, 0.14)";
+			target.beginPath(); target.moveTo(0, -1.6); target.lineTo(0, 1.5);
+			target.lineTo(-0.65, 0.9); target.lineTo(-0.85, -0.7); target.closePath(); target.fill();
+		}
+		target.restore();
 	};
 	const drawUmbrella = function (target, x, y, size) {
 		target.strokeStyle = "#f4f0df"; target.lineWidth = size * 0.05;
@@ -922,7 +976,7 @@
 		const offsetY = displaySize / 2 - (camera.y + 0.5) * cellSize + viewY;
 		const walls = Game.constants.WALLS;
 		const floor = Rewards.item("floor", state.progress.equipped.floor);
-		const flowerPalette = floor && floor.palette;
+		const decoratedFloor = floor && (floor.palette || floor.motif);
 
 		const drawCells = function (target, include, bright) {
 			for (let y = 0; y < state.maze.size; y++) {
@@ -932,9 +986,9 @@
 					const obstacle = state.maze.blocked && state.maze.blocked.has(index);
 					target.fillStyle = obstacle ? (bright ? "#3b463f" : "#1c221f") : bright ? "#26322b" : "#151b18";
 					target.fillRect(offsetX + x * cellSize, offsetY + y * cellSize, cellSize + 0.5, cellSize + 0.5);
-					if (!obstacle && flowerPalette) {
-						state.flowers[index].forEach(function (flower) {
-							drawFlower(target, offsetX + (x + flower.x) * cellSize, offsetY + (y + flower.y) * cellSize, cellSize * flower.radius, bright, flower.shade, flowerPalette);
+					if (!obstacle && decoratedFloor) {
+						state.decorations[index].forEach(function (decoration) {
+							drawFloorDecoration(target, offsetX + (x + decoration.x) * cellSize, offsetY + (y + decoration.y) * cellSize, cellSize * decoration.radius, bright, decoration.shade, floor);
 						});
 					}
 					target.strokeStyle = state.progress.equipped.walls === "moss" ? (bright ? "#b4d68c" : "#5a7051") : (bright ? "#b9d3bc" : "#526158");

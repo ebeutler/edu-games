@@ -50,11 +50,19 @@
 			dim: colors.map(function (color) { return flowerPalettes[color].dim[0]; })
 		};
 	});
+	const floorMotifs = {
+		paw_prints: { bright: ["#edcf9d", "#d29a62", "#ad744e"], dim: ["#8b785b", "#7c593b", "#65452f"] },
+		nuts_bolts: { bright: ["#d5dce5", "#79a6ca", "#849098"], dim: ["#858b93", "#47667e", "#505a62"] },
+		confetti: { bright: ["#ee83b5", "#82cdec", "#f7d378"], dim: ["#86506b", "#4c7b91", "#927b49"] },
+		crystals: { bright: ["#78d7dd", "#b482e8", "#ee96bc"], dim: ["#4b858a", "#71528b", "#936079"] }
+	};
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),
 		walls: [{ id: "original", cost: 0 }, { id: "moss", cost: 2 }],
 		floor: [{ id: "original", cost: 0 }].concat(Object.keys(flowerPalettes).map(function (palette) {
 			return { id: palette === "gold" ? "flowers" : "flowers_" + palette, cost: flowerPalettes[palette].cost || 1, palette: palette };
+		})).concat(Object.keys(floorMotifs).map(function (motif) {
+			return { id: motif, cost: 2, motif: motif };
 		})),
 		goal: [{ id: "original", cost: 0 }, { id: "truck", cost: 2 }],
 		outside: [{ id: "original", cost: 0 }, { id: "beach", cost: 3 }]
@@ -125,14 +133,15 @@
 			});
 		return { achievements: [reliable, reliable && score <= stages[stage].budget, reliable && large], score: reliable ? score : null };
 	};
-	const flowerLayout = function (seed, size) {
+	const decorationLayout = function (seed, size) {
+		// Keep the original seed namespace so existing flower placement stays unchanged.
 		const random = window.MazeEscapeGame.randomFor("flowers:" + seed + ":" + size);
 		return Array.from({ length: size * size }, function () {
 			const chance = random();
 			const count = chance < 0.03 ? 3 : chance < 0.08 ? 2 : chance < 0.25 ? 1 : 0;
 			const quadrants = [0, 1, 2, 3];
 			return Array.from({ length: count }, function () {
-				// Separate jittered quadrants keep petals clear of walls and the central visit mark.
+				// Separate jittered quadrants keep motifs clear of walls and the central visit mark.
 				const quadrant = quadrants.splice(Math.floor(random() * quadrants.length), 1)[0];
 				return {
 					x: 0.15 + 0.2 * random() + 0.5 * (quadrant % 2),
@@ -144,7 +153,8 @@
 		});
 	};
 	window.MazeEscapeRewards = {
-		stages: stages, catalog: catalog, item: item, flowerPalettes: flowerPalettes, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate, flowerLayout: flowerLayout,
+		stages: stages, catalog: catalog, item: item, flowerPalettes: flowerPalettes, floorMotifs: floorMotifs, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
+		decorationLayout: decorationLayout, flowerLayout: decorationLayout,
 		canAccessStage: function (progress, stage, teacherMode) {
 			return [1, 2, 3].includes(stage) && (stage === 1 || teacherMode || progress.achievements[1][0]);
 		},

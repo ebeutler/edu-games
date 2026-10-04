@@ -51,6 +51,13 @@ Orange/Light blue/Purple, and Red/Gold/Dark blue. They use the main color of eac
 with matching dimmed colors. Every flower randomly uses one of the three colors; previews show all
 three. Swapping between mixed sets reuses the deposit, and switching to a single-color set refunds
 one star. Color changes preserve the existing seeded positions and sizes.
+Four themed floors follow, each with a two-star deposit: Paw prints (animal), Nuts and bolts (robot),
+Confetti (human), and Crystals (alien). Any explorer can use any theme. They share the flowers'
+seeded positions, 25%/8%/3% coverage, and ±15% size variation, with three bright/dim colors per
+theme. Robot debris alternates nuts and bolts; confetti includes rectangles, triangles, and ribbons.
+Shop previews use the same motif renderer as the maze. Shapes fit within the existing decoration
+bounds so walls and visit marks remain clear. `decorationLayout` generalises the placement API;
+`flowerLayout` remains an alias and keeps the original seed namespace for existing layouts.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size
