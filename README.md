@@ -46,6 +46,11 @@ Tiles show only the image, name, and a large top-right star-cost badge. Bright g
 affordability are also exposed to assistive technology. Category and gender remain sorting metadata.
 Flower floor options appear in this order: Pink, Red, Orange, Gold, White, Light blue, Dark blue,
 Purple, and Gray. Each costs one star and provides three distinct shades plus dimmed equivalents.
+Four mixed sets follow, at two stars each: Pink/White/Purple, Red/Gold/Gray,
+Orange/Light blue/Purple, and Red/Gold/Dark blue. They use the main color of each component palette
+with matching dimmed colors. Every flower randomly uses one of the three colors; previews show all
+three. Swapping between mixed sets reuses the deposit, and switching to a single-color set refunds
+one star. Color changes preserve the existing seeded positions and sizes.
 The existing `flowers` selection remains Gold, preserving saved selections and deposits.
 Flower floors use a separate seeded layout: 25% of tiles have at least one flower, 8% have at least
 two, and 3% have three. Each flower has a jittered position, one of three palette shades, and a size

@@ -503,10 +503,10 @@
 			assert(flowerShades.size === 3 && flowerSizes.size > 100 && flowerPositions.size > 100, "flowers lack shade, size, or position variation");
 			messages.push("PASS: seeded flowers have 25%/8%/3% coverage, varied shades and sizes, and clear placement");
 			assert(Rewards.catalog.floor.map(function (entry) { return entry.palette || entry.id; }).join(",")
-				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray", "flower palette order is incorrect");
+				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray,mix_pink_white_purple,mix_red_gold_gray,mix_orange_light_blue_purple,mix_red_gold_dark_blue", "flower palette order is incorrect");
 			const paletteProgress = Rewards.fresh();
 			Rewards.award(paletteProgress, 1, [true, false, false], 500);
-			Rewards.catalog.floor.filter(function (entry) { return !!entry.palette; }).forEach(function (entry) {
+			Rewards.catalog.floor.filter(function (entry) { return !!entry.palette && entry.cost === 1; }).forEach(function (entry) {
 				const palette = Rewards.flowerPalettes[entry.palette];
 				assert(entry.cost === 1 && palette.bright.length === 3 && palette.dim.length === 3
 					&& new Set(palette.bright).size === 3 && new Set(palette.dim).size === 3, "flower option lacks three shades or has a different cost");
@@ -519,6 +519,26 @@
 				"existing gold selection lost its palette or deposit");
 			assert(Rewards.flowerPalettes.gold.bright.join(",") === "#e6c684,#cf902c,#fff0b8", "existing gold shades changed");
 			messages.push("PASS: ordered flower palettes share one-star deposits, three shades, and saved gold compatibility");
+			const mixtures = [
+				["pink", "white", "purple"], ["red", "gold", "gray"],
+				["orange", "light_blue", "purple"], ["red", "gold", "dark_blue"]
+			];
+			const mixedOptions = Rewards.catalog.floor.filter(function (entry) { return !!entry.palette && entry.cost === 2; });
+			assert(mixedOptions.length === 4, "mixed flower sets do not cost two stars");
+			assert(!Rewards.equip(paletteProgress, "floor", mixedOptions[0].id) && paletteProgress.equipped.floor === "flowers",
+				"mixed upgrade did not require an additional star or altered the existing selection");
+			Rewards.award(paletteProgress, 1, [true, true, false], 450);
+			mixedOptions.forEach(function (entry, index) {
+				const palette = Rewards.flowerPalettes[entry.palette];
+				assert(palette.bright.join(",") === mixtures[index].map(function (color) { return Rewards.flowerPalettes[color].bright[0]; }).join(",")
+					&& palette.dim.join(",") === mixtures[index].map(function (color) { return Rewards.flowerPalettes[color].dim[0]; }).join(","),
+					"mixed set uses incorrect component colors");
+				assert(Rewards.equip(paletteProgress, "floor", entry.id) && Rewards.balance(paletteProgress).borrowed === 2
+					&& Rewards.balance(paletteProgress).available === 0, "mixed palette swap did not reuse its deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(paletteProgress))).equipped.floor === mixedOptions[3].id, "mixed selection was not persisted");
+			assert(Rewards.equip(paletteProgress, "floor", "flowers") && Rewards.balance(paletteProgress).available === 1, "returning to a single color did not refund one star");
+			messages.push("PASS: four ordered mixed flower sets use the requested colors and refundable two-star deposits");
 
 			const learningProgress = Rewards.fresh();
 			assert(Rewards.canAccessStage(learningProgress, 1, false)

@@ -36,11 +36,25 @@
 		purple: { dim: ["#71528b", "#4e3569", "#9784aa"], bright: ["#b083e0", "#8046b2", "#dec3ff"] },
 		gray: { dim: ["#666b72", "#424b57", "#969aa0"], bright: ["#999fa7", "#626975", "#ced2d8"] }
 	};
+	const mixedFlowerSets = {
+		mix_pink_white_purple: ["pink", "white", "purple"],
+		mix_red_gold_gray: ["red", "gold", "gray"],
+		mix_orange_light_blue_purple: ["orange", "light_blue", "purple"],
+		mix_red_gold_dark_blue: ["red", "gold", "dark_blue"]
+	};
+	Object.keys(mixedFlowerSets).forEach(function (name) {
+		const colors = mixedFlowerSets[name];
+		flowerPalettes[name] = {
+			cost: 2,
+			bright: colors.map(function (color) { return flowerPalettes[color].bright[0]; }),
+			dim: colors.map(function (color) { return flowerPalettes[color].dim[0]; })
+		};
+	});
 	const catalog = {
 		explorer: [{ id: "original", cost: 0 }].concat(characters),
 		walls: [{ id: "original", cost: 0 }, { id: "moss", cost: 2 }],
 		floor: [{ id: "original", cost: 0 }].concat(Object.keys(flowerPalettes).map(function (palette) {
-			return { id: palette === "gold" ? "flowers" : "flowers_" + palette, cost: 1, palette: palette };
+			return { id: palette === "gold" ? "flowers" : "flowers_" + palette, cost: flowerPalettes[palette].cost || 1, palette: palette };
 		})),
 		goal: [{ id: "original", cost: 0 }, { id: "truck", cost: 2 }],
 		outside: [{ id: "original", cost: 0 }, { id: "beach", cost: 3 }]

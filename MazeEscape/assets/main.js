@@ -65,6 +65,8 @@
 			item_moss: "Mossy walls", item_flowers: "Gold flowers", item_truck: "Ice cream truck", item_beach: "Beach",
 			item_flowers_pink: "Pink flowers", item_flowers_red: "Red flowers", item_flowers_orange: "Orange flowers", item_flowers_white: "White flowers",
 			item_flowers_light_blue: "Light blue flowers", item_flowers_dark_blue: "Dark blue flowers", item_flowers_purple: "Purple flowers", item_flowers_gray: "Gray flowers",
+			item_flowers_mix_pink_white_purple: "Pink / White / Purple", item_flowers_mix_red_gold_gray: "Red / Gold / Gray",
+			item_flowers_mix_orange_light_blue_purple: "Orange / Light blue / Purple", item_flowers_mix_red_gold_dark_blue: "Red / Gold / Dark blue",
 			failedSeed: "First failed seed: {seed}", testError: "Failure: {error}", lineError: "Line {line}: {message}",
 			hintsList: [
 				"A fixed sequence of turns only works for one maze. Look for a rule that makes a decision at every cell.",
@@ -147,6 +149,8 @@
 			item_moss: "Mooswände", item_flowers: "Goldene Blumen", item_truck: "Glacewagen", item_beach: "Strand",
 			item_flowers_pink: "Rosa Blumen", item_flowers_red: "Rote Blumen", item_flowers_orange: "Orange Blumen", item_flowers_white: "Weisse Blumen",
 			item_flowers_light_blue: "Hellblaue Blumen", item_flowers_dark_blue: "Dunkelblaue Blumen", item_flowers_purple: "Violette Blumen", item_flowers_gray: "Graue Blumen",
+			item_flowers_mix_pink_white_purple: "Rosa / Weiss / Violett", item_flowers_mix_red_gold_gray: "Rot / Gold / Grau",
+			item_flowers_mix_orange_light_blue_purple: "Orange / Hellblau / Violett", item_flowers_mix_red_gold_dark_blue: "Rot / Gold / Dunkelblau",
 			failedSeed: "Erster fehlgeschlagener Seed: {seed}", testError: "Fehler: {error}", lineError: "Zeile {line}: {message}",
 			hintsList: [
 				"Eine feste Folge von Drehungen funktioniert nur in einem Labyrinth. Suche eine Regel, die an jedem Feld eine Entscheidung trifft.",
