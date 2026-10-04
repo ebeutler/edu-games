@@ -800,7 +800,11 @@
 	};
 
 	const drawPreview = function (canvas, slot, id) {
+		const scale = 4 * (window.devicePixelRatio || 1);
+		canvas.width = Math.round(80 * scale);
+		canvas.height = Math.round(60 * scale);
 		const context = canvas.getContext("2d");
+		context.setTransform(canvas.width / 80, 0, 0, canvas.height / 60, 0, 0);
 		if (slot === "explorer") {
 			context.translate(40, 36); drawExplorer(context, 48, id);
 		} else if (slot === "goal" && id === "truck") {

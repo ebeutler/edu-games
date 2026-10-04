@@ -88,6 +88,7 @@ h1 {
 .cosmetic-cost { position: absolute; top: 6px; right: 8px; font-size: 1.25rem; line-height: 1; font-weight: 800; color: var(--moss); }
 .cosmetic-button[data-affordable="false"] .cosmetic-cost { color: #b84848; }
 .cosmetic-preview { width: 64px; height: 64px; object-fit: contain; }
+.shop-items .cosmetic-preview { display: block; width: 100%; max-width: 100%; height: auto; }
 .cosmetic-button[aria-pressed="true"] { border-color: var(--moss); }
 .cosmetic-button:disabled { cursor: default; }
 .cosmetic-button:hover:not(:disabled) { border-color: var(--blue); }
