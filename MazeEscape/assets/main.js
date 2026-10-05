@@ -51,6 +51,7 @@
 			pushHelp: "Remember an absolute direction using FRONT, LEFT, RIGHT, or BACK.", popHelp: "Face and remove the latest saved direction.", stackHelp: "True when no return direction is saved.",
 			revealHint: "Reveal a hint", previousHint: "Previous hint", nextHint: "Next hint", challenge: "Challenge", testTitle: "Benchmark results", openFailure: "Open a failing test maze",
 			footer: "Your code stays in this browser. Maze seeds can be shared through the URL.", githubLink: "View on GitHub", mazeAria: "Fog-covered maze", centerView: "Center view", metricsAria: "Run statistics",
+			resetProgress: "Reset progress", confirmResetProgress: "Delete all MazeEscape progress, stars, decorations, saved code, and preferences and start again at Stage 1? This cannot be undone.",
 			testsPassed: "Your algorithm escaped all {count} test mazes.", testsFailed: "Your algorithm escaped {passed} of {count} test mazes.",
 			reliableStar: "Reliability: solve all 8 benchmark mazes ({dimensions})", efficientStar: "Efficiency: at most {limit} moves + turns across the benchmark suite", scaleStar: "Large maze: solve a visible 21×21+ maze and pass validation",
 			stage2TestsPassed: "Your algorithm escaped all {count} braided mazes.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} braided mazes.",
@@ -144,6 +145,7 @@
 			pushHelp: "Speichert eine absolute Richtung mit FRONT, LEFT, RIGHT oder BACK.", popHelp: "Richtet den Forscher nach der zuletzt gespeicherten Richtung aus und entfernt sie.", stackHelp: "Wahr, wenn keine Rückkehrrichtung gespeichert ist.",
 			revealHint: "Hinweis zeigen", previousHint: "Vorheriger Hinweis", nextHint: "Nächster Hinweis", challenge: "Herausforderung", testTitle: "Benchmark-Ergebnisse", openFailure: "Fehlgeschlagenes Testlabyrinth öffnen",
 			footer: "Dein Code bleibt in diesem Browser. Labyrinth-Seeds können über die URL geteilt werden.", githubLink: "Auf GitHub ansehen", mazeAria: "Labyrinth im Nebel", centerView: "Ansicht zentrieren", metricsAria: "Laufstatistik",
+			resetProgress: "Fortschritt zurücksetzen", confirmResetProgress: "Den gesamten MazeEscape-Fortschritt, alle Sterne, Dekorationen, gespeicherten Programme und Einstellungen löschen und bei Stufe 1 neu beginnen? Dies kann nicht rückgängig gemacht werden.",
 			testsPassed: "Dein Algorithmus hat alle {count} Testlabyrinthe verlassen.", testsFailed: "Dein Algorithmus hat {passed} von {count} Testlabyrinthen verlassen.",
 			reliableStar: "Zuverlässigkeit: alle 8 Benchmark-Labyrinthe lösen ({dimensions})", efficientStar: "Effizienz: höchstens {limit} Schritte + Drehungen in der Benchmark-Serie", scaleStar: "Grosses Labyrinth: ein sichtbares 21×21+-Labyrinth lösen und die Validierung bestehen",
 			stage2TestsPassed: "Dein Algorithmus hat alle {count} Labyrinthe mit Schleifen verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} Labyrinthen mit Schleifen verlassen.",
@@ -1440,11 +1442,24 @@
 			"starBalance", "stageProgress", "nextChallenge", "largeChallenge", "rewardNotice", "shopItems",
 			"cosmeticPicker", "closePicker", "pickerTitle", "pickerBalance", "pickerOptions",
 			"mazeDimensions", "mazeNotice", "completionAdvice", "nextAction", "advanceStage", "decorateAction", "editorError", "hintShortcut",
-			"starterPrompt", "starterMessage", "starterShopAction"
+			"starterPrompt", "starterMessage", "starterShopAction", "resetProgress"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
 
 	const bindEvents = function () {
+		elements.resetProgress.addEventListener("click", function () {
+			if (!window.confirm(text("confirmResetProgress"))) { return; }
+			stop();
+			safeStorage(function () {
+				Object.keys(localStorage).forEach(function (key) {
+					if (key.startsWith("mazeEscape")) { localStorage.removeItem(key); }
+				});
+			});
+			const url = new URL(window.location.href);
+			url.search = "";
+			url.hash = "";
+			window.location.replace(url.href);
+		});
 		elements.starterShopAction.addEventListener("click", openShop);
 		elements.hintShortcut.addEventListener("click", function () {
 			revealNextHint();
