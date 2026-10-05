@@ -308,6 +308,8 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .editor-error { margin: 12px 0; padding: 10px 12px; border-left: 3px solid var(--danger); color: var(--danger); background: var(--panel-deep); font-size: 0.83rem; line-height: 1.5; }
 
 .run-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.starter-prompt { margin-bottom: 12px; padding: 10px 12px; border-left: 3px solid var(--amber); background: var(--panel-deep); }
+.starter-prompt p { margin: 0 0 4px; color: var(--amber); font-size: 0.83rem; line-height: 1.5; }
 .hint-shortcut { display: block; margin: 0 0 8px auto; padding: 4px 0; font-size: 0.78rem; }
 #hintTitle { scroll-margin-top: 14px; }
 .speed-field { display: flex; align-items: center; gap: 8px; margin-left: auto; color: var(--muted); font-size: 0.75rem; font-weight: 700; }

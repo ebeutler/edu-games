@@ -24,6 +24,16 @@ across all eight mazes. Stages 2 and 3 retain their v1 suites, calibrated agains
 DFS respectively. A benchmark revision resets only that stage's incomparable personal best;
 earned stars and cosmetic deposits remain intact.
 
+Two permanent starter bonuses are separate from the nine stage stars: the first successful MOVE
+(Run or Step), followed by the first paid cosmetic selection change. Parser errors, wall collisions,
+turns alone, opening the shop, and Original selections do not qualify. A compact editor invitation
+offers "Pause & decorate" during a run and preserves execution when used. First borrowing awards
+the second bonus; swaps and returns cannot farm it. Stage unlocking still requires reliability.
+Starter flags are saved under the existing reward profile, bringing the normal maximum budget to
+11 stars. Legacy profiles without starter flags receive a first-move bonus when a saved stage star
+proves success, and a first-borrow bonus when paid equipment proves borrowing. Migration runs
+once and preserves stage stars, bests, and affordable equipment. Teacher credit remains separate.
+
 The borrowing panel reserves stars as refundable deposits for explorers, walls, floors, goal
 decorations, and outside scenery. Swapping credits the previous deposit automatically; returning an
 item refunds it in full. Earned achievements, personal bests, and equipment are saved locally under

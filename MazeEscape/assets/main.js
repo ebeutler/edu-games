@@ -39,7 +39,7 @@
 			completionValidationFailed: "Your program passed the standard benchmark but failed a large validation maze. Open that maze and debug the same algorithm.",
 			completionImprove: "Your next star is efficiency. This run used {score} moves + turns; the budget is {limit}. Look for unnecessary turns or explore different choices, then run again.",
 			completionLarge: "Your next star is the large-maze challenge. Create and solve a visible maze of at least 21×21; the same code must also pass validation.",
-			completionAdvance: "All three stars in this stage are yours. Try the next lesson or borrow a decoration.", completionRevisit: "All three stars in this stage are yours. Collect the remaining stars in an earlier stage.", completionPractice: "You earned all nine stars! Refine your algorithm to beat the fixed benchmark, try another maze, or decorate your explorer's world.",
+			completionAdvance: "All three stars in this stage are yours. Try the next lesson or borrow a decoration.", completionRevisit: "All three stars in this stage are yours. Collect the remaining stars in an earlier stage.", completionPractice: "You earned all nine stage stars! Refine your algorithm to beat the fixed benchmark, try another maze, or decorate your explorer's world.",
 			improveAlgorithm: "Improve the algorithm", continueStage: "Continue to Stage {stage}", revisitStage: "Collect stars in Stage {stage}", practiceMaze: "Try another maze",
 			step: "Step", reset: "Reset", speed: "Speed", trace: "Execution trace", reference: "Command reference",
 			referenceActions: "Actions", referenceConditions: "Conditions", referenceFlow: "Control flow", referenceVariables: "Variables", referenceExploration: "Exploration memory",
@@ -55,9 +55,10 @@
 			reliableStar: "Reliability: solve all 8 benchmark mazes ({dimensions})", efficientStar: "Efficiency: at most {limit} moves + turns across the benchmark suite", scaleStar: "Large maze: solve a visible 21×21+ maze and pass validation",
 			stage2TestsPassed: "Your algorithm escaped all {count} braided mazes.", stage2TestsFailed: "Your algorithm escaped {passed} of {count} braided mazes.",
 			stage3TestsPassed: "Your algorithm found all {count} hidden goals.", stage3TestsFailed: "Your algorithm found {passed} of {count} hidden goals.",
-			progressTitle: "Your progress", starBalance: "Earned: {earned}/9 ★ · Borrowed: {borrowed} ★ · Available: {available} ★",
-			teacherStarBalance: "Earned: {earned}/9 ★ · Teacher credit: {virtual} ★ · Borrowed: {borrowed} ★ · Available: {available} ★",
-			progressHelp: "Each achievement earns one permanent star. Experiments and returns never erase earned stars.",
+			progressTitle: "Your progress", starBalance: "Stage stars: {earned}/9 ★ · Starter stars: {starter}/2 ★ · Borrowed: {borrowed} ★ · Available: {available} ★",
+			teacherStarBalance: "Stage stars: {earned}/9 ★ · Starter stars: {starter}/2 ★ · Teacher credit: {virtual} ★ · Borrowed: {borrowed} ★ · Available: {available} ★",
+			progressHelp: "Earn nine stage stars plus two starter stars for your first successful move and first paid decoration. Each is permanent and awarded once.",
+			starterReward: "Starter reward", firstMoveReward: "Your first move earned 1 ★! Borrow your first decoration.", firstBorrowReward: "Your first decoration earned another 1 ★! Mix styles or swap to try something new.", pauseDecorate: "Pause & decorate",
 			stageProgress: "Stage {stage}", nextChallenge: "Next challenge: {goal}", stageMastered: "All three stars earned in this stage!",
 			largeChallenge: "Create large maze", shopTitle: "Borrow & decorate", shopHelp: "Stars are refundable deposits. Swapping or returning an item releases its stars. Decorations never change the algorithm or reveal hidden goals.",
 			starsGained: "You earned {count} new ★! Try a new decoration.", benchmarkScore: "Benchmark: {score} moves + turns · Personal best: {best}", newBest: "New personal best: {previous} → {score}",
@@ -131,7 +132,7 @@
 			completionValidationFailed: "Dein Programm hat den Standard-Benchmark bestanden, aber ein grosses Validierungslabyrinth nicht gelöst. Öffne dieses Labyrinth und prüfe denselben Algorithmus.",
 			completionImprove: "Dein nächster Stern ist die Effizienz. Dieser Lauf brauchte {score} Schritte + Drehungen; das Budget ist {limit}. Suche unnötige Drehungen oder probiere andere Entscheidungen und starte erneut.",
 			completionLarge: "Dein nächster Stern ist das grosse Labyrinth. Erstelle und löse ein sichtbares Labyrinth mit mindestens 21×21 Feldern; derselbe Code muss auch die Validierung bestehen.",
-			completionAdvance: "Alle drei Sterne dieser Stufe gehören dir. Probiere die nächste Stufe oder leihe eine Dekoration aus.", completionRevisit: "Alle drei Sterne dieser Stufe gehören dir. Sammle die fehlenden Sterne einer früheren Stufe.", completionPractice: "Du hast alle neun Sterne verdient! Verbessere deinen Algorithmus für einen neuen Benchmark-Bestwert, probiere ein weiteres Labyrinth oder dekoriere die Welt deines Forschers.",
+			completionAdvance: "Alle drei Sterne dieser Stufe gehören dir. Probiere die nächste Stufe oder leihe eine Dekoration aus.", completionRevisit: "Alle drei Sterne dieser Stufe gehören dir. Sammle die fehlenden Sterne einer früheren Stufe.", completionPractice: "Du hast alle neun Stufensterne verdient! Verbessere deinen Algorithmus für einen neuen Benchmark-Bestwert, probiere ein weiteres Labyrinth oder dekoriere die Welt deines Forschers.",
 			improveAlgorithm: "Algorithmus verbessern", continueStage: "Weiter zu Stufe {stage}", revisitStage: "Sterne in Stufe {stage} sammeln", practiceMaze: "Weiteres Labyrinth probieren",
 			pause: "Pause", step: "Schritt", reset: "Zurücksetzen", speed: "Tempo", trace: "Ausführungsspur", reference: "Befehlsübersicht",
 			referenceActions: "Aktionen", referenceConditions: "Bedingungen", referenceFlow: "Kontrollfluss", referenceVariables: "Variablen", referenceExploration: "Erkundungsspeicher",
@@ -147,9 +148,10 @@
 			reliableStar: "Zuverlässigkeit: alle 8 Benchmark-Labyrinthe lösen ({dimensions})", efficientStar: "Effizienz: höchstens {limit} Schritte + Drehungen in der Benchmark-Serie", scaleStar: "Grosses Labyrinth: ein sichtbares 21×21+-Labyrinth lösen und die Validierung bestehen",
 			stage2TestsPassed: "Dein Algorithmus hat alle {count} Labyrinthe mit Schleifen verlassen.", stage2TestsFailed: "Dein Algorithmus hat {passed} von {count} Labyrinthen mit Schleifen verlassen.",
 			stage3TestsPassed: "Dein Algorithmus hat alle {count} versteckten Ziele gefunden.", stage3TestsFailed: "Dein Algorithmus hat {passed} von {count} versteckten Zielen gefunden.",
-			progressTitle: "Dein Fortschritt", starBalance: "Verdient: {earned}/9 ★ · Geliehen: {borrowed} ★ · Verfügbar: {available} ★",
-			teacherStarBalance: "Verdient: {earned}/9 ★ · Lehrperson-Guthaben: {virtual} ★ · Geliehen: {borrowed} ★ · Verfügbar: {available} ★",
-			progressHelp: "Jede Herausforderung bringt einen dauerhaften Stern. Experimente und Rückgaben löschen keine verdienten Sterne.",
+			progressTitle: "Dein Fortschritt", starBalance: "Stufensterne: {earned}/9 ★ · Startsterne: {starter}/2 ★ · Geliehen: {borrowed} ★ · Verfügbar: {available} ★",
+			teacherStarBalance: "Stufensterne: {earned}/9 ★ · Startsterne: {starter}/2 ★ · Lehrperson-Guthaben: {virtual} ★ · Geliehen: {borrowed} ★ · Verfügbar: {available} ★",
+			progressHelp: "Verdiene neun Stufensterne und zwei Startsterne für deinen ersten erfolgreichen Schritt und deine erste ausgeliehene Dekoration. Jeder bleibt erhalten und wird einmal vergeben.",
+			starterReward: "Startbonus", firstMoveReward: "Dein erster Schritt bringt dir 1 ★! Leihe deine erste Dekoration aus.", firstBorrowReward: "Deine erste Dekoration bringt dir noch 1 ★! Kombiniere Stile oder wechsle die Auswahl.", pauseDecorate: "Pausieren & dekorieren",
 			stageProgress: "Stufe {stage}", nextChallenge: "Nächste Herausforderung: {goal}", stageMastered: "Alle drei Sterne dieser Stufe verdient!",
 			largeChallenge: "Grosses Labyrinth erstellen", shopTitle: "Ausleihen & dekorieren", shopHelp: "Sterne dienen als rückzahlbares Pfand. Beim Wechseln oder Zurückgeben erhältst du sie zurück. Dekorationen verändern den Algorithmus nicht und verraten keine versteckten Ziele.",
 			starsGained: "Du hast {count} neue ★ verdient! Probiere eine neue Dekoration.", benchmarkScore: "Benchmark: {score} Schritte + Drehungen · Persönlicher Bestwert: {best}", newBest: "Neuer Bestwert: {previous} → {score}",
@@ -208,7 +210,7 @@
 		language: "en", stage: 1, maze: null, world: null, runner: null, instructions: null,
 		running: false, frame: 0, lastStep: 0, hintIndex: -1, revealedHintIndex: -1, failedSeed: null,
 		camera: null, seedRevealed: false, viewOffsetX: 0, viewOffsetY: 0, drag: null,
-		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null, decorations: [], wallSegments: []
+		stage1Solved: false, teacherMode: false, progress: null, assessment: null, creationNotice: false, error: null, shopSlot: null, decorations: [], wallSegments: [], starterFeedback: false
 	};
 
 	const byId = function (id) { return document.getElementById(id); };
@@ -332,6 +334,7 @@
 
 	const createScenario = function (seed, size, announce) {
 		stop();
+		state.starterFeedback = false;
 		state.creationNotice = !!announce;
 		state.maze = state.stage === 3 ? Game.createDfsMaze(seed, size) : state.stage === 2 ? Game.createPledgeMaze(seed, size) : Game.createMaze(seed, size);
 		state.decorations = Rewards.decorationLayout(state.maze.seed, state.maze.size);
@@ -372,6 +375,7 @@
 
 	const resetWorld = function () {
 		stop();
+		state.starterFeedback = false;
 		state.creationNotice = false;
 		state.world = Game.createWorld(state.maze);
 		state.camera = {
@@ -574,7 +578,21 @@
 			elements.shopItems.appendChild(group);
 		});
 		if (elements.cosmeticPicker.open) { renderPicker(); }
+		if (state.starterFeedback) { elements.rewardNotice.textContent = text("firstBorrowReward"); }
 		updateBorrowControls();
+		updateStarterPrompt();
+	};
+	const updateStarterPrompt = function () {
+		const pending = state.progress.starter.firstMove && !state.progress.starter.firstBorrow;
+		elements.starterPrompt.hidden = !pending;
+		elements.starterMessage.textContent = pending ? text("firstMoveReward") : "";
+		elements.starterShopAction.hidden = !pending;
+		elements.starterShopAction.textContent = text(state.running ? "pauseDecorate" : "shopTitle");
+	};
+	const openShop = function () {
+		if (state.running) { pause(); }
+		byId("shop").open = true;
+		reveal(byId("shop").querySelector("summary"), true);
 	};
 	const cosmeticButton = function (slot, entry) {
 		const button = document.createElement("button");
@@ -721,7 +739,12 @@
 		const camera = cameraPosition(now);
 		const fromX = state.world.player.x;
 		const fromY = state.world.player.y;
+		const previousMoves = state.world.moves;
 		state.runner.step();
+		if (state.world.moves > previousMoves && Rewards.awardStarter(state.progress, "firstMove")) {
+			saveProgress();
+			updateProgress();
+		}
 		if (fromX !== state.world.player.x || fromY !== state.world.player.y) {
 			moveCamera(camera.x, camera.y, now, interval || 500);
 		}
@@ -796,6 +819,7 @@
 		elements.resetCode.disabled = elements.code.readOnly;
 		elements.maze.dataset.draggable = String(!state.running);
 		updateBorrowControls();
+		updateStarterPrompt();
 	};
 
 	const updateActiveLine = function () {
@@ -1415,11 +1439,13 @@
 			"status", "step", "testDetails", "testSummary", "trace", "turns", "variables", "variableOverlay", "memory", "memoryMetric",
 			"starBalance", "stageProgress", "nextChallenge", "largeChallenge", "rewardNotice", "shopItems",
 			"cosmeticPicker", "closePicker", "pickerTitle", "pickerBalance", "pickerOptions",
-			"mazeDimensions", "mazeNotice", "completionAdvice", "nextAction", "advanceStage", "decorateAction", "editorError", "hintShortcut"
+			"mazeDimensions", "mazeNotice", "completionAdvice", "nextAction", "advanceStage", "decorateAction", "editorError", "hintShortcut",
+			"starterPrompt", "starterMessage", "starterShopAction"
 		].forEach(function (id) { elements[id] = byId(id); });
 	};
 
 	const bindEvents = function () {
+		elements.starterShopAction.addEventListener("click", openShop);
 		elements.hintShortcut.addEventListener("click", function () {
 			revealNextHint();
 			reveal(byId("hintTitle"), true);
@@ -1434,10 +1460,7 @@
 			else if (action === "practice") { createScenario(randomSeed(), state.maze.size, true); reveal(elements.mazeTitle, true); }
 		});
 		elements.advanceStage.addEventListener("click", function () { goToStage(state.stage + 1); });
-		elements.decorateAction.addEventListener("click", function () {
-			byId("shop").open = true;
-			reveal(byId("shop").querySelector("summary"), true);
-		});
+		elements.decorateAction.addEventListener("click", openShop);
 		elements.shopItems.addEventListener("click", function (event) {
 			const button = event.target.closest("button");
 			if (!button || state.running) { return; }
@@ -1446,7 +1469,10 @@
 		elements.pickerOptions.addEventListener("click", function (event) {
 			const button = event.target.closest("button");
 			if (!button || state.running) { return; }
+			const changed = (state.progress.equipped[button.dataset.slot] || "original") !== button.dataset.item;
 			if (Rewards.equip(state.progress, button.dataset.slot, button.dataset.item, state.teacherMode)) {
+				const entry = Rewards.item(button.dataset.slot, button.dataset.item);
+				if (changed && entry.cost > 0 && Rewards.awardStarter(state.progress, "firstBorrow")) { state.starterFeedback = true; }
 				saveProgress();
 				updateProgress();
 				draw();
@@ -1537,7 +1563,9 @@
 	const initialize = function () {
 		cacheElements();
 		state.teacherMode = new URLSearchParams(window.location.search).get("teacher") === "1";
-		state.progress = Rewards.restore(safeStorage(function () { return JSON.parse(localStorage.getItem("mazeEscapeRewardsV1")); }, null), state.teacherMode);
+		const savedProgress = safeStorage(function () { return JSON.parse(localStorage.getItem("mazeEscapeRewardsV1")); }, null);
+		state.progress = Rewards.restore(savedProgress, state.teacherMode);
+		if (savedProgress && !savedProgress.starter) { saveProgress(); }
 		state.stage1Solved = state.progress.achievements[1][0];
 		const parameters = mazeParameters();
 		if (!Rewards.canAccessStage(state.progress, parameters.stage, state.teacherMode)) {

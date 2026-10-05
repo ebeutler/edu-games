@@ -131,6 +131,10 @@
 				<button id="reset" class="text-button" type="button" data-i18n="reset">Reset</button>
 				<label class="speed-field"><span data-i18n="speed">Speed</span><input id="speed" type="range" min="1" max="60" value="12"><output id="speedValue">12/s</output></label>
 			</div>
+			<section id="starterPrompt" class="starter-prompt" data-i18n-aria="starterReward" aria-label="Starter reward" hidden>
+				<p id="starterMessage" role="status" aria-live="polite"></p>
+				<button id="starterShopAction" class="text-button" type="button"></button>
+			</section>
 			<p id="editorError" class="editor-error" role="alert" hidden></p>
 			<button id="hintShortcut" class="text-button hint-shortcut" type="button" data-i18n="hintShortcut">Stuck? Reveal a hint</button>
 			<label class="visually-hidden" for="code" data-i18n="codeLabel">Pseudocode editor</label>

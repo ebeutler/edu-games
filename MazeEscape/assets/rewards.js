@@ -111,7 +111,7 @@
 	const fresh = function () {
 		const benchmarkVersions = {};
 		Object.keys(stages).forEach(function (stage) { benchmarkVersions[stage] = stages[stage].revision; });
-		return { achievements: { 1: [false, false, false], 2: [false, false, false], 3: [false, false, false] }, best: {}, equipped: {}, benchmarkVersions: benchmarkVersions };
+		return { achievements: { 1: [false, false, false], 2: [false, false, false], 3: [false, false, false] }, starter: { firstMove: false, firstBorrow: false }, best: {}, equipped: {}, benchmarkVersions: benchmarkVersions };
 	};
 	const item = function (slot, id) {
 		return (catalog[slot] || []).find(function (entry) { return entry.id === id; });
@@ -124,7 +124,8 @@
 			return total + (item(slot, progress.equipped[slot]) || catalog[slot][0]).cost;
 		}, 0);
 		const virtual = teacherMode ? 5 : 0;
-		return { earned: earned, virtual: virtual, borrowed: borrowed, available: earned + virtual - borrowed };
+		const starter = Number(progress.starter.firstMove) + Number(progress.starter.firstBorrow);
+		return { earned: earned, starter: starter, virtual: virtual, borrowed: borrowed, available: earned + starter + virtual - borrowed };
 	};
 	const equip = function (progress, slot, id, teacherMode) {
 		const next = item(slot, id);
@@ -144,6 +145,17 @@
 			const revision = saved.benchmarkVersions && saved.benchmarkVersions[stage] || 1;
 			if (revision === stages[stage].revision && Number.isSafeInteger(best) && best >= 0) { progress.best[stage] = best; }
 		});
+		if (saved.starter && typeof saved.starter === "object") {
+			progress.starter.firstMove = saved.starter.firstMove === true;
+			progress.starter.firstBorrow = progress.starter.firstMove && saved.starter.firstBorrow === true;
+		} else {
+			progress.starter.firstMove = Object.values(progress.achievements).some(function (stars) { return stars.some(Boolean); });
+			progress.starter.firstBorrow = progress.starter.firstMove && Object.keys(catalog).some(function (slot) {
+				const id = saved.equipped && saved.equipped[slot];
+				const entry = item(slot, id === "humen_f_Mina" ? "human_f_Mina" : id);
+				return !!entry && entry.cost > 0 || ["moss", "slug", "bunny", "racecar"].includes(id);
+			});
+		}
 		Object.keys(catalog).forEach(function (slot) {
 			if (saved.equipped && saved.equipped[slot]) {
 				const id = slot === "explorer" && saved.equipped[slot] === "humen_f_Mina" ? "human_f_Mina" : saved.equipped[slot];
@@ -151,6 +163,12 @@
 			}
 		});
 		return progress;
+	};
+	const awardStarter = function (progress, milestone) {
+		if (!["firstMove", "firstBorrow"].includes(milestone) || progress.starter[milestone]
+				|| milestone === "firstBorrow" && !progress.starter.firstMove) { return false; }
+		progress.starter[milestone] = true;
+		return true;
 	};
 	const award = function (progress, stage, achievements, score) {
 		let gained = 0;
@@ -257,7 +275,7 @@
 		return segments;
 	};
 	window.MazeEscapeRewards = {
-		stages: stages, catalog: catalog, item: item, flowerPalettes: flowerPalettes, floorMotifs: floorMotifs, wallThemes: wallThemes, wallLayout: wallLayout, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, evaluate: evaluate,
+		stages: stages, catalog: catalog, item: item, flowerPalettes: flowerPalettes, floorMotifs: floorMotifs, wallThemes: wallThemes, wallLayout: wallLayout, fresh: fresh, restore: restore, balance: balance, equip: equip, award: award, awardStarter: awardStarter, evaluate: evaluate,
 		decorationLayout: decorationLayout, flowerLayout: decorationLayout,
 		canAccessStage: function (progress, stage, teacherMode) {
 			return [1, 2, 3].includes(stage) && (stage === 1 || teacherMode || progress.achievements[1][0]);

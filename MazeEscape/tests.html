@@ -470,6 +470,36 @@
 				"real achievements did not add to the separate virtual credit");
 			messages.push("PASS: teacher mode adds exactly five virtual shop stars without minting achievements");
 
+			const starterProgress = Rewards.fresh();
+			assert(!Rewards.awardStarter(starterProgress, "firstBorrow"), "borrowing earned a starter star before a successful move");
+			assert(Rewards.awardStarter(starterProgress, "firstMove") && Rewards.balance(starterProgress).starter === 1
+				&& Rewards.balance(starterProgress).earned === 0 && Rewards.balance(starterProgress).available === 1,
+				"first move did not award a separate starter star");
+			assert(!Rewards.awardStarter(starterProgress, "firstMove") && !Rewards.canAccessStage(starterProgress, 2, false), "starter replay minted stars or unlocked a stage");
+			assert(Rewards.equip(starterProgress, "explorer", "animal_d_Buggs"), "starter star cannot fund the first decoration");
+			assert(Rewards.awardStarter(starterProgress, "firstBorrow") && Rewards.balance(starterProgress).starter === 2
+				&& Rewards.balance(starterProgress).available === 1, "first borrow did not award the second starter star");
+			assert(!Rewards.awardStarter(starterProgress, "firstBorrow") && Rewards.equip(starterProgress, "floor", "flowers"), "second bonus was farmed or cannot fund another decoration");
+			assert(JSON.stringify(Rewards.restore(JSON.parse(JSON.stringify(starterProgress)))) === JSON.stringify(starterProgress), "starter bonuses or their equipment did not persist");
+			assert(Rewards.balance(starterProgress, true).virtual === 5 && Rewards.balance(starterProgress, true).starter === 2, "teacher credit replaced or inflated starter bonuses");
+			const legacyStarter = Rewards.fresh();
+			legacyStarter.achievements[1] = [true, true, false];
+			legacyStarter.equipped = { explorer: "animal_d_Buggs", floor: "flowers" };
+			delete legacyStarter.starter;
+			const retroactive = Rewards.restore(legacyStarter);
+			assert(retroactive.starter.firstMove && retroactive.starter.firstBorrow && Rewards.balance(retroactive).earned === 2
+				&& Rewards.balance(retroactive).starter === 2 && retroactive.equipped.explorer === "animal_d_Buggs", "qualified legacy progress did not receive both starter bonuses");
+			assert(!Rewards.awardStarter(Rewards.restore(retroactive), "firstBorrow"), "legacy migration repeatedly awarded starter stars");
+			const legacyMoveOnly = Rewards.fresh();
+			legacyMoveOnly.achievements[1][0] = true;
+			delete legacyMoveOnly.starter;
+			assert(Rewards.restore(legacyMoveOnly).starter.firstMove && !Rewards.restore(legacyMoveOnly).starter.firstBorrow, "legacy migration invented a paid borrow");
+			const teacherLoansOnly = Rewards.fresh();
+			teacherLoansOnly.equipped.explorer = "human_f_Mina";
+			delete teacherLoansOnly.starter;
+			assert(Rewards.balance(Rewards.restore(teacherLoansOnly, true), true).starter === 0, "teacher loans alone awarded starter stars");
+			messages.push("PASS: two one-time starter bonuses fund early decoration, preserve stage gates, and migrate qualified legacy progress");
+
 			const flowers = Rewards.flowerLayout("flower-repeatable", 11);
 			assert(JSON.stringify(flowers) === JSON.stringify(Rewards.flowerLayout("flower-repeatable", 11)), "flower layout changes on redraw or reset");
 			assert(JSON.stringify(flowers) !== JSON.stringify(Rewards.flowerLayout("flower-different", 11)), "different seeds share the same flower layout");
