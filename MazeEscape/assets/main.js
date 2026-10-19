@@ -526,8 +526,11 @@
 		elements.advanceStage.textContent = text("continueStage", { stage: state.stage + 1 });
 	};
 	const reveal = function (element, focus) {
-		element.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-		if (focus) { element.focus({ preventScroll: true }); }
+		const panel = element.closest(".hint-card, .results, .maze-heading, #shop") || element;
+		window.requestAnimationFrame(function () {
+			if (focus) { element.focus({ preventScroll: true }); }
+			panel.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start", inline: "nearest" });
+		});
 	};
 	const createLargeMaze = function () {
 		createScenario(randomSeed(), 21, true);
@@ -1514,7 +1517,7 @@
 			document.body.classList.remove("cosmetic-picker-open");
 			const button = elements.shopItems.querySelector('[data-slot="' + state.shopSlot + '"]');
 			state.shopSlot = null;
-			if (button) { button.focus(); }
+			if (button) { button.focus({ preventScroll: true }); }
 		});
 		elements.cosmeticPicker.addEventListener("click", function (event) {
 			if (event.target !== elements.cosmeticPicker) { return; }
