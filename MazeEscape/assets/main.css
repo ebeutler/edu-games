@@ -357,6 +357,18 @@ input[type="text"], input[type="number"] { width: 100%; padding: 7px 9px; font-f
 .results ul { padding-left: 20px; }
 .stars { margin: 0; color: var(--amber) !important; font-size: 1.5rem !important; letter-spacing: 0.1em; }
 
+@keyframes panel-arrival {
+	0%, 100% { box-shadow: 0 0 0 0 transparent; }
+	50% { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(242, 184, 75, 0.65); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	:is(.starter-prompt, .results, .maze-notice, .editor-error):not([hidden]),
+	.reward-notice:not(:empty), .cosmetic-picker[open], .syntax-guide[open], #shop[open] {
+		animation: panel-arrival 1s ease-in-out 3;
+	}
+}
+
 footer { padding: 20px 0 36px; color: var(--muted); font-size: 0.78rem; }
 footer p { margin: 0; }
 footer a { color: var(--blue); text-underline-offset: 3px; }
