@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Maze Escape checks</title>
+	<script src="assets/game.js"></script>
+	<script src="assets/rewards.js"></script>
+</head>
+<body>
+	<h1>Maze Escape checks</h1>
+	<pre id="results">Running...</pre>
+	<script>
+		window.addEventListener("error", function (event) {
+			document.getElementById("results").textContent = "FAIL: " + event.message;
+		});
+		(function () {
+			"use strict";
+
+			const Game = window.MazeEscapeGame;
+			const messages = [];
+			const wallFollower = [
+				"WHILE NOT AT_GOAL",
+				"  IF NOT WALL RIGHT",
+				"    TURN RIGHT",
+				"    MOVE",
+				"  ELSE",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN LEFT",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
+			const leftWallFollower = [
+				"WHILE NOT AT_GOAL",
+				"  IF NOT WALL LEFT",
+				"    TURN LEFT",
+				"    MOVE",
+				"  ELSE",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN RIGHT",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
+			const pledge = [
+				"SET turnBalance TO 0",
+				"WHILE NOT AT_GOAL",
+				"  IF turnBalance = 0",
+				"    IF NOT WALL FRONT",
+				"      MOVE",
+				"    ELSE",
+				"      TURN RIGHT",
+				"      SET turnBalance TO turnBalance + 1",
+				"    END",
+				"  ELSE",
+				"    IF NOT WALL LEFT",
+				"      TURN LEFT",
+				"      SET turnBalance TO turnBalance - 1",
+				"      MOVE",
+				"    ELSE",
+				"      IF NOT WALL FRONT",
+				"        MOVE",
+				"      ELSE",
+				"        TURN RIGHT",
+				"        SET turnBalance TO turnBalance + 1",
+				"      END",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
+			const obstacleSidestep = [
+				"WHILE NOT AT_GOAL",
+				"  IF NOT WALL FRONT",
+				"    MOVE",
+				"  ELSE",
+				"    TURN RIGHT",
+				"    MOVE",
+				"    TURN LEFT",
+				"  END",
+				"END"
+			].join("\n");
+			const depthFirstSearch = [
+				"MARK",
+				"WHILE NOT AT_GOAL",
+				"  IF UNVISITED FRONT",
+				"    PUSH BACK",
+				"    MOVE",
+				"    MARK",
+				"  ELSE",
+				"    IF UNVISITED RIGHT",
+				"      TURN RIGHT",
+				"      PUSH BACK",
+				"      MOVE",
+				"      MARK",
+				"    ELSE",
+				"      IF UNVISITED LEFT",
+				"        TURN LEFT",
+				"        PUSH BACK",
+				"        MOVE",
+				"        MARK",
+				"      ELSE",
+				"        IF UNVISITED BACK",
+				"          TURN RIGHT",
+				"          TURN RIGHT",
+				"          PUSH BACK",
+				"          MOVE",
+				"          MARK",
+				"        ELSE",
+				"          IF NOT STACK EMPTY",
+				"            FACE POP",
+				"            MOVE",
+				"          END",
+				"        END",
+				"      END",
+				"    END",
+				"  END",
+				"END"
+			].join("\n");
+
+			const assert = function (condition, message) {
+				if (!condition) {
+					throw new Error(message);
+				}
+			};
+			const runOnMaze = function (source, maze, stage) {
+				const runner = Game.createRunner(Game.parse(source, stage), Game.createWorld(maze));
+				while (!runner.complete) { runner.step(); }
+				return runner;
+			};
+
+			const first = Game.createMaze("repeatable", 11);
+			const second = Game.createMaze("repeatable", 11);
+			assert(JSON.stringify(first) === JSON.stringify(second), "same seed produced different mazes");
+			messages.push("PASS: seeded generation is deterministic");
+
+			[5, 11, 31].forEach(function (size) {
+				const maze = Game.createMaze("tree-" + size, size);
+				let passages = 0;
+				for (let y = 0; y < size; y++) {
+					for (let x = 0; x < size; x++) {
+						const cell = maze.cells[y * size + x];
+						if (x + 1 < size && !(cell & Game.constants.WALLS[1])) { passages++; }
+						if (y + 1 < size && !(cell & Game.constants.WALLS[2])) { passages++; }
+					}
+				}
+				assert(passages === size * size - 1, "maze is not a tree at size " + size);
+			});
+			messages.push("PASS: generated mazes are perfect mazes");
+
+			const instructions = Game.parse(wallFollower);
+			assert(instructions.some(function (instruction) { return instruction.op === "JUMP_IF_FALSE"; }), "IF/WHILE did not compile");
+			assert(instructions.some(function (instruction) { return instruction.op === "TURN"; }), "TURN did not compile");
+			messages.push("PASS: keyword pseudocode compiles");
+
+			const mixedCase = wallFollower.split("\n").map(function (line, index) {
+				return index % 2 ? line.toLowerCase() : line.charAt(0) + line.slice(1).toLowerCase();
+			}).join("\n");
+			const mixedCaseResult = Game.runProgram(mixedCase, "mixed-case", 11);
+			assert(mixedCaseResult.world.won, "mixed-capitalization program did not escape");
+			assert(Game.parse(mixedCase)[0].text === "While not at_goal", "parser changed the entered source text");
+			messages.push("PASS: commands accept arbitrary capitalization");
+
+			const steppingSource = [
+				"SET count TO 0",
+				"WHILE count = 0",
+				"  IF count = 1",
+				"    SET count TO 2",
+				"  ELSE",
+				"    SET count TO 1",
+				"  END",
+				"END"
+			].join("\n");
+			const steppingRunner = Game.createRunner(
+				Game.parse(steppingSource, 2),
+				Game.createWorld(Game.createMaze("stepping", 5))
+			);
+			const steppedLines = [];
+			for (let index = 0; index < 6; index++) {
+				steppingRunner.step();
+				steppedLines.push(steppingRunner.lastInstruction.line);
+			}
+			assert(steppedLines.join(",") === "1,2,3,5,6,2", "stepping skipped a source-level control line");
+			messages.push("PASS: stepping pauses on SET, IF, ELSE, and WHILE");
+
+			const booleanSource = [
+				"SET result TO 0",
+				"IF result = 0 OR result = 1 AND result = 2",
+				"  SET result TO 1",
+				"END",
+				"IF result = 1 AND NOT result = 2",
+				"  SET result TO 3",
+				"END"
+			].join("\n");
+			const booleanInstructions = Game.parse(booleanSource, 2);
+			assert(booleanInstructions[1].condition.type === "OR"
+				&& booleanInstructions[1].condition.conditions[1].type === "AND", "AND/OR precedence compiled incorrectly");
+			const booleanRunner = Game.createRunner(booleanInstructions, Game.createWorld(Game.createMaze("booleans", 5)));
+			while (!booleanRunner.complete) { booleanRunner.step(); }
+			assert(booleanRunner.variables.RESULT === 3, "AND/OR conditions evaluated incorrectly");
+			messages.push("PASS: conditions support NOT, AND, and OR precedence");
+
+			for (let index = 0; index < 50; index++) {
+				const result = Game.runProgram(wallFollower, "escape-" + index, 15);
+				assert(result.world.won, "wall follower failed seed escape-" + index);
+				assert(!result.error, "wall follower raised an error for seed escape-" + index);
+				assert(result.world.player.x < 0 || result.world.player.y < 0
+					|| result.world.player.x >= 15 || result.world.player.y >= 15,
+				"escaped player did not cross the maze boundary");
+			}
+			messages.push("PASS: right-hand rule escapes 50 generated mazes");
+
+			const pledgeMaze = Game.createPledgeMaze("pledge-repeatable", 15);
+			assert(pledgeMaze.stage === 2, "Pledge maze has the wrong stage");
+			assert(pledgeMaze.requiresTurnBalance, "Pledge maze does not require turn balance");
+			assert(pledgeMaze.start.x > 0 && pledgeMaze.start.y > 0
+				&& pledgeMaze.start.x < pledgeMaze.size - 1 && pledgeMaze.start.y < pledgeMaze.size - 1,
+				"Pledge maze does not start in the interior");
+			let boundaryOpenings = 0;
+			for (let position = 0; position < pledgeMaze.size; position++) {
+				if (!(pledgeMaze.cells[position] & Game.constants.WALLS[0])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[position * pledgeMaze.size + pledgeMaze.size - 1] & Game.constants.WALLS[1])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[(pledgeMaze.size - 1) * pledgeMaze.size + position] & Game.constants.WALLS[2])) { boundaryOpenings++; }
+				if (!(pledgeMaze.cells[position * pledgeMaze.size] & Game.constants.WALLS[3])) { boundaryOpenings++; }
+			}
+			assert(boundaryOpenings === 1, "Pledge maze does not have exactly one boundary exit");
+			let pledgePassages = 0;
+			for (let y = 0; y < pledgeMaze.size; y++) {
+				for (let x = 0; x < pledgeMaze.size; x++) {
+					const cell = pledgeMaze.cells[y * pledgeMaze.size + x];
+					if (x + 1 < pledgeMaze.size && !(cell & Game.constants.WALLS[1])) { pledgePassages++; }
+					if (y + 1 < pledgeMaze.size && !(cell & Game.constants.WALLS[2])) { pledgePassages++; }
+				}
+			}
+			assert(pledgePassages > pledgeMaze.size * pledgeMaze.size - 1, "Pledge maze has no passage cycles");
+			assert(JSON.stringify(pledgeMaze) === JSON.stringify(Game.createPledgeMaze("pledge-repeatable", 15)),
+				"Pledge generation is not deterministic");
+			messages.push("PASS: Pledge mazes are deterministic, interior, and braided");
+
+			const startDirections = new Set();
+			const exitDirections = new Set();
+			for (let index = 0; index < 50; index++) {
+				const size = [7, 11, 15, 21, 31][index % 5];
+				const maze = Game.createPledgeMaze("pledge-" + index, size);
+				startDirections.add(maze.start.direction);
+				exitDirections.add(maze.exit.direction);
+				assert(runOnMaze(pledge, maze, 2).world.won, "Pledge algorithm failed seed pledge-" + index);
+				assert(!runOnMaze(wallFollower, maze, 2).world.won, "right-hand rule escaped seed pledge-" + index);
+				assert(!runOnMaze(leftWallFollower, maze, 2).world.won, "left-hand rule escaped seed pledge-" + index);
+				assert(!runOnMaze(obstacleSidestep, maze, 2).world.won, "simple obstacle sidestep escaped seed pledge-" + index);
+			}
+			assert(startDirections.size === 4, "Pledge starts do not cover every direction");
+			assert(exitDirections.size === 4, "Pledge exits do not cover every boundary");
+			messages.push("PASS: Pledge escapes 50 braided mazes from every initial direction");
+			messages.push("PASS: Pledge mazes trap both hand rules and the sidestep shortcut");
+
+			[7, 11, 15, 21, 31].forEach(function (size) {
+				const base = Game.createPledgeMaze("direction-matrix-" + size, size);
+				for (let exitDirection = 0; exitDirection < 4; exitDirection++) {
+					for (let startDirection = 0; startDirection < 4; startDirection++) {
+						const cells = base.cells.slice();
+						cells[base.exit.y * size + base.exit.x] |= Game.constants.WALLS[base.exit.direction];
+						const offset = Math.floor(size / 2);
+						const exit = exitDirection === 0 ? { x: offset, y: 0, direction: 0 }
+							: exitDirection === 1 ? { x: size - 1, y: offset, direction: 1 }
+								: exitDirection === 2 ? { x: offset, y: size - 1, direction: 2 }
+									: { x: 0, y: offset, direction: 3 };
+						cells[exit.y * size + exit.x] &= ~Game.constants.WALLS[exit.direction];
+						const maze = {
+							seed: base.seed,
+							size: size,
+							stage: 2,
+							cells: cells,
+							exit: exit,
+							start: { x: base.start.x, y: base.start.y, direction: startDirection }
+						};
+						assert(runOnMaze(pledge, maze, 2).world.won,
+							"Pledge failed size " + size + ", start " + startDirection + ", exit " + exitDirection);
+					}
+				}
+			});
+			messages.push("PASS: Pledge works for every start direction and exit side");
+
+			let stageError;
+			try { Game.parse("SET turns TO 0", 1); } catch (error) { stageError = error; }
+			assert(stageError && stageError.code === "COMMAND_NOT_AVAILABLE", "Stage 1 accepted Stage 2 commands");
+			assert(Game.parse("IF WALL LEFT OR WALL RIGHT\n  MOVE\nEND", 1)[0].condition.type === "OR",
+				"Stage 1 did not accept Boolean conditions");
+			assert(Game.parse("set turns to turns + 1", 2)[0].op === "SET", "Stage 2 SET did not compile case-insensitively");
+			let headingError;
+			try { Game.parse("IF HEADING NORTH\n  MOVE\nEND", 2); } catch (error) { headingError = error; }
+			assert(headingError && headingError.code === "UNKNOWN_CONDITION", "Stage 2 still accepted HEADING");
+			messages.push("PASS: Stage 2 uses turn balance without an absolute heading sensor");
+
+			const dfsMaze = Game.createDfsMaze("dfs-repeatable", 15);
+			let dfsPassages = 0;
+			for (let y = 0; y < dfsMaze.size; y++) {
+				for (let x = 0; x < dfsMaze.size; x++) {
+					const cell = dfsMaze.cells[y * dfsMaze.size + x];
+					if (x + 1 < dfsMaze.size && !(cell & Game.constants.WALLS[1])) { dfsPassages++; }
+					if (y + 1 < dfsMaze.size && !(cell & Game.constants.WALLS[2])) { dfsPassages++; }
+				}
+			}
+			assert(dfsPassages > dfsMaze.size * dfsMaze.size - 1, "Stage 3 maze has no loops");
+			assert(dfsMaze.goal.x !== dfsMaze.start.x || dfsMaze.goal.y !== dfsMaze.start.y, "Stage 3 goal starts under the player");
+			assert(JSON.stringify(dfsMaze.cells) === JSON.stringify(Game.createDfsMaze("dfs-repeatable", 15).cells),
+				"Stage 3 generation is not deterministic");
+			messages.push("PASS: Stage 3 braided mazes are deterministic");
+
+			for (let index = 0; index < 40; index++) {
+				const size = [7, 11, 15, 21, 31][index % 5];
+				const result = Game.runProgram(depthFirstSearch, "dfs-" + index, size, 3);
+				assert(result.world.won, "DFS failed seed dfs-" + index);
+				assert(result.world.player.x === result.world.maze.goal.x
+					&& result.world.player.y === result.world.maze.goal.y, "DFS did not stop on the hidden goal");
+			}
+			messages.push("PASS: DFS finds 40 hidden goals");
+
+			let markStageError;
+			try { Game.parse("MARK", 2); } catch (error) { markStageError = error; }
+			assert(markStageError && markStageError.code === "COMMAND_NOT_AVAILABLE", "Stage 2 accepted Stage 3 commands");
+			assert(Game.parse("MARK\nPUSH BACK\nFACE POP", 3).length === 4, "Stage 3 memory commands did not compile");
+			messages.push("PASS: Stage 3 memory commands are stage-restricted");
+
+			let parseError;
+			try { Game.parse("FLY"); } catch (error) { parseError = error; }
+			assert(parseError && parseError.code === "UNKNOWN_COMMAND" && parseError.line === 1, "unknown command error is incorrect");
+			messages.push("PASS: parser reports source errors");
+			let missingEnd;
+			try { Game.parse("WHILE NOT AT_GOAL\n  IF WALL FRONT\n    TURN LEFT"); } catch (error) { missingEnd = error; }
+			assert(missingEnd && missingEnd.code === "MISSING_END" && missingEnd.line === 2 && missingEnd.detail === "IF",
+				"missing END did not identify the innermost opener");
+			try { Game.parse("WHILE NOT AT_GOAL\n  IF WALL FRONT\n    TURN LEFT\n  END"); } catch (error) { missingEnd = error; }
+			assert(missingEnd.line === 1 && missingEnd.detail === "WHILE", "outer WHILE opener was not identified");
+			let bracketError;
+			try { Game.parse("IF <WALL FRONT>\n  MOVE\nEND"); } catch (error) { bracketError = error; }
+			assert(bracketError && bracketError.code === "UNKNOWN_CONDITION" && bracketError.detail === "<WALL FRONT>",
+				"literal placeholder brackets were accepted or lost in the error");
+			messages.push("PASS: syntax errors identify block openers and preserve bracket mistakes for guidance");
+
+			const collision = Game.runProgram("MOVE", "collision", 5);
+			assert(collision.error && ["HIT_WALL", "STOPPED_BEFORE_GOAL"].includes(collision.error.code), "unsafe program did not stop");
+			messages.push("PASS: unsafe programs stop with an error");
+
+			const stalled = Game.runProgram("WHILE NOT AT_GOAL\nEND", "stalled", 5);
+			assert(stalled.error && stalled.error.code === "LIMIT_REACHED", "empty loop did not hit execution limit");
+			messages.push("PASS: non-progressing loops are bounded");
+
+			const Rewards = window.MazeEscapeRewards;
+			const references = [wallFollower, pledge, depthFirstSearch.replace(/RIGHT/g, "TEMP").replace(/LEFT/g, "RIGHT").replace(/TEMP/g, "LEFT")];
+			references.forEach(function (source, index) {
+				const stage = index + 1;
+				const results = Array.from({ length: 8 }, function (_, seedIndex) {
+					return Game.runProgram(source, Rewards.benchmarkSeed(stage, seedIndex), Rewards.stages[stage].size, stage);
+				});
+				const small = Game.runProgram(source, "reward-visible-small", Rewards.stages[stage].size, stage).world;
+				const large = Game.runProgram(source, "reward-visible-large", 21, stage).world;
+				const validation = Array.from({ length: 3 }, function (_, seedIndex) {
+					return Game.runProgram(source, Rewards.largeSeed(stage, 21, seedIndex), 21, stage);
+				});
+				const normal = Rewards.evaluate(stage, results, small, validation);
+				assert(normal.achievements.join(",") === "true,true,false", "small visible run earned a large-maze star, or reference budget is unreachable");
+				assert(Rewards.evaluate(stage, results, large, validation).achievements[2], "visible large maze with validation did not qualify");
+				assert(!Rewards.evaluate(stage, results, large, []).achievements[2], "large maze qualified without validation");
+				assert(!Rewards.evaluate(stage, results, large, results.slice(0, 3)).achievements[2], "small validation mazes qualified a large run");
+				assert(!Rewards.evaluate(stage, results, { won: false, maze: { size: 21 } }, validation).achievements[2], "unsolved visible large maze qualified");
+				const slower = results.map(function (runner) {
+					return { world: { won: true, moves: runner.world.moves, turns: runner.world.turns + 1000 } };
+				});
+				assert(!Rewards.evaluate(stage, slower, small, []).achievements[1], "efficiency ignored unnecessary turns");
+			});
+			messages.push("PASS: fixed reward benchmarks have achievable moves + turns budgets");
+			messages.push("PASS: large-maze stars require a visible 21×21+ success and validation");
+			const handScores = [wallFollower, leftWallFollower].map(function (source) {
+				const results = Array.from({ length: 8 }, function (_, index) {
+					return Game.runProgram(source, Rewards.benchmarkSeed(1, index), Rewards.stages[1].size, 1);
+				});
+				assert(Rewards.evaluate(1, results, null, []).achievements[1], "a hand rule cannot earn the efficiency star");
+				return results.reduce(function (total, runner) {
+					return { moves: total.moves + runner.world.moves, turns: total.turns + runner.world.turns };
+				}, { moves: 0, turns: 0 });
+			});
+			assert(handScores[0].moves === handScores[1].moves && handScores[0].turns === handScores[1].turns,
+				"Stage 1 benchmark favors one hand rule");
+			messages.push("PASS: both wall followers have equal benchmark moves and turns and earn the efficiency star");
+
+			const progress = Rewards.fresh();
+			assert(Rewards.award(progress, 1, [true, false, false], 500).gained === 1, "first star was not awarded");
+			assert(Rewards.equip(progress, "explorer", "animal_d_Buggs"), "animal could not be borrowed for one star");
+			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 2, "additional stars counted incorrectly");
+			assert(Rewards.balance(progress).available === 2, "animal deposit was not reserved");
+			assert(Rewards.equip(progress, "explorer", "human_f_Aino"), "animal deposit was not reused for the human");
+			assert(Rewards.balance(progress).borrowed === 3 && Rewards.balance(progress).available === 0, "human swap double-charged");
+			assert(!Rewards.equip(progress, "floor", "flowers") && !progress.equipped.floor, "borrowing overspent the shared balance");
+			assert(Rewards.equip(progress, "explorer", "human_f_Laura"), "equal-cost swap failed");
+			assert(Rewards.equip(progress, "explorer", "original") && Rewards.balance(progress).available === 3, "return did not fully refund deposit");
+			assert(Rewards.equip(progress, "walls", "living_hedges") && Rewards.equip(progress, "floor", "flowers"), "independent slots failed");
+			assert(!Rewards.equip(progress, "outside", "beach"), "outside slot overspent balance");
+			const before = JSON.stringify(progress.equipped);
+			assert(!Rewards.equip(progress, "explorer", "human_f_Aino") && JSON.stringify(progress.equipped) === before, "failed swap altered equipment");
+			assert(Rewards.award(progress, 1, [true, true, true], 450).gained === 0, "repeated check minted duplicate stars");
+			Rewards.award(progress, 1, [false, false, false], null);
+			assert(Rewards.balance(progress).earned === 3 && progress.best[1] === 450, "unsuccessful experiment lost earned progress");
+			assert(JSON.stringify(Rewards.restore(JSON.parse(JSON.stringify(progress)))) === JSON.stringify(progress), "progress did not survive serialization");
+			const legacy = JSON.parse(JSON.stringify(progress));
+			delete legacy.benchmarkVersions;
+			legacy.best[2] = 987;
+			const migrated = Rewards.restore(legacy);
+			assert(migrated.best[1] === undefined && migrated.best[2] === 987, "benchmark migration kept an incomparable score or reset an unchanged score");
+			assert(JSON.stringify(migrated.achievements) === JSON.stringify(progress.achievements)
+				&& JSON.stringify(migrated.equipped) === JSON.stringify(progress.equipped), "benchmark migration lost stars or deposits");
+			assert(Rewards.award(migrated, 1, [true, true, true], 1790).gained === 0, "benchmark migration re-awarded existing stars");
+			messages.push("PASS: benchmark revisions reset only incomparable personal bests and preserve rewards");
+			assert(Rewards.balance(Rewards.restore({ achievements: progress.achievements, equipped: { explorer: "human_f_Aino", walls: "living_hedges", outside: "beach" } })).available >= 0,
+				"invalid saved deposits created a negative balance");
+			const characters = Rewards.catalog.explorer.filter(function (entry) { return !!entry.image; });
+			assert(characters.length === 42 && new Set(characters.map(function (entry) { return entry.id; })).size === 42,
+				"character assets are missing or duplicated");
+			assert(characters.filter(function (entry) { return entry.cost === 1; }).length === 6
+				&& characters.filter(function (entry) { return entry.cost === 2; }).length === 2
+				&& characters.filter(function (entry) { return entry.cost === 3; }).length === 28
+				&& characters.filter(function (entry) { return entry.cost === 4; }).length === 6,
+				"character categories have the wrong prices");
+			assert(characters.filter(function (entry) { return entry.category === "human"; }).map(function (entry) { return entry.name; }).join(",")
+				=== "Aino,Alex,Gillian,Julia,Ladina,Laura,Linda,Luigia,Lydia,Mina,Neela,Nora,Nova,Pia,Rose,Daniel,Denis,Ed,Julius,Kariko,Kevin,Kumail,Lars,Linus,Olly,Paul,Philipp,Sato",
+				"humans are not sorted by gender, then name");
+			assert(Rewards.item("explorer", "alien_f_Jax 372").image.includes("%20"), "spaces in asset filenames are not URL-encoded");
+			assert(Rewards.item("explorer", "alien_m_Floater #938").image.includes("%23"), "hash in asset filename is treated as a fragment");
+			assert(Rewards.item("explorer", "human_f_Mina").category === "human" && Rewards.item("explorer", "human_f_Mina").cost === 3
+				&& Rewards.item("explorer", "human_f_Mina").image.endsWith("human_f_Mina.png"), "Mina's renamed asset is not in the catalog");
+			const oldMina = Rewards.fresh();
+			oldMina.achievements[1] = [true, true, true];
+			oldMina.equipped.explorer = "humen_f_Mina";
+			const renamedMina = Rewards.restore(oldMina);
+			assert(renamedMina.equipped.explorer === "human_f_Mina" && Rewards.balance(renamedMina).borrowed === 3,
+				"Mina's rename lost a saved selection or its deposit");
+			const oldEquipment = Rewards.fresh();
+			oldEquipment.achievements[1] = [true, true, true];
+			oldEquipment.achievements[2] = [true, true, true];
+			oldEquipment.equipped = { explorer: "bunny", walls: "moss", floor: "flowers" };
+			const newEquipment = Rewards.restore(oldEquipment);
+			assert(!newEquipment.equipped.explorer && !newEquipment.equipped.walls && newEquipment.equipped.floor === "flowers"
+				&& Rewards.balance(newEquipment).available === 5 && Rewards.balance(newEquipment).earned === 6,
+				"removed explorer did not release its deposit while preserving other rewards");
+			messages.push("PASS: image explorers have category prices, gender/name order, encoded paths, and safe legacy refunds");
+			messages.push("PASS: refundable deposits support upgrades, returns, shared slots, and persistence");
+			messages.push("PASS: earned stars and personal bests persist without duplicate rewards");
+
+			const teacherProgress = Rewards.fresh();
+			assert(Rewards.balance(teacherProgress, true).available === 5 && Rewards.balance(teacherProgress, true).earned === 0
+				&& Rewards.balance(teacherProgress).available === 0, "virtual teacher credit leaked into earned or normal stars");
+			assert(Rewards.equip(teacherProgress, "explorer", "human_f_Mina", true), "teacher cannot try a human without achievements");
+			assert(Rewards.equip(teacherProgress, "explorer", "alien_m_Floater #938", true)
+				&& Rewards.equip(teacherProgress, "floor", "flowers", true), "teacher deposit swaps did not reuse virtual credit");
+			assert(!Rewards.equip(teacherProgress, "walls", "living_hedges", true), "teacher exceeded the five-star shared credit");
+			const savedTeacher = JSON.parse(JSON.stringify(teacherProgress));
+			assert(!Object.prototype.hasOwnProperty.call(savedTeacher, "virtual"), "teacher credit was stored as persistent currency");
+			const restoredTeacher = Rewards.restore(savedTeacher, true);
+			assert(Rewards.balance(restoredTeacher, true).borrowed === 5 && Rewards.balance(restoredTeacher, true).available === 0,
+				"teacher reload lost the outfit or accumulated extra credit");
+			const restoredStudent = Rewards.restore(savedTeacher);
+			assert(Rewards.balance(restoredStudent).earned === 0 && Rewards.balance(restoredStudent).borrowed === 0
+				&& Rewards.balance(restoredStudent).available === 0 && !restoredStudent.achievements[1][0],
+				"leaving teacher mode retained unaffordable loans or awarded achievements");
+			Rewards.award(teacherProgress, 1, [true, false, false], 500);
+			assert(Rewards.balance(teacherProgress, true).earned === 1 && Rewards.balance(teacherProgress, true).available === 1,
+				"real achievements did not add to the separate virtual credit");
+			messages.push("PASS: teacher mode adds exactly five virtual shop stars without minting achievements");
+
+			const starterProgress = Rewards.fresh();
+			assert(!Rewards.awardStarter(starterProgress, "firstBorrow"), "borrowing earned a starter star before a successful move");
+			assert(Rewards.awardStarter(starterProgress, "firstMove") && Rewards.balance(starterProgress).starter === 1
+				&& Rewards.balance(starterProgress).earned === 0 && Rewards.balance(starterProgress).available === 1,
+				"first move did not award a separate starter star");
+			assert(!Rewards.awardStarter(starterProgress, "firstMove") && !Rewards.canAccessStage(starterProgress, 2, false), "starter replay minted stars or unlocked a stage");
+			assert(Rewards.equip(starterProgress, "explorer", "animal_d_Buggs"), "starter star cannot fund the first decoration");
+			assert(Rewards.awardStarter(starterProgress, "firstBorrow") && Rewards.balance(starterProgress).starter === 2
+				&& Rewards.balance(starterProgress).available === 1, "first borrow did not award the second starter star");
+			assert(!Rewards.awardStarter(starterProgress, "firstBorrow") && Rewards.equip(starterProgress, "floor", "flowers"), "second bonus was farmed or cannot fund another decoration");
+			assert(JSON.stringify(Rewards.restore(JSON.parse(JSON.stringify(starterProgress)))) === JSON.stringify(starterProgress), "starter bonuses or their equipment did not persist");
+			assert(Rewards.balance(starterProgress, true).virtual === 5 && Rewards.balance(starterProgress, true).starter === 2, "teacher credit replaced or inflated starter bonuses");
+			const legacyStarter = Rewards.fresh();
+			legacyStarter.achievements[1] = [true, true, false];
+			legacyStarter.equipped = { explorer: "animal_d_Buggs", floor: "flowers" };
+			delete legacyStarter.starter;
+			const retroactive = Rewards.restore(legacyStarter);
+			assert(retroactive.starter.firstMove && retroactive.starter.firstBorrow && Rewards.balance(retroactive).earned === 2
+				&& Rewards.balance(retroactive).starter === 2 && retroactive.equipped.explorer === "animal_d_Buggs", "qualified legacy progress did not receive both starter bonuses");
+			assert(!Rewards.awardStarter(Rewards.restore(retroactive), "firstBorrow"), "legacy migration repeatedly awarded starter stars");
+			const legacyMoveOnly = Rewards.fresh();
+			legacyMoveOnly.achievements[1][0] = true;
+			delete legacyMoveOnly.starter;
+			assert(Rewards.restore(legacyMoveOnly).starter.firstMove && !Rewards.restore(legacyMoveOnly).starter.firstBorrow, "legacy migration invented a paid borrow");
+			const teacherLoansOnly = Rewards.fresh();
+			teacherLoansOnly.equipped.explorer = "human_f_Mina";
+			delete teacherLoansOnly.starter;
+			assert(Rewards.balance(Rewards.restore(teacherLoansOnly, true), true).starter === 0, "teacher loans alone awarded starter stars");
+			messages.push("PASS: two one-time starter bonuses fund early decoration, preserve stage gates, and migrate qualified legacy progress");
+
+			const flowers = Rewards.flowerLayout("flower-repeatable", 11);
+			assert(JSON.stringify(flowers) === JSON.stringify(Rewards.flowerLayout("flower-repeatable", 11)), "flower layout changes on redraw or reset");
+			assert(JSON.stringify(flowers) !== JSON.stringify(Rewards.flowerLayout("flower-different", 11)), "different seeds share the same flower layout");
+			const flowerCounts = [0, 0, 0, 0];
+			const flowerShades = new Set();
+			const flowerSizes = new Set();
+			const flowerPositions = new Set();
+			const orientationsByShade = [new Set(), new Set(), new Set()];
+			const variantsByShade = [new Set(), new Set(), new Set()];
+			const componentsByShade = [new Set(), new Set(), new Set()];
+			for (let seedIndex = 0; seedIndex < 50; seedIndex++) {
+				Rewards.flowerLayout("flower-distribution-" + seedIndex, 31).forEach(function (tile) {
+					assert(tile.length <= 3, "tile has more than three flowers");
+					flowerCounts[tile.length]++;
+					tile.forEach(function (flower, index) {
+						assert(flower.orientation >= 0 && flower.orientation < Math.PI * 2, "decoration orientation is outside a full rotation");
+						assert(flower.variant === 0 || flower.variant === 1, "decoration uses an unsupported shape variant");
+						orientationsByShade[flower.shade].add(flower.orientation);
+						variantsByShade[flower.shade].add(flower.variant);
+						assert(flower.component >= 0 && flower.component < 3, "mixed decoration has an invalid component");
+						componentsByShade[flower.shade].add(flower.component);
+						assert(flower.radius >= 0.0425 && flower.radius <= 0.0575, "flower size is outside the small variation range");
+						const extent = flower.radius * 1.7;
+						assert(flower.x - extent > 0.035 && flower.x + extent < 0.965
+							&& flower.y - extent > 0.035 && flower.y + extent < 0.965, "flower overlaps a wall");
+						assert(Math.hypot(flower.x - 0.5, flower.y - 0.5) > extent + 0.08, "flower covers a central visit mark");
+						tile.slice(0, index).forEach(function (other) {
+							assert(Math.hypot(flower.x - other.x, flower.y - other.y) > extent + other.radius * 1.7, "flowers overlap each other");
+						});
+						flowerShades.add(flower.shade);
+						flowerSizes.add(flower.radius);
+						flowerPositions.add(flower.x + "," + flower.y);
+					});
+				});
+			}
+			const tileCount = flowerCounts.reduce(function (total, count) { return total + count; }, 0);
+			assert(Math.abs((flowerCounts[1] + flowerCounts[2] + flowerCounts[3]) / tileCount - 0.25) < 0.01, "first-flower probability is not about 25%");
+			assert(Math.abs((flowerCounts[2] + flowerCounts[3]) / tileCount - 0.08) < 0.005, "second-flower probability is not about 8%");
+			assert(Math.abs(flowerCounts[3] / tileCount - 0.03) < 0.003, "third-flower probability is not about 3%");
+			assert(flowerShades.size === 3 && flowerSizes.size > 100 && flowerPositions.size > 100, "flowers lack shade, size, or position variation");
+			assert(orientationsByShade.every(function (angles) { return angles.size > 100; })
+				&& variantsByShade.every(function (variants) { return variants.size === 2; })
+				&& componentsByShade.every(function (components) { return components.size === 3; }), "orientation, shape, or mixed component is tied to color");
+			messages.push("PASS: seeded flowers have 25%/8%/3% coverage, varied shades and sizes, and clear placement");
+			messages.push("PASS: seeded decoration orientations and two shape variants are independent of color");
+			assert(Rewards.catalog.floor.map(function (entry) { return entry.palette || entry.id; }).join(",")
+				=== "original,pink,red,orange,gold,white,light_blue,dark_blue,purple,gray,mix_pink_white_purple,mix_red_gold_gray,mix_orange_light_blue_purple,mix_red_gold_dark_blue,paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes,meteor_fragments,sparkles,animal_playground,robot_workshop,celebration,alien_landscape", "floor option order is incorrect");
+			const paletteProgress = Rewards.fresh();
+			Rewards.award(paletteProgress, 1, [true, false, false], 500);
+			Rewards.catalog.floor.filter(function (entry) { return !!entry.palette && entry.cost === 1; }).forEach(function (entry) {
+				const palette = Rewards.flowerPalettes[entry.palette];
+				assert(entry.cost === 1 && palette.bright.length === 3 && palette.dim.length === 3
+					&& new Set(palette.bright).size === 3 && new Set(palette.dim).size === 3, "flower option lacks three shades or has a different cost");
+				assert(Rewards.equip(paletteProgress, "floor", entry.id) && Rewards.balance(paletteProgress).borrowed === 1
+					&& Rewards.balance(paletteProgress).available === 0, "flower palette swap requires additional stars");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(paletteProgress))).equipped.floor === "flowers_gray", "flower palette selection was not persisted");
+			paletteProgress.equipped.floor = "flowers";
+			assert(Rewards.restore(paletteProgress).equipped.floor === "flowers" && Rewards.item("floor", "flowers").palette === "gold",
+				"existing gold selection lost its palette or deposit");
+			assert(Rewards.flowerPalettes.gold.bright.join(",") === "#e6c684,#cf902c,#fff0b8", "existing gold shades changed");
+			messages.push("PASS: ordered flower palettes share one-star deposits, three shades, and saved gold compatibility");
+			const mixtures = [
+				["pink", "white", "purple"], ["red", "gold", "gray"],
+				["orange", "light_blue", "purple"], ["red", "gold", "dark_blue"]
+			];
+			const mixedOptions = Rewards.catalog.floor.filter(function (entry) { return !!entry.palette && entry.cost === 2; });
+			assert(mixedOptions.length === 4, "mixed flower sets do not cost two stars");
+			assert(!Rewards.equip(paletteProgress, "floor", mixedOptions[0].id) && paletteProgress.equipped.floor === "flowers",
+				"mixed upgrade did not require an additional star or altered the existing selection");
+			Rewards.award(paletteProgress, 1, [true, true, false], 450);
+			mixedOptions.forEach(function (entry, index) {
+				const palette = Rewards.flowerPalettes[entry.palette];
+				assert(palette.bright.join(",") === mixtures[index].map(function (color) { return Rewards.flowerPalettes[color].bright[0]; }).join(",")
+					&& palette.dim.join(",") === mixtures[index].map(function (color) { return Rewards.flowerPalettes[color].dim[0]; }).join(","),
+					"mixed set uses incorrect component colors");
+				assert(Rewards.equip(paletteProgress, "floor", entry.id) && Rewards.balance(paletteProgress).borrowed === 2
+					&& Rewards.balance(paletteProgress).available === 0, "mixed palette swap did not reuse its deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(paletteProgress))).equipped.floor === mixedOptions[3].id, "mixed selection was not persisted");
+			assert(Rewards.equip(paletteProgress, "floor", "flowers") && Rewards.balance(paletteProgress).available === 1, "returning to a single color did not refund one star");
+			messages.push("PASS: four ordered mixed flower sets use the requested colors and refundable two-star deposits");
+			const themedOptions = Rewards.catalog.floor.filter(function (entry) { return !!entry.motif; });
+			assert(themedOptions.map(function (entry) { return entry.id; }).join(",") === "paw_prints,nuts_bolts,confetti,crystals,bones,leaves,gears,microchips,slime_droplets,paint_splashes,meteor_fragments,sparkles",
+				"recommended themed floors are missing or out of order");
+			assert(Rewards.decorationLayout === Rewards.flowerLayout, "new motifs do not share the original placement generator");
+			const motifProgress = Rewards.fresh();
+			Rewards.award(motifProgress, 1, [true, false, false], 500);
+			Rewards.equip(motifProgress, "floor", "flowers");
+			assert(!Rewards.equip(motifProgress, "floor", "paw_prints") && motifProgress.equipped.floor === "flowers",
+				"two-star motif was borrowed with only one total earned star");
+			Rewards.award(motifProgress, 1, [true, true, false], 450);
+			themedOptions.forEach(function (entry) {
+				const colors = Rewards.floorMotifs[entry.motif];
+				assert(entry.cost === 2 && new Set(colors.bright).size === 3 && new Set(colors.dim).size === 3,
+					"motif has incorrect pricing or lacks three colors");
+				assert(Rewards.equip(motifProgress, "floor", entry.id) && Rewards.balance(motifProgress).borrowed === 2
+					&& Rewards.balance(motifProgress).available === 0, "themed floor swap did not reuse its deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(motifProgress))).equipped.floor === "sparkles", "themed floor did not survive a reload");
+			assert(Rewards.equip(motifProgress, "floor", "original") && Rewards.balance(motifProgress).available === 2,
+				"returning a themed floor did not refund two stars");
+			messages.push("PASS: all twelve themed floors reuse seeded placement and refundable two-star deposits");
+			const packs = Rewards.catalog.floor.filter(function (entry) { return !!entry.components; });
+			assert(packs.map(function (entry) { return entry.id; }).join(",") === "animal_playground,robot_workshop,celebration,alien_landscape", "mixed theme packs are missing or out of order");
+			const packComponents = ["paw_prints,bones,leaves", "nuts_bolts,microchips,gears", "gold,confetti,paint_splashes", "crystals,meteor_fragments,slime_droplets"];
+			packs.forEach(function (pack, index) {
+				assert(pack.cost === 3 && pack.components.map(function (part) { return part.motif || part.palette; }).join(",") === packComponents[index], "mixed pack has incorrect components or cost");
+			});
+			assert(packs[1].components[0].variant === 0, "Robot workshop includes bolts instead of only nuts");
+			const packProgress = Rewards.fresh();
+			Rewards.award(packProgress, 1, [true, true, false], 500);
+			Rewards.equip(packProgress, "floor", "sparkles");
+			assert(!Rewards.equip(packProgress, "floor", "animal_playground") && packProgress.equipped.floor === "sparkles", "pack upgrade ignored its extra-star cost");
+			Rewards.award(packProgress, 1, [true, true, true], 450);
+			packs.forEach(function (pack) {
+				assert(Rewards.equip(packProgress, "floor", pack.id) && Rewards.balance(packProgress).borrowed === 3 && Rewards.balance(packProgress).available === 0, "pack swap did not reuse its three-star deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(packProgress))).equipped.floor === "alien_landscape", "mixed pack did not survive a reload");
+			assert(Rewards.equip(packProgress, "floor", "meteor_fragments") && Rewards.balance(packProgress).available === 1, "downgrading a pack did not refund one star");
+			messages.push("PASS: four mixed theme packs have correct components, independent selection, and three-star deposits");
+			assert(Rewards.catalog.walls.map(function (entry) { return entry.id; }).join(",") === "original,living_hedges,industrial_pipes,spikes,brickwork,crystal_growth,woodland_fences,mushroom_wall,riveted_panels,circuit_walls,festival_bunting,flower_planters,bioluminescent_tendrils,slime_walls,enchanted_garden,robot_factory,street_festival,alien_hive",
+				"new wall themes are missing or moss was retained");
+			const wallProgress = Rewards.fresh();
+			Rewards.award(wallProgress, 1, [true, false, false], 500);
+			Rewards.catalog.walls.filter(function (entry) { return entry.cost === 1; }).forEach(function (entry) {
+				assert(entry.cost === 1 && Rewards.equip(wallProgress, "walls", entry.id) && Rewards.balance(wallProgress).available === 0,
+					"wall theme does not use a reusable one-star deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "slime_walls", "wall theme did not persist");
+			const wallCombinations = Rewards.catalog.walls.filter(function (entry) { return entry.cost === 2; });
+			assert(wallCombinations.map(function (entry) { return entry.id; }).join(",") === "enchanted_garden,robot_factory,street_festival,alien_hive", "wall combinations are missing or incorrectly priced");
+			const wallComponents = ["living_hedges,mushroom_wall,flower_planters", "industrial_pipes,circuit_walls", "brickwork,festival_bunting", "crystal_growth,bioluminescent_tendrils,slime_walls"];
+			wallCombinations.forEach(function (entry, index) {
+				assert(Rewards.wallThemes[entry.id].components.map(function (part) { return part.theme; }).join(",") === wallComponents[index], "wall combination contains the wrong decorations");
+			});
+			assert(!Rewards.equip(wallProgress, "walls", "enchanted_garden") && wallProgress.equipped.walls === "slime_walls", "wall combination upgrade ignored the extra-star cost");
+			Rewards.award(wallProgress, 1, [true, true, false], 450);
+			wallCombinations.forEach(function (entry) {
+				assert(Rewards.equip(wallProgress, "walls", entry.id) && Rewards.balance(wallProgress).borrowed === 2 && Rewards.balance(wallProgress).available === 0, "combination swaps did not reuse their two-star deposit");
+			});
+			assert(Rewards.restore(JSON.parse(JSON.stringify(wallProgress))).equipped.walls === "alien_hive", "wall combination did not persist");
+			assert(Rewards.equip(wallProgress, "walls", "spikes") && Rewards.balance(wallProgress).available === 1, "returning to single walls did not refund one star");
+			assert(Rewards.wallThemes.slime_walls.growth.join(",") === "3,5", "slime walls do not use the sparser 3–5 count");
+			const hedgeCounts = new Set();
+			const crystalCounts = new Set();
+			const organicAngles = new Set();
+			const organicPositions = new Set();
+			const rareWallCounts = new Set();
+			[7, 11, 31].forEach(function (size) {
+				[Game.createMaze, Game.createPledgeMaze, Game.createDfsMaze].forEach(function (create) {
+					const maze = create("wall-check-" + size, size);
+					const layout = Rewards.wallLayout(maze);
+					const byKey = new Map(layout.map(function (segment) { return [segment.key, segment]; }));
+					assert(byKey.size === layout.length, "a shared physical wall was decorated twice");
+					const expected = new Map();
+					maze.cells.forEach(function (cell, index) {
+						const x = index % size, y = Math.floor(index / size);
+						["horizontal:" + x + ":" + y, "vertical:" + (x + 1) + ":" + y,
+							"horizontal:" + x + ":" + (y + 1), "vertical:" + x + ":" + y].forEach(function (key, direction) {
+							if (!(cell & Game.constants.WALLS[direction])) { return; }
+							if (!expected.has(key)) { expected.set(key, []); }
+							expected.get(key).push(index);
+						});
+					});
+					assert(expected.size === layout.length, "wall decoration covers an opening or misses a wall");
+					layout.forEach(function (segment) {
+						assert(expected.has(segment.key) && segment.cells.slice().sort(function (a, b) { return a - b; }).join(",") === expected.get(segment.key).join(","),
+							"wall sides disagree about their canonical segment");
+						segment.details.forEach(function (detail) {
+							assert(detail.position > 0.17 && detail.position < 0.83 && detail.size >= 0.85 && detail.size < 1.15,
+								"wall attachment may extend into an opening");
+						});
+						assert(segment.spikes.length === 5, "wall does not have five paired spike positions");
+						segment.spikes.forEach(function (spike) {
+							assert(spike.position - 0.014 * spike.size > 0.035 && spike.position + 0.014 * spike.size < 0.965
+								&& spike.size * 0.17 < 0.2, "spikes reach into an opening or too far into a corridor");
+						});
+						const garden = segment.combinations.enchanted_garden;
+						const hive = segment.combinations.alien_hive;
+						[garden.mushroom_wall, garden.flower_planters, hive.slime_walls].forEach(function (elements) {
+							assert(elements.length >= 0 && elements.length <= 2, "rare combination detail exceeds zero to two elements");
+							rareWallCounts.add(elements.length);
+							elements.forEach(function (element) {
+								const extent = element.radius * 1.7;
+								assert(element.position - extent >= 0.035 - 1e-10 && element.position + extent <= 0.965 + 1e-10
+									&& Math.abs(element.offset) + extent < 0.2, "combined wall growth covers a gap or corridor center");
+							});
+						});
+						assert(segment.growth.living_hedges.length > garden.mushroom_wall.length + garden.flower_planters.length, "garden is not mostly leaves");
+						["living_hedges", "crystal_growth"].forEach(function (theme) {
+							const elements = segment.growth[theme];
+							const minimum = theme === "living_hedges" ? 10 : 3;
+							const maximum = theme === "living_hedges" ? 20 : 5;
+							assert(elements.length >= minimum && elements.length <= maximum, "organic wall count is outside the requested range");
+							(theme === "living_hedges" ? hedgeCounts : crystalCounts).add(elements.length);
+							elements.forEach(function (element) {
+								const extent = element.radius * 1.7;
+								assert(element.position - extent >= 0.035 - 1e-10 && element.position + extent <= 0.965 + 1e-10,
+									"organic growth reaches into a passage at a wall endpoint");
+								assert(Math.abs(element.offset) + extent < 0.2, "organic growth protrudes too far into a corridor");
+								assert(element.orientation >= 0 && element.orientation < Math.PI * 2, "organic wall orientation is invalid");
+								organicAngles.add(element.orientation);
+								organicPositions.add(element.position + "," + element.offset);
+							});
+						});
+						["mushroom_wall", "flower_planters", "bioluminescent_tendrils", "slime_walls"].forEach(function (theme) {
+							const elements = segment.growth[theme];
+							const range = Rewards.wallThemes[theme].growth;
+							assert(elements.length >= range[0] && elements.length <= range[1], "new wall growth has an invalid count");
+							elements.forEach(function (element) {
+								const extent = element.radius * 1.7;
+								assert(element.position - extent >= 0.035 - 1e-10 && element.position + extent <= 0.965 + 1e-10
+									&& Math.abs(element.offset) + extent < 0.2, "new wall growth covers an opening or corridor center");
+							});
+						});
+					});
+					assert(JSON.stringify(layout) === JSON.stringify(Rewards.wallLayout(maze)), "wall attachments change on redraw");
+				});
+			});
+			messages.push("PASS: single wall themes and spikes use stable canonical segments and leave passages undecorated");
+			assert(hedgeCounts.size === 11 && crystalCounts.size === 3 && organicAngles.size > 100 && organicPositions.size > 100,
+				"organic walls lack count, orientation, or placement variation");
+			messages.push("PASS: hedges have 10–20 leaves and crystal walls 3–5 randomly oriented, bounded elements");
+			assert(rareWallCounts.size === 3, "rare combination elements do not include all zero-to-two counts");
+			messages.push("PASS: four two-star wall combinations have the requested components, rare-element counts, and reusable deposits");
+
+			const learningProgress = Rewards.fresh();
+			assert(Rewards.canAccessStage(learningProgress, 1, false)
+				&& !Rewards.canAccessStage(learningProgress, 2, false) && !Rewards.canAccessStage(learningProgress, 3, false),
+				"fresh progress unlocked a later stage");
+			assert(Rewards.canAccessStage(learningProgress, 2, true), "teacher override no longer permits access");
+			learningProgress.achievements[1][0] = true;
+			assert(Rewards.canAccessStage(learningProgress, 2, false) && Rewards.canAccessStage(learningProgress, 3, false),
+				"saved reliability did not unlock later stages");
+			assert(Rewards.completionAction(learningProgress, 1, 0, true) === "debug", "one-maze success skipped generalisation guidance");
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "improve", "missing efficiency did not recommend improvement");
+			learningProgress.achievements[1][1] = true;
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "large", "missing large-maze star did not recommend the challenge");
+			assert(Rewards.completionAction(learningProgress, 1, 8, true) === "debug", "large validation failure did not recommend debugging");
+			learningProgress.achievements[1][2] = true;
+			assert(Rewards.completionAction(learningProgress, 1, 8, false) === "advance", "mastered stage did not recommend advancement");
+			learningProgress.achievements[3] = [true, true, true];
+			assert(Rewards.completionAction(learningProgress, 3, 8, false) === "revisit", "final stage ignored missing earlier stars");
+			learningProgress.achievements[2] = [true, true, true];
+			assert(Rewards.completionAction(learningProgress, 3, 8, false) === "practice", "all nine stars did not recommend personal-best practice");
+			messages.push("PASS: reliability unlocks stages and completion recommends each learning objective");
+
+			document.getElementById("results").textContent = messages.join("\n") + "\n\nAll checks passed.";
+		})();
+	</script>
+</body>
+</html>
